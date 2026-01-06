@@ -9,7 +9,7 @@ const TowingScreen = () => {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Towing Services</Text>
+                <Text style={styles.title}>Towing</Text>
             </View>
             <FlatList
                 data={towingServices}

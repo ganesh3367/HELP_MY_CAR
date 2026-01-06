@@ -11,7 +11,7 @@ const CostEstimatorScreen = () => {
 
     const calculateEstimate = () => {
         const dist = parseFloat(distance) || 0;
-        const price = selectedService.basePrice + (dist * 2); // Simple logic
+        const price = selectedService.basePrice + (dist * 2);
         setEstimate(price.toFixed(2));
     };
 

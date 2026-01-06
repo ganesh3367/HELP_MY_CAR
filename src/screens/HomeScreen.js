@@ -1,46 +1,178 @@
-import { MapPin } from 'lucide-react-native';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Button from '../components/Button';
+import NetInfo from '@react-native-community/netinfo';
+import { Calculator, MapPin, Menu, Phone, ShieldAlert, Truck, Wrench } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import {
+    Platform,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import SOSButton from '../components/SOSButton';
-import { COLORS, SPACING } from '../constants/theme';
+import { COLORS, SHADOWS, SPACING } from '../constants/theme';
+import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
 
 const HomeScreen = ({ navigation }) => {
-    const { location, loading } = useLocation();
+    const { location } = useLocation();
+    const { mechanics } = useAppContext();
+    const { user } = useAuth();
+    const [mapError, setMapError] = useState(false);
+    const [isConnected, setIsConnected] = useState(true);
+
+    useEffect(() => {
+        const unsubscribe = NetInfo.addEventListener(state => {
+            setIsConnected(state.isConnected);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const initialRegion = {
+        latitude: 37.78825,
+        longitude: -122.4324,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+    };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scroll}>
-                <View style={styles.header}>
-                    <Text style={styles.greeting}>Hello, Ganesh!</Text>
-                    <Text style={styles.subGreeting}>Need assistance?</Text>
+        <View style={styles.container}>
+            {!mapError ? (
+                <MapView
+                    provider={PROVIDER_GOOGLE}
+                    style={styles.map}
+                    initialRegion={location?.coords ? {
+                        latitude: location.coords.latitude,
+                        longitude: location.coords.longitude,
+                        latitudeDelta: 0.015,
+                        longitudeDelta: 0.0121,
+                    } : initialRegion}
+                    showsUserLocation
+                    showsMyLocationButton={false}
+                    onError={() => setMapError(true)}
+                >
+                    {mechanics.map((mechanic) => (
+                        <Marker
+                            key={mechanic.id}
+                            coordinate={{ latitude: mechanic.lat, longitude: mechanic.lng }}
+                            title={mechanic.name}
+                        >
+                            <View style={styles.markerContainer}>
+                                <View style={styles.markerIcon}>
+                                    <Wrench size={14} color={COLORS.white} />
+                                </View>
+                            </View>
+                        </Marker>
+                    ))}
+                </MapView>
+            ) : (
+                <View style={[styles.map, styles.fallbackContainer]}>
+                    <MapPin size={48} color={COLORS.primary} />
+                    <Text style={styles.fallbackTitle}>Map Unavailable</Text>
+                    <Text style={styles.fallbackText}>Nearby services are listed in the tabs below.</Text>
+                </View>
+            )}
+
+            <View style={styles.overlay} pointerEvents="box-none">
+                <View style={styles.glassHeader}>
+                    <View style={styles.topBar}>
+                        <TouchableOpacity style={styles.glassButton} onPress={() => navigation.navigate('Profile')}>
+                            <Menu size={22} color={COLORS.text} />
+                        </TouchableOpacity>
+
+                        <View style={styles.mainGreeting}>
+                            <Text style={styles.greetingTitle}>Hello, {user?.name || 'Ganesh'}</Text>
+                            <View style={[styles.statusBadge, !isConnected && styles.offlineBadge]}>
+                                <View style={[styles.pulseDot, !isConnected && styles.offlineDot]} />
+                                <Text style={[styles.statusText, !isConnected && styles.offlineText]}>
+                                    {isConnected ? 'Safe & Connected' : 'Offline Mode'}
+                                </Text>
+                            </View>
+                        </View>
+
+                        <TouchableOpacity style={styles.avatarButton} onPress={() => navigation.navigate('Profile')}>
+                            <View style={styles.avatarLarge}>
+                                <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'G'}</Text>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
-                <View style={styles.locationCard}>
-                    <MapPin size={20} color={COLORS.primary} />
-                    <Text style={styles.locationText}>
-                        {loading ? 'Detecting your location...' : 'Pune, Maharashtra'}
-                    </Text>
+                {!isConnected && (
+                    <View style={styles.emergencyContainer}>
+                        <View style={styles.emergencyCard}>
+                            <View style={styles.emergencyHeader}>
+                                <ShieldAlert size={20} color={COLORS.error} />
+                                <Text style={styles.emergencyTitle}>Offline Emergency Support</Text>
+                            </View>
+                            <Text style={styles.emergencySub}>Quick call even without internet</Text>
+
+                            <View style={styles.emergencyRow}>
+                                <TouchableOpacity style={styles.emergencyItem}>
+                                    <View style={[styles.eIcon, { backgroundColor: '#FFEDED' }]}>
+                                        <Phone size={18} color={COLORS.error} />
+                                    </View>
+                                    <Text style={styles.eLabel}>Police (100)</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={styles.emergencyItem}>
+                                    <View style={[styles.eIcon, { backgroundColor: '#E6F3FF' }]}>
+                                        <Phone size={18} color="#007AFF" />
+                                    </View>
+                                    <Text style={styles.eLabel}>Ambulance (102)</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                )}
+
+                <View style={styles.bottomContent}>
+                    <View style={styles.glassCard}>
+                        <View style={styles.actionHeader}>
+                            <Text style={styles.cardTitle}>Emergency Services</Text>
+                            <View style={styles.activePill}>
+                                <Text style={styles.activePillText}>Live</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.actionGrid}>
+                            <TouchableOpacity
+                                style={[styles.actionCard, { backgroundColor: '#FFF7F0' }]}
+                                onPress={() => navigation.navigate('Mechanics')}
+                            >
+                                <View style={[styles.actionIconPill, { backgroundColor: COLORS.primary }]}>
+                                    <Wrench size={20} color={COLORS.white} />
+                                </View>
+                                <Text style={styles.actionLabel}>Mechanics</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.actionCard, { backgroundColor: '#F0F7FF' }]}
+                                onPress={() => navigation.navigate('Towing')}
+                            >
+                                <View style={[styles.actionIconPill, { backgroundColor: '#007AFF' }]}>
+                                    <Truck size={20} color={COLORS.white} />
+                                </View>
+                                <Text style={styles.actionLabel}>Towing</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.actionCard, { backgroundColor: '#F5F0FF' }]}
+                                onPress={() => navigation.navigate('Estimator')}
+                            >
+                                <View style={[styles.actionIconPill, { backgroundColor: '#7B61FF' }]}>
+                                    <Calculator size={20} color={COLORS.white} />
+                                </View>
+                                <Text style={styles.actionLabel}>Cost</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
 
-                <View style={styles.buttonContainer}>
-                    <Button
-                        title="Find Mechanic"
-                        onPress={() => navigation.navigate('Mechanics')}
-                        style={styles.bigButton}
-                        textStyle={styles.bigButtonText}
-                    />
-                    <Button
-                        title="Call Towing"
-                        variant="secondary"
-                        onPress={() => navigation.navigate('Towing')}
-                        style={styles.bigButton}
-                        textStyle={styles.bigButtonText}
-                    />
-                </View>
-            </ScrollView>
-            <SOSButton onPress={() => console.log('SOS Pressed')} />
-        </SafeAreaView>
+                <SOSButton onPress={() => { }} />
+            </View>
+        </View>
     );
 };
 
@@ -49,43 +181,255 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.background,
     },
-    scroll: {
-        padding: SPACING.lg,
+    map: {
+        ...StyleSheet.absoluteFillObject,
     },
-    header: {
-        marginVertical: SPACING.xl,
+    overlay: {
+        flex: 1,
     },
-    greeting: {
-        fontSize: 28,
+    glassHeader: {
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        paddingBottom: SPACING.md,
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        ...SHADOWS.medium,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.4)',
+    },
+    topBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: SPACING.lg,
+        paddingTop: Platform.OS === 'ios' ? 60 : 40,
+        marginBottom: 10,
+    },
+    offlineBadge: {
+        backgroundColor: '#FFF1F0',
+        borderColor: '#FFA39E',
+    },
+    offlineDot: {
+        backgroundColor: COLORS.error,
+    },
+    offlineText: {
+        color: COLORS.error,
+    },
+    emergencyContainer: {
+        paddingHorizontal: SPACING.lg,
+        marginTop: SPACING.lg,
+    },
+    emergencyCard: {
+        backgroundColor: COLORS.white,
+        borderRadius: 20,
+        padding: SPACING.md,
+        ...SHADOWS.medium,
+        borderWidth: 1,
+        borderColor: '#FFEBEA',
+    },
+    emergencyHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    emergencyTitle: {
+        fontSize: 16,
         fontWeight: 'bold',
         color: COLORS.text,
     },
-    subGreeting: {
-        fontSize: 16,
+    emergencySub: {
+        fontSize: 12,
         color: COLORS.textLight,
+        marginTop: 2,
+        marginBottom: SPACING.md,
     },
-    locationCard: {
+    emergencyRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    emergencyItem: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.surface,
-        padding: SPACING.md,
+        backgroundColor: '#FAFAFA',
+        padding: 10,
         borderRadius: 12,
-        marginBottom: SPACING.xl,
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
     },
-    locationText: {
-        marginLeft: 8,
-        fontSize: 14,
+    eIcon: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 8,
+    },
+    eLabel: {
+        fontSize: 11,
+        fontWeight: '700',
         color: COLORS.text,
     },
-    buttonContainer: {
-        gap: SPACING.md,
+    glassButton: {
+        width: 45,
+        height: 45,
+        borderRadius: 15,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...SHADOWS.medium,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.5)',
     },
-    bigButton: {
-        height: 120,
+    mainGreeting: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    greetingTitle: {
+        fontSize: 22,
+        fontWeight: '900',
+        color: COLORS.text,
+        letterSpacing: -0.5,
+    },
+    statusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#E6F7ED',
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 20,
+        marginTop: 6,
+        borderWidth: 1,
+        borderColor: '#B7EB8F',
+    },
+    pulseDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: COLORS.success,
+        marginRight: 6,
+    },
+    statusText: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: COLORS.success,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    avatarButton: {
+        ...SHADOWS.medium,
+    },
+    avatarLarge: {
+        width: 45,
+        height: 45,
+        borderRadius: 15,
+        backgroundColor: COLORS.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: COLORS.white,
+    },
+    avatarText: {
+        color: COLORS.white,
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    bottomContent: {
+        position: 'absolute',
+        bottom: 20,
+        left: 0,
+        right: 0,
+        paddingHorizontal: SPACING.lg,
+        paddingBottom: 80,
+    },
+    glassCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 24,
+        padding: SPACING.lg,
+        ...SHADOWS.medium,
+    },
+    cardTitle: {
+        fontSize: 18,
+        fontWeight: '900',
+        color: COLORS.text,
+        letterSpacing: -0.5,
+    },
+    actionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: SPACING.md,
+    },
+    activePill: {
+        backgroundColor: COLORS.primary + '20',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    activePillText: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: COLORS.primary,
+        textTransform: 'uppercase',
+    },
+    actionGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 10,
+    },
+    actionCard: {
+        flex: 1,
+        padding: 12,
+        borderRadius: 20,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.03)',
+    },
+    actionIconPill: {
+        width: 40,
+        height: 40,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 8,
+        ...SHADOWS.small,
+    },
+    actionLabel: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: COLORS.text,
+    },
+    markerContainer: {
+        padding: 2,
+        backgroundColor: COLORS.white,
+        borderRadius: 20,
+        ...SHADOWS.medium,
+    },
+    markerIcon: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: COLORS.primary,
+        alignItems: 'center',
         justifyContent: 'center',
     },
-    bigButtonText: {
+    fallbackContainer: {
+        backgroundColor: '#F5F5F5',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    fallbackTitle: {
         fontSize: 20,
+        fontWeight: 'bold',
+        color: COLORS.text,
+        marginTop: 10,
+    },
+    fallbackText: {
+        fontSize: 14,
+        color: COLORS.textLight,
+        textAlign: 'center',
+        paddingHorizontal: 40,
+        marginTop: 5,
     },
 });
 
