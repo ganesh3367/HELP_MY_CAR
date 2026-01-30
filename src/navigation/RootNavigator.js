@@ -17,6 +17,10 @@ import TabNavigator from './TabNavigator';
 
 const Stack = createNativeStackNavigator();
 
+/**
+ * The main navigator component.
+ * @returns {JSX.Element} Navigation stack based on auth state.
+ */
 const RootNavigator = () => {
     const auth = useAuth();
     const user = auth?.user;
