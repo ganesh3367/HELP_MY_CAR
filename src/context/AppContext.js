@@ -93,6 +93,12 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Places a new order for a mechanic.
+     * @param {string} garageId - The ID of the selected garage.
+     * @param {Object} vehicleDetails - Details of the user's vehicle.
+     * @returns {Promise<Object>} The created order object.
+     */
     const placeOrder = async (garageId, vehicleDetails) => {
         setLoading(true);
         try {
