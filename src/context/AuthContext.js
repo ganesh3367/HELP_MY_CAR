@@ -1,3 +1,8 @@
+/**
+ * AuthContext.js
+ * Manages user authentication state including login, signup, and logout/
+ * Persists user state using AsyncStorage.
+ */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState } from 'react';
 
