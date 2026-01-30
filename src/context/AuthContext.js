@@ -28,6 +28,12 @@ export const AuthProvider = ({ children }) => {
         checkUser();
     }, []);
 
+    /**
+     * Logs in the user.
+     * @param {string} email - User email
+     * @param {string} password - User password
+     * @returns {Promise<Object>} User data
+     */
     const login = async (email, password) => {
         setLoading(true);
         return new Promise((resolve, reject) => {
