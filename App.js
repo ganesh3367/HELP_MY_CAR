@@ -1,3 +1,7 @@
+/**
+ * Main Entry Point for the HELP_MY_CAR Application
+ * This file sets up the main providers (Auth, App, Location) and the Navigation structure.
+ */
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import OfflineFallback from './src/components/OfflineFallback';
