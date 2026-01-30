@@ -1,16 +1,21 @@
+/**
+ * OfflineFallback Component
+ * Displays a warning banner when the device loses internet connectivity.
+ * Uses NetInfo to monitor connection state.
+ */
 import NetInfo from '@react-native-community/netinfo';
 import { WifiOff } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { COLORS, SPACING } from '../constants/theme';
 
 const OfflineFallback = () => {
-    const [isConnected, setIsConnected] = useState(true);
-    const slideAnim = new Animated.Value(-100);
+
+    const slideAnim = useMemo(() => new Animated.Value(-100), []);
 
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener(state => {
-            setIsConnected(state.isConnected);
+
 
             Animated.timing(slideAnim, {
                 toValue: state.isConnected ? -100 : 0,
