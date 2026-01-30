@@ -12,6 +12,9 @@ export const LocationProvider = ({ children }) => {
     const [errorMsg, setErrorMsg] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    /**
+     * Requests foreground permission and fetches current location.
+     */
     const requestLocation = async () => {
         try {
             setLoading(true);
