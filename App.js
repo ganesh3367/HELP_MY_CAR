@@ -10,6 +10,11 @@ import { AuthProvider } from './src/context/AuthContext';
 import { LocationProvider } from './src/context/LocationContext';
 import RootNavigator from './src/navigation/RootNavigator';
 
+/**
+ * Root component of the application.
+ * Wraps the app in necessary context providers and navigation container.
+ * @returns {JSX.Element} The rendered application
+ */
 export default function App() {
     return (
         <AuthProvider>
