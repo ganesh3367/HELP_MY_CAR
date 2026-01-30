@@ -1,3 +1,7 @@
+/**
+ * LocationContext.js
+ * Manages access to the device's geolocation services using expo-location.
+ */
 import * as Location from 'expo-location';
 import { createContext, useContext, useEffect, useState } from 'react';
 
