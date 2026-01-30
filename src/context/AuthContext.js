@@ -52,6 +52,13 @@ export const AuthProvider = ({ children }) => {
         });
     };
 
+    /**
+     * Registers a new user.
+     * @param {string} name - User full name
+     * @param {string} email - User email
+     * @param {string} password - User password
+     * @returns {Promise<Object>} User data
+     */
     const signup = async (name, email, password) => {
         setLoading(true);
         return new Promise((resolve, reject) => {
