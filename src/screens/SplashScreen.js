@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '../constants/theme';
 
 const SplashScreen = ({ navigation }) => {
-    const fadeAnim = new Animated.Value(0);
+    const fadeAnim = useMemo(() => new Animated.Value(0), []);
 
     useEffect(() => {
         Animated.timing(fadeAnim, {

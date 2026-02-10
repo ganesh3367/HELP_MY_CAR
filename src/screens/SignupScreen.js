@@ -36,7 +36,7 @@ const SignupScreen = ({ navigation }) => {
         try {
             await signup(name, email, password);
         } catch (error) {
-            Alert.alert('Signup Failed', error);
+            Alert.alert('Signup Failed', String(error));
         } finally {
             setLoading(false);
         }
