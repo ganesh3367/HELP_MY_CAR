@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/native';
 import { Filter, Search, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -7,9 +8,11 @@ import { COLORS, SHADOWS, SIZES, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 
 const MechanicsScreen = () => {
-    const { mechanics } = useAppContext();
+    const navigation = useNavigation();
+    const { mechanics, placeOrder } = useAppContext();
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredMechanics, setFilteredMechanics] = useState(mechanics);
+    const [isConnecting, setIsConnecting] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -26,6 +29,19 @@ const MechanicsScreen = () => {
         );
         setFilteredMechanics(filtered);
     }, [searchQuery, mechanics]);
+
+    const handleProceed = async (item) => {
+        setIsConnecting(true);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const vehicle = { make: 'Tesla', model: 'Model 3', year: '2023', issue: 'Tire puncture' };
+        const order = await placeOrder(item._id || item.id, vehicle);
+
+        setIsConnecting(false);
+        if (order) {
+            navigation.navigate('OrderTracking', { order });
+        }
+    };
 
     const renderSkeleton = () => (
         <View style={styles.skeletonContainer}>
@@ -85,6 +101,7 @@ const MechanicsScreen = () => {
                             phone={item.phone}
                             lat={item.lat}
                             lng={item.lng}
+                            onProceed={() => handleProceed(item)}
                         />
                     )}
                     contentContainerStyle={styles.list}
@@ -95,6 +112,17 @@ const MechanicsScreen = () => {
                         </View>
                     }
                 />
+            )}
+
+            {/* Connecting Overlay */}
+            {isConnecting && (
+                <View style={styles.overlay}>
+                    <View style={styles.connectingCard}>
+                        <LoadingSkeleton width={60} height={60} borderRadius={30} style={{ marginBottom: 20 }} />
+                        <Text style={styles.connectingTitle}>Contacting Mechanic...</Text>
+                        <Text style={styles.connectingSub}>Waiting for acceptance</Text>
+                    </View>
+                </View>
             )}
         </SafeAreaView>
     );
@@ -172,6 +200,31 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: COLORS.textLight,
     },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 100,
+    },
+    connectingCard: {
+        backgroundColor: COLORS.white,
+        padding: 40,
+        borderRadius: 24,
+        alignItems: 'center',
+        width: '80%',
+        ...SHADOWS.large,
+    },
+    connectingTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: COLORS.text,
+        marginBottom: 8,
+    },
+    connectingSub: {
+        fontSize: 14,
+        color: COLORS.textLight,
+    }
 });
 
 export default MechanicsScreen;

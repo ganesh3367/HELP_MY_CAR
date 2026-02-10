@@ -1,15 +1,15 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
-import { Calculator, Home, Truck, User, Wrench } from 'lucide-react-native';
+import { Home, MapPin, ShieldAlert, Truck, Wrench } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, SHADOWS } from '../constants/theme';
 
-import CostEstimatorScreen from '../screens/CostEstimatorScreen';
+import CarStuckScreen from '../screens/CarStuckScreen';
 import HomeScreen from '../screens/HomeScreen';
 import MechanicsScreen from '../screens/MechanicsScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import NearbyMechanicsScreen from '../screens/NearbyMechanicsScreen';
 import TowingScreen from '../screens/TowingScreen';
 
 const { width } = Dimensions.get('window');
@@ -18,9 +18,9 @@ const Tab = createBottomTabNavigator();
 const TAB_COLORS = {
     Home: '#007AFF',
     Mechanics: '#FF8C00',
+    CarStuck: '#FF3B30',
     Towing: '#34C759',
-    Cost: '#5856D6',
-    Profile: '#FF2D55',
+    Nearby: '#5856D6',
 };
 
 const CustomTabBar = ({ state, descriptors, navigation }) => {
@@ -35,7 +35,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             bounciness: 5,
             speed: 12,
         }).start();
-    }, [state.index, tabWidth]);
+    }, [state.index, tabWidth, translateX]);
 
     return (
         <View style={styles.tabBarWrapper}>
@@ -118,6 +118,15 @@ const TabNavigator = () => {
                 }}
             />
             <Tab.Screen
+                name="CarStuck"
+                component={CarStuckScreen}
+                options={{
+                    title: 'Stuck?',
+                    headerShown: false,
+                    tabBarIcon: (props) => <ShieldAlert {...props} />,
+                }}
+            />
+            <Tab.Screen
                 name="Mechanics"
                 component={MechanicsScreen}
                 options={{
@@ -134,20 +143,11 @@ const TabNavigator = () => {
                 }}
             />
             <Tab.Screen
-                name="Cost"
-                component={CostEstimatorScreen}
-                options={{
-                    headerShown: true,
-                    title: 'Cost',
-                    tabBarIcon: (props) => <Calculator {...props} />,
-                }}
-            />
-            <Tab.Screen
-                name="Profile"
-                component={ProfileScreen}
+                name="Nearby"
+                component={NearbyMechanicsScreen}
                 options={{
                     headerShown: false,
-                    tabBarIcon: (props) => <User {...props} />,
+                    tabBarIcon: (props) => <MapPin {...props} />,
                 }}
             />
         </Tab.Navigator>

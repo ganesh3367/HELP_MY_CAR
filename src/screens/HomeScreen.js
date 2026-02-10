@@ -1,12 +1,16 @@
 import NetInfo from '@react-native-community/netinfo';
-import { Calculator, MapPin, Menu, Phone, ShieldAlert, Truck, Wrench } from 'lucide-react-native';
+import { BookOpen, Flame, MapPin, Phone, Search, ShieldAlert, Siren, Truck, Wrench, X } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
+    Dimensions,
+    Linking,
+    Modal,
     Platform,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import SOSButton from '../components/SOSButton';
@@ -15,12 +19,17 @@ import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
 
+const { width } = Dimensions.get('window');
+
 const HomeScreen = ({ navigation }) => {
     const { location } = useLocation();
     const { mechanics } = useAppContext();
     const { user } = useAuth();
     const [mapError, setMapError] = useState(false);
     const [isConnected, setIsConnected] = useState(true);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [isEmergencyModalVisible, setIsEmergencyModalVisible] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener(state => {
@@ -52,9 +61,9 @@ const HomeScreen = ({ navigation }) => {
                     showsMyLocationButton={false}
                     onError={() => setMapError(true)}
                 >
-                    {mechanics.map((mechanic) => (
+                    {mechanics.map((mechanic, index) => (
                         <Marker
-                            key={mechanic.id}
+                            key={mechanic._id || mechanic.id || index}
                             coordinate={{ latitude: mechanic.lat, longitude: mechanic.lng }}
                             title={mechanic.name}
                         >
@@ -77,25 +86,47 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.overlay} pointerEvents="box-none">
                 <View style={styles.glassHeader}>
                     <View style={styles.topBar}>
-                        <TouchableOpacity style={styles.glassButton} onPress={() => navigation.navigate('Profile')}>
-                            <Menu size={22} color={COLORS.text} />
-                        </TouchableOpacity>
-
-                        <View style={styles.mainGreeting}>
-                            <Text style={styles.greetingTitle}>Hello, {user?.name || 'Ganesh'}</Text>
-                            <View style={[styles.statusBadge, !isConnected && styles.offlineBadge]}>
-                                <View style={[styles.pulseDot, !isConnected && styles.offlineDot]} />
-                                <Text style={[styles.statusText, !isConnected && styles.offlineText]}>
-                                    {isConnected ? 'Safe & Connected' : 'Offline Mode'}
-                                </Text>
+                        {isSearchVisible ? (
+                            <View style={styles.searchContainer}>
+                                <Search size={20} color={COLORS.textLight} />
+                                <TextInput
+                                    style={styles.searchInput}
+                                    placeholder="Search mechanics, towing..."
+                                    placeholderTextColor={COLORS.textLight}
+                                    value={searchQuery}
+                                    onChangeText={setSearchQuery}
+                                    autoFocus
+                                />
+                                <TouchableOpacity onPress={() => { setIsSearchVisible(false); setSearchQuery(''); }}>
+                                    <X size={20} color={COLORS.textLight} />
+                                </TouchableOpacity>
                             </View>
-                        </View>
+                        ) : (
+                            <>
+                                <TouchableOpacity style={styles.glassButton} onPress={() => setIsSearchVisible(true)}>
+                                    <Search size={22} color={COLORS.text} />
+                                </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.avatarButton} onPress={() => navigation.navigate('Profile')}>
-                            <View style={styles.avatarLarge}>
-                                <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'G'}</Text>
-                            </View>
-                        </TouchableOpacity>
+                                <View style={styles.mainGreeting}>
+                                    <Text style={styles.greetingTitle}>Hello, {user?.name || 'Ganesh'}</Text>
+                                    <View style={[styles.statusBadge, !isConnected && styles.offlineBadge]}>
+                                        <View style={[styles.pulseDot, !isConnected && styles.offlineDot]} />
+                                        <Text style={[styles.statusText, !isConnected && styles.offlineText]}>
+                                            {isConnected ? 'Safe & Connected' : 'Offline Mode'}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <TouchableOpacity
+                                    style={styles.avatarButton}
+                                    onPress={() => navigation.navigate('Profile')}
+                                >
+                                    <View style={styles.avatarLarge}>
+                                        <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'G'}</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </>
+                        )}
                     </View>
                 </View>
 
@@ -128,6 +159,8 @@ const HomeScreen = ({ navigation }) => {
                 )}
 
                 <View style={styles.bottomContent}>
+
+
                     <View style={styles.glassCard}>
                         <View style={styles.actionHeader}>
                             <Text style={styles.cardTitle}>Emergency Services</Text>
@@ -158,19 +191,95 @@ const HomeScreen = ({ navigation }) => {
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={[styles.actionCard, { backgroundColor: '#F5F0FF' }]}
-                                onPress={() => navigation.navigate('Estimator')}
+                                style={[styles.actionCard, { backgroundColor: '#F0FFF4' }]}
+                                onPress={() => navigation.navigate('CarStuck')}
                             >
-                                <View style={[styles.actionIconPill, { backgroundColor: '#7B61FF' }]}>
-                                    <Calculator size={20} color={COLORS.white} />
+                                <View style={[styles.actionIconPill, { backgroundColor: '#34C759' }]}>
+                                    <BookOpen size={20} color={COLORS.white} />
                                 </View>
-                                <Text style={styles.actionLabel}>Cost</Text>
+                                <Text style={styles.actionLabel}>Guides</Text>
                             </TouchableOpacity>
+
+
                         </View>
                     </View>
                 </View>
 
-                <SOSButton onPress={() => { }} />
+
+
+                <SOSButton onPress={() => setIsEmergencyModalVisible(true)} />
+
+                <Modal
+                    visible={isEmergencyModalVisible}
+                    transparent
+                    animationType="slide"
+                    onRequestClose={() => setIsEmergencyModalVisible(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <TouchableOpacity
+                            style={styles.modalDismissArea}
+                            onPress={() => setIsEmergencyModalVisible(false)}
+                        />
+                        <View style={styles.emergencyModal}>
+                            <View style={styles.modalIndicator} />
+                            <Text style={styles.modalTitle}>Emergency Assistance</Text>
+                            <Text style={styles.modalSubtitle}>Select a service to get help immediately</Text>
+
+                            <View style={styles.emergencyGrid}>
+                                <TouchableOpacity
+                                    style={[styles.emergencyButton, { backgroundColor: '#FFEDED' }]}
+                                    onPress={() => { Linking.openURL('tel:100'); setIsEmergencyModalVisible(false); }}
+                                >
+                                    <View style={[styles.emergencyIcon, { backgroundColor: '#FF3B30' }]}>
+                                        <Siren size={24} color={COLORS.white} />
+                                    </View>
+                                    <Text style={styles.emergencyLabel}>Police</Text>
+                                    <Text style={styles.emergencyNumber}>100</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.emergencyButton, { backgroundColor: '#EBF5FF' }]}
+                                    onPress={() => { Linking.openURL('tel:102'); setIsEmergencyModalVisible(false); }}
+                                >
+                                    <View style={[styles.emergencyIcon, { backgroundColor: '#007AFF' }]}>
+                                        <ShieldAlert size={24} color={COLORS.white} />
+                                    </View>
+                                    <Text style={styles.emergencyLabel}>Ambulance</Text>
+                                    <Text style={styles.emergencyNumber}>102</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.emergencyButton, { backgroundColor: '#FFF5E6' }]}
+                                    onPress={() => { Linking.openURL('tel:101'); setIsEmergencyModalVisible(false); }}
+                                >
+                                    <View style={[styles.emergencyIcon, { backgroundColor: '#FF8C00' }]}>
+                                        <Flame size={24} color={COLORS.white} />
+                                    </View>
+                                    <Text style={styles.emergencyLabel}>Fire</Text>
+                                    <Text style={styles.emergencyNumber}>101</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.emergencyButton, { backgroundColor: '#F0F7FF' }]}
+                                    onPress={() => { navigation.navigate('Towing'); setIsEmergencyModalVisible(false); }}
+                                >
+                                    <View style={[styles.emergencyIcon, { backgroundColor: COLORS.primary }]}>
+                                        <Truck size={24} color={COLORS.white} />
+                                    </View>
+                                    <Text style={styles.emergencyLabel}>Roadside</Text>
+                                    <Text style={styles.emergencyNumber}>24/7</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={() => setIsEmergencyModalVisible(false)}
+                            >
+                                <Text style={styles.closeButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
             </View>
         </View>
     );
@@ -188,21 +297,26 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     glassHeader: {
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
         paddingBottom: SPACING.md,
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
-        ...SHADOWS.medium,
+        marginHorizontal: 15,
+        marginTop: Platform.OS === 'ios' ? 50 : 30,
+        borderRadius: 30,
+        ...SHADOWS.large,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.4)',
+        borderColor: 'rgba(255, 255, 255, 0.5)',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 10,
     },
     topBar: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: SPACING.lg,
-        paddingTop: Platform.OS === 'ios' ? 60 : 40,
-        marginBottom: 10,
+        paddingHorizontal: SPACING.md,
+        paddingTop: SPACING.md,
     },
     offlineBadge: {
         backgroundColor: '#FFF1F0',
@@ -269,6 +383,26 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: '700',
         color: COLORS.text,
+    },
+    searchContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        height: 50,
+        borderRadius: 25,
+        paddingHorizontal: 15,
+        marginHorizontal: 5,
+        ...SHADOWS.medium,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.05)',
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 15,
+        color: COLORS.text,
+        marginLeft: 10,
+        fontWeight: '600',
     },
     glassButton: {
         width: 45,
@@ -430,6 +564,108 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         paddingHorizontal: 40,
         marginTop: 5,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalDismissArea: {
+        flex: 1,
+    },
+    emergencyModal: {
+        backgroundColor: COLORS.white,
+        borderTopLeftRadius: 36,
+        borderTopRightRadius: 36,
+        padding: SPACING.xl,
+        alignItems: 'center',
+        ...SHADOWS.large,
+    },
+    modalIndicator: {
+        width: 40,
+        height: 5,
+        backgroundColor: '#E0E0E0',
+        borderRadius: 3,
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: '900',
+        color: COLORS.text,
+        marginBottom: 8,
+    },
+    modalSubtitle: {
+        fontSize: 14,
+        color: COLORS.textLight,
+        marginBottom: 30,
+        textAlign: 'center',
+    },
+    emergencyGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 15,
+        justifyContent: 'center',
+        marginBottom: 30,
+    },
+    emergencyButton: {
+        width: (width - 60) / 2 - 10,
+        padding: 20,
+        borderRadius: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    emergencyIcon: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 12,
+        ...SHADOWS.small,
+    },
+    emergencyLabel: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: COLORS.text,
+    },
+    emergencyNumber: {
+        fontSize: 12,
+        color: COLORS.textLight,
+        fontWeight: 'bold',
+        marginTop: 2,
+    },
+    closeButton: {
+        width: '100%',
+        padding: 16,
+        borderRadius: 16,
+        backgroundColor: '#FAFAFA',
+        alignItems: 'center',
+    },
+    closeButtonText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: COLORS.textLight,
+    },
+    stuckButton: {
+        backgroundColor: '#FF3B30',
+        borderRadius: 24,
+        padding: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+        marginBottom: 20,
+        ...SHADOWS.large,
+    },
+    stuckButtonTitle: {
+        fontSize: 20,
+        fontWeight: '900',
+        color: COLORS.white,
+        letterSpacing: 0.5,
+    },
+    stuckButtonSubtitle: {
+        fontSize: 14,
+        color: 'rgba(255,255,255,0.9)',
+        fontWeight: '500',
     },
 });
 

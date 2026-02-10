@@ -1,5 +1,5 @@
-import { ChevronRight, History, Info, LogOut, MessageSquare, Phone, Settings, Shield } from 'lucide-react-native';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ArrowLeft, ChevronRight, History, Info, LogOut, MessageSquare, Phone, Settings, Shield } from 'lucide-react-native';
+import { Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
@@ -21,6 +21,12 @@ const ProfileScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+            >
+                <ArrowLeft size={24} color={COLORS.text} />
+            </TouchableOpacity>
             <ScrollView contentContainerStyle={styles.scroll}>
                 <View style={styles.profileHeader}>
                     <View style={styles.avatarLarge}>
@@ -64,6 +70,14 @@ const styles = StyleSheet.create({
     },
     scroll: {
         padding: SPACING.lg,
+        paddingTop: 60,
+    },
+    backButton: {
+        padding: SPACING.lg,
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 50 : 20,
+        left: 10,
+        zIndex: 10,
     },
     profileHeader: {
         alignItems: 'center',

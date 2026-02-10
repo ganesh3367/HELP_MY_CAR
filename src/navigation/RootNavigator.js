@@ -7,7 +7,9 @@ import { ActivityIndicator, View } from 'react-native';
 import { COLORS } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
+import LocationPickerScreen from '../screens/LocationPickerScreen';
 import LoginScreen from '../screens/LoginScreen';
+import MechanicProfileScreen from '../screens/MechanicProfileScreen';
 import OrderTrackingScreen from '../screens/OrderTrackingScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ServiceHistoryScreen from '../screens/ServiceHistoryScreen';
@@ -63,6 +65,8 @@ const RootNavigator = () => {
                         component={OrderTrackingScreen}
                         options={{ title: 'Track Service', headerShown: true }}
                     />
+                    <Stack.Screen name="LocationPicker" component={LocationPickerScreen} />
+                    <Stack.Screen name="MechanicProfile" component={MechanicProfileScreen} options={{ headerShown: false }} />
                 </>
             ) : (
                 <>
