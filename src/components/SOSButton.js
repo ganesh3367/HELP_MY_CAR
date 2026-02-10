@@ -1,9 +1,10 @@
 import { PhoneCall } from 'lucide-react-native';
+import { useRef } from 'react';
 import { Animated, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, SHADOWS } from '../constants/theme';
 
 const SOSButton = ({ onPress }) => {
-    const scale = new Animated.Value(1);
+    const scale = useRef(new Animated.Value(1)).current;
 
     const onPressIn = () => {
         Animated.spring(scale, {

@@ -13,12 +13,12 @@ const AppContext = createContext();
 // For Simulators (iOS): localhost is fine.
 // For Emulators (Android): 10.0.2.2 is required.
 const API_URL = Platform.select({
-    ios: 'http://localhost:5000/api',
-    android: 'http://10.0.2.2:5000/api',
-    default: 'http://localhost:5000/api'
+    ios: 'http://172.20.10.11:5001/api', // Use local IP for physical device
+    android: 'http://10.0.2.2:5001/api', // Standard Android emulator IP
+    default: 'http://172.20.10.11:5001/api' // Default to local IP
 });
 
-console.log('Using API URL:', API_URL);
+
 
 // CLIENT-SIDE MOCK DATA FOR DEMO FALLBACK
 const MOCK_MECHANICS = [
@@ -32,7 +32,14 @@ const MOCK_MECHANICS = [
         phone: '+15550123',
         rating: 4.8,
         estimatedCost: '$20 - $100',
-        specialties: ['Engine', 'Electrical']
+        specialties: ['Engine', 'Electrical', 'Battery', 'Car not starting'],
+        vehicleTypes: ['Car', 'Truck'],
+        experience: '5 Years',
+        jobsCompleted: 350,
+        reviews: [
+            { id: 1, user: 'Rahul K.', rating: 5, comment: 'Fixed my engine in 30 mins. Super fast!', date: '2 days ago' },
+            { id: 2, user: 'Sarah M.', rating: 4, comment: 'Good service but came a bit late.', date: '1 week ago' }
+        ]
     },
     {
         _id: '2',
@@ -44,7 +51,32 @@ const MOCK_MECHANICS = [
         phone: '+15550456',
         rating: 4.5,
         estimatedCost: '$30 - $150',
-        specialties: ['Tyre', 'Alignment']
+        specialties: ['Tyre', 'Alignment', 'Flat tire'],
+        vehicleTypes: ['Car', 'Bike'],
+        experience: '8 Years',
+        jobsCompleted: 1200,
+        reviews: [
+            { id: 1, user: 'Amit S.', rating: 5, comment: 'Best tyre change service.', date: 'Yesterday' }
+        ]
+    },
+    {
+        _id: '3',
+        name: 'MotoAssist 24/7',
+        address: '789 Highway Rd',
+        location: { type: 'Point', coordinates: [-122.4224, 37.79825] },
+        lat: 37.79825,
+        lng: -122.4224,
+        phone: '+15550789',
+        rating: 4.9,
+        estimatedCost: '$50 - $200',
+        specialties: ['Accident', 'Towing', 'Engine overheating'],
+        vehicleTypes: ['Car', 'Truck', 'Bike'],
+        experience: '12 Years',
+        jobsCompleted: 2500,
+        reviews: [
+            { id: 1, user: 'John D.', rating: 5, comment: 'Lifesaver! Towed my car at 2 AM.', date: '3 days ago' },
+            { id: 2, user: 'Priya R.', rating: 5, comment: 'Very professional.', date: '1 month ago' }
+        ]
     }
 ];
 
@@ -67,7 +99,7 @@ export const AppProvider = ({ children }) => {
 
             // We pass these defaults to the API.
             // The backend is now updated to handle missing params gracefully too.
-            console.log(`Fetching mechanics from: ${API_URL}/garages/nearby`);
+
 
             // Add timeout to fail fast and switch to mock data
             const controller = new AbortController();
@@ -85,10 +117,16 @@ export const AppProvider = ({ children }) => {
             const data = await response.json();
 
             if (data.success) {
-                setMechanics(data.data);
+                // Normalize data: Ensure lat/lng exist from coordinates
+                const normalizedMechanics = data.data.map(m => ({
+                    ...m,
+                    lat: m.location?.coordinates[1] || m.lat,
+                    lng: m.location?.coordinates[0] || m.lng
+                }));
+                setMechanics(normalizedMechanics);
             }
         } catch (error) {
-            console.error('Network failed, using client-side mock data:', error);
+            console.warn('Network failed, using mock data');
             setMechanics(MOCK_MECHANICS); // Fallback to local mock
         }
     };
@@ -99,8 +137,11 @@ export const AppProvider = ({ children }) => {
      * @param {Object} vehicleDetails - Details of the user's vehicle.
      * @returns {Promise<Object>} The created order object.
      */
-    const placeOrder = async (garageId, vehicleDetails) => {
+    const placeOrder = async (garageId, vehicleDetails, userLocation) => {
         setLoading(true);
+        // Default location if not provided
+        const loc = userLocation || { lat: 37.78825, lng: -122.4324 };
+
         try {
             const response = await fetch(`${API_URL}/orders`, {
                 method: 'POST',
@@ -111,7 +152,7 @@ export const AppProvider = ({ children }) => {
                     userId: 'user_123', // Hardcoded for demo
                     garageId,
                     vehicleDetails,
-                    userLocation: { lat: 37.78825, lng: -122.4324 }
+                    userLocation: loc
                 }),
             });
             const data = await response.json();
@@ -120,15 +161,15 @@ export const AppProvider = ({ children }) => {
                 return data.data;
             }
         } catch (error) {
-            console.error('Network failed, creating local mock order:', error);
+            console.warn('Order API failed, using mock order');
             // Client-side mock order
             const mockOrder = {
                 _id: 'local_mock_' + Date.now(),
                 status: 'PENDING',
                 garageId: MOCK_MECHANICS.find(m => m._id === garageId) || MOCK_MECHANICS[0],
                 vehicleDetails,
-                mechanicLocation: { lat: 37.78825 - 0.01, lng: -122.4324 - 0.01 },
-                userLocation: { lat: 37.78825, lng: -122.4324 }
+                mechanicLocation: { lat: loc.lat - 0.01, lng: loc.lng - 0.01 },
+                userLocation: loc
             };
             setCurrentOrder(mockOrder);
             return mockOrder;
@@ -154,8 +195,8 @@ export const AppProvider = ({ children }) => {
                     const latDiff = newOrder.userLocation.lat - newOrder.mechanicLocation.lat;
                     const lngDiff = newOrder.userLocation.lng - newOrder.mechanicLocation.lng;
 
-                    newOrder.mechanicLocation.lat += latDiff * 0.1;
-                    newOrder.mechanicLocation.lng += lngDiff * 0.1;
+                    newOrder.mechanicLocation.lat += latDiff * 0.5;
+                    newOrder.mechanicLocation.lng += lngDiff * 0.5;
 
                     if (Math.abs(latDiff) < 0.0005) {
                         newOrder.status = 'ARRIVED';

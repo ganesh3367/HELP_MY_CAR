@@ -10,7 +10,8 @@ const ServiceCard = ({
     phone,
     lat,
     lng,
-    type = 'mechanic' // or 'towing'
+    type = 'mechanic', // or 'towing'
+    onProceed
 }) => {
     const openMaps = () => {
         const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
@@ -51,6 +52,11 @@ const ServiceCard = ({
                     <Text style={styles.costValue}>{cost}</Text>
                 </View>
                 <View style={styles.actions}>
+                    {type === 'mechanic' && (
+                        <TouchableOpacity onPress={onProceed} style={[styles.iconButton, styles.proceedButton]}>
+                            <Text style={styles.proceedText}>Proceed</Text>
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity onPress={openMaps} style={styles.iconButton}>
                         <MapPin size={20} color={COLORS.primary} />
                     </TouchableOpacity>
@@ -137,6 +143,17 @@ const styles = StyleSheet.create({
     },
     callButton: {
         backgroundColor: COLORS.primary,
+    },
+    proceedButton: {
+        width: 'auto',
+        paddingHorizontal: 20,
+        backgroundColor: COLORS.secondary || '#FF9500', // Fallback color
+        marginRight: SPACING.sm,
+    },
+    proceedText: {
+        color: COLORS.white,
+        fontWeight: 'bold',
+        fontSize: 14,
     },
 });
 
