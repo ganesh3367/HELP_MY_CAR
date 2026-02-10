@@ -7,6 +7,7 @@ export const COLORS = {
   text: '#333333',
   textLight: '#777777',
   white: '#FFFFFF',
+  gray: '#E0E0E0',
   error: '#FF3B30',
   success: '#34C759',
   shadow: '#000000',
@@ -26,6 +27,13 @@ export const SIZES = {
 };
 
 export const SHADOWS = {
+  small: {
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
   light: {
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -39,5 +47,12 @@ export const SHADOWS = {
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 5,
+  },
+  large: {
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
   },
 };
