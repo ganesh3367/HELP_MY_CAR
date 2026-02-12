@@ -6,7 +6,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 HELP_MY_CAR is a mobile application designed to assist users with car-related issues, providing services like mechanic finding, location tracking, and offline support.
 
-## Features
+## Features 
 
 - **Mechanic Finder**: Locate nearby mechanics easily.
 - **Location Tracking**: Real-time location context for assistance.
