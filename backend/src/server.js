@@ -16,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/garages', require('./routes/garageRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 

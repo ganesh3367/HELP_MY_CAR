@@ -10,7 +10,7 @@ const ServiceCard = ({
     phone,
     lat,
     lng,
-    type = 'mechanic', // or 'towing'
+    type = 'mechanic', 
     onProceed
 }) => {
     const openMaps = () => {

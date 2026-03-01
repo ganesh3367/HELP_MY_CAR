@@ -12,13 +12,8 @@ const AppContext = createContext();
 // Use your machine's IP (e.g., 192.168.x.x) if testing on physical device.
 // For Simulators (iOS): localhost is fine.
 // For Emulators (Android): 10.0.2.2 is required.
-const API_URL = Platform.select({
-    ios: 'http://172.20.10.11:5001/api', // Use local IP for physical device
-    android: 'http://10.0.2.2:5001/api', // Standard Android emulator IP
-    default: 'http://172.20.10.11:5001/api' // Default to local IP
-});
-
-
+// Use your machine's IP (e.g., 192.168.x.x) if testing on physical device.
+const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5001/api' : 'http://localhost:5001/api';
 
 // CLIENT-SIDE MOCK DATA FOR DEMO FALLBACK
 const MOCK_MECHANICS = [
@@ -81,6 +76,7 @@ const MOCK_MECHANICS = [
 ];
 
 export const AppProvider = ({ children }) => {
+    const { user } = useAuth();
     const [mechanics, setMechanics] = useState([]);
     const [towingServices] = useState(TOWING_SERVICES);
     const [favorites, setFavorites] = useState([]);
@@ -96,10 +92,6 @@ export const AppProvider = ({ children }) => {
             // Default location (SF) for demo if location service fails
             const lat = 37.78825;
             const lng = -122.4324;
-
-            // We pass these defaults to the API.
-            // The backend is now updated to handle missing params gracefully too.
-
 
             // Add timeout to fail fast and switch to mock data
             const controller = new AbortController();
@@ -149,7 +141,7 @@ export const AppProvider = ({ children }) => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    userId: 'user_123', // Hardcoded for demo
+                    userId: user?.id || 'guest',
                     garageId,
                     vehicleDetails,
                     userLocation: loc

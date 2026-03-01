@@ -31,10 +31,13 @@ const MechanicsScreen = () => {
     }, [searchQuery, mechanics]);
 
     const handleProceed = async (item) => {
+        // Simple prompt for simulation
+        const issue = 'Engine issue'; // In a real app, this would come from a form
+
         setIsConnecting(true);
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        const vehicle = { make: 'Tesla', model: 'Model 3', year: '2023', issue: 'Tire puncture' };
+        const vehicle = { make: 'Car', model: 'Standard', year: '2020', issue };
         const order = await placeOrder(item._id || item.id, vehicle);
 
         setIsConnecting(false);

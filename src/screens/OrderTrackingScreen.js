@@ -1,15 +1,18 @@
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { CheckCircle, Clock, MapPin, MessageSquare, Phone } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import RatingModal from '../components/RatingModal';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 
 const OrderTrackingScreen = () => {
+    const navigation = useNavigation();
     const { params } = useRoute();
     const { trackOrderStatus, currentOrder } = useAppContext();
     const [orderStatus, setOrderStatus] = useState(params?.order || currentOrder);
+    const [isRatingVisible, setIsRatingVisible] = useState(false);
 
     useEffect(() => {
         const fetchStatus = async () => {
@@ -32,6 +35,16 @@ const OrderTrackingScreen = () => {
 
         return () => clearInterval(interval);
     }, [orderStatus?._id, params?.order?._id, trackOrderStatus]);
+
+    const handleComplete = () => {
+        setIsRatingVisible(true);
+    };
+
+    const handleSaveRating = (data) => {
+        console.log('Rating saved:', data);
+        Alert.alert('Thank you!', 'Your feedback helps improve our service.');
+        navigation.navigate('Main');
+    };
 
     // Helper to get status color/text
     const getStatusInfo = (status) => {
@@ -144,24 +157,31 @@ const OrderTrackingScreen = () => {
 
                 <View style={styles.actions}>
                     {orderStatus.status === 'ARRIVED' ? (
-                        <View style={[styles.actionBtn, { backgroundColor: COLORS.primary }]}>
+                        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: COLORS.primary }]} onPress={handleComplete}>
                             <CheckCircle size={24} color={COLORS.white} />
                             <Text style={[styles.actionText, { color: COLORS.white }]}>Complete Job</Text>
-                        </View>
+                        </TouchableOpacity>
                     ) : (
                         <>
-                            <View style={[styles.actionBtn, { backgroundColor: '#E5F1FF' }]}>
+                            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#E5F1FF' }]}>
                                 <Phone size={24} color={COLORS.primary} />
                                 <Text style={[styles.actionText, { color: COLORS.primary }]}>Call</Text>
-                            </View>
-                            <View style={[styles.actionBtn, { backgroundColor: '#E8F8EE' }]}>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#E8F8EE' }]}>
                                 <MessageSquare size={24} color="#34C759" />
                                 <Text style={[styles.actionText, { color: '#34C759' }]}>Message</Text>
-                            </View>
+                            </TouchableOpacity>
                         </>
                     )}
                 </View>
             </View>
+
+            <RatingModal
+                visible={isRatingVisible}
+                onClose={() => setIsRatingVisible(false)}
+                onSave={handleSaveRating}
+                mechanicName={orderStatus.garageId?.name || 'Mechanic'}
+            />
         </SafeAreaView>
     );
 };

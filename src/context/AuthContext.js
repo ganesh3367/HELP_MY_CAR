@@ -8,16 +8,22 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 const AuthContext = createContext();
 
+// Use your machine's IP (e.g., 192.168.x.x) if testing on physical device.
+const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5001/api' : 'http://localhost:5001/api';
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const checkUser = async () => {
             try {
                 const storedUser = await AsyncStorage.getItem('user');
-                if (storedUser) {
+                const storedToken = await AsyncStorage.getItem('token');
+                if (storedUser && storedToken) {
                     setUser(JSON.parse(storedUser));
+                    setToken(storedToken);
                 }
             } catch (error) {
                 console.error('Failed to load user', error);
@@ -30,60 +36,79 @@ export const AuthProvider = ({ children }) => {
 
     /**
      * Logs in the user.
-     * @param {string} email - User email
-     * @param {string} password - User password
-     * @returns {Promise<Object>} User data
      */
     const login = async (email, password) => {
         setLoading(true);
-        return new Promise((resolve, reject) => {
-            setTimeout(async () => {
-                if (email && password) {
-                    const userData = { email, name: email.split('@')[0], id: '123' };
-                    await AsyncStorage.setItem('user', JSON.stringify(userData));
-                    setUser(userData);
-                    setLoading(false);
-                    resolve(userData);
-                } else {
-                    setLoading(false);
-                    reject('Invalid credentials');
-                }
-            }, 1500);
-        });
+        try {
+            const response = await fetch(`${API_URL}/users/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const userData = data.data;
+                const userToken = data.token;
+                await AsyncStorage.setItem('user', JSON.stringify(userData));
+                await AsyncStorage.setItem('token', userToken);
+                setUser(userData);
+                setToken(userToken);
+                return userData;
+            } else {
+                throw new Error(data.error || 'Login failed');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
     };
 
     /**
      * Registers a new user.
-     * @param {string} name - User full name
-     * @param {string} email - User email
-     * @param {string} password - User password
-     * @returns {Promise<Object>} User data
      */
     const signup = async (name, email, password) => {
         setLoading(true);
-        return new Promise((resolve, reject) => {
-            setTimeout(async () => {
-                if (name && email && password) {
-                    const userData = { name, email, id: '123' };
-                    await AsyncStorage.setItem('user', JSON.stringify(userData));
-                    setUser(userData);
-                    setLoading(false);
-                    resolve(userData);
-                } else {
-                    setLoading(false);
-                    reject('Please fill all fields');
-                }
-            }, 1500);
-        });
+        try {
+            const response = await fetch(`${API_URL}/users/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const userData = data.data;
+                const userToken = data.token;
+                await AsyncStorage.setItem('user', JSON.stringify(userData));
+                await AsyncStorage.setItem('token', userToken);
+                setUser(userData);
+                setToken(userToken);
+                return userData;
+            } else {
+                throw new Error(data.error || 'Signup failed');
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
     };
 
     const logout = async () => {
         await AsyncStorage.removeItem('user');
+        await AsyncStorage.removeItem('token');
         setUser(null);
+        setToken(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+        <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
             {children}
         </AuthContext.Provider>
     );
