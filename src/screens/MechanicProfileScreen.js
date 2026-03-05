@@ -1,23 +1,45 @@
 import { ArrowLeft, Award, CheckCircle, Clock, MapPin, Star, Wrench } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Dimensions, Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 
-const { width } = Dimensions.get('window');
-
 const MechanicProfileScreen = ({ navigation, route }) => {
     const { mechanic } = route.params;
-    const { placeOrder } = useAppContext();
+    const { placeOrder, addReview } = useAppContext();
     const [bookingLoading, setBookingLoading] = useState(false);
+    const [userRating, setUserRating] = useState(5);
+    const [reviewComment, setReviewComment] = useState('');
+    const [submittingReview, setSubmittingReview] = useState(false);
 
     const handleBookNow = async () => {
         setBookingLoading(true);
         // Direct booking flow for now - in future stages this could go to a "Select Service" screen
-        const order = await placeOrder(mechanic._id, { make: 'Toyota', model: 'Camry' }); // Demo vehicle
+        const order = await placeOrder(mechanic.id || mechanic._id, { make: 'Toyota', model: 'Camry', year: '2020', issue: 'General Checkup' });
         setBookingLoading(false);
         if (order) {
             navigation.navigate('OrderTracking', { order });
+        }
+    };
+
+    const handleSubmitReview = async () => {
+        if (!reviewComment.trim()) {
+            Alert.alert('Error', 'Please enter a comment.');
+            return;
+        }
+        setSubmittingReview(true);
+        const success = await addReview(mechanic.id || mechanic._id, {
+            rating: userRating,
+            comment: reviewComment
+        });
+        setSubmittingReview(false);
+        if (success) {
+            Alert.alert('Success', 'Thank you for your review!');
+            setReviewComment('');
+            setUserRating(5);
+        } else {
+            Alert.alert('Error', 'Failed to submit review. Using mock data.');
         }
     };
 
@@ -80,6 +102,39 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                                 <Text style={styles.tagText}>{tag}</Text>
                             </View>
                         ))}
+                    </View>
+
+                    {/* Leave a Review */}
+                    <View style={styles.leaveReviewCard}>
+                        <Text style={styles.reviewTitle}>Rate your experience</Text>
+                        <View style={styles.ratingSelector}>
+                            {[1, 2, 3, 4, 5].map((num) => (
+                                <TouchableOpacity key={num} onPress={() => setUserRating(num)}>
+                                    <Star
+                                        size={32}
+                                        color={num <= userRating ? "#FFD700" : COLORS.gray}
+                                        fill={num <= userRating ? "#FFD700" : "transparent"}
+                                    />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                        <TextInput
+                            style={styles.reviewInput}
+                            placeholder="Share your feedback..."
+                            placeholderTextColor={COLORS.textLight}
+                            multiline
+                            value={reviewComment}
+                            onChangeText={setReviewComment}
+                        />
+                        <TouchableOpacity
+                            style={[styles.submitReviewBtn, submittingReview && { opacity: 0.7 }]}
+                            onPress={handleSubmitReview}
+                            disabled={submittingReview}
+                        >
+                            <Text style={styles.submitReviewText}>
+                                {submittingReview ? 'Submitting...' : 'Submit Review'}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
 
                     {/* Reviews */}
@@ -331,6 +386,51 @@ const styles = StyleSheet.create({
         color: COLORS.white,
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    leaveReviewCard: {
+        backgroundColor: COLORS.white,
+        borderRadius: 20,
+        padding: SPACING.lg,
+        marginTop: SPACING.xl,
+        ...SHADOWS.medium,
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
+    },
+    reviewTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: COLORS.text,
+        textAlign: 'center',
+        marginBottom: SPACING.md,
+    },
+    ratingSelector: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 10,
+        marginBottom: SPACING.lg,
+    },
+    reviewInput: {
+        backgroundColor: '#FAFAFA',
+        borderRadius: 12,
+        padding: SPACING.md,
+        height: 100,
+        textAlignVertical: 'top',
+        fontSize: 14,
+        color: COLORS.text,
+        borderWidth: 1,
+        borderColor: '#EEEEEE',
+        marginBottom: SPACING.md,
+    },
+    submitReviewBtn: {
+        backgroundColor: COLORS.primary + '15',
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    submitReviewText: {
+        color: COLORS.primary,
+        fontWeight: 'bold',
+        fontSize: 15,
     },
 });
 

@@ -3,30 +3,40 @@
  * Manages global application state including mechanics list, orders, and favorites.
  * Handles API calls for fetching mechanics and order management with fallback mock data.
  */
-import { createContext, useContext, useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { TOWING_SERVICES } from '../constants/mockData';
+import { useAuth } from './AuthContext';
+import { useLocation } from './LocationContext';
 
 const AppContext = createContext();
 
-// Use your machine's IP (e.g., 192.168.x.x) if testing on physical device.
-// For Simulators (iOS): localhost is fine.
-// For Emulators (Android): 10.0.2.2 is required.
-// Use your machine's IP (e.g., 192.168.x.x) if testing on physical device.
-const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5001/api' : 'http://localhost:5001/api';
+// Get the host IP dynamically for physical devices and emulators
+import { Platform } from 'react-native';
 
-// CLIENT-SIDE MOCK DATA FOR DEMO FALLBACK
+const getApiUrl = () => {
+    const debuggerHost = Constants.expoConfig?.hostUri || '';
+    let host = debuggerHost.split(':')[0];
+    if (!host) {
+        host = Platform.OS === 'android' ? '10.0.2.2' : '127.0.0.1';
+    }
+    return `http://${host}:5002/api`;
+};
+
+const API_URL = getApiUrl();
+console.log('[AppContext] Calculated API_URL:', API_URL);
+
 const MOCK_MECHANICS = [
     {
-        _id: '1',
-        name: 'Quick Fix Motors',
-        address: '123 Auto Lane',
-        location: { type: 'Point', coordinates: [-122.4324, 37.78825] },
-        lat: 37.78825,
-        lng: -122.4324,
-        phone: '+15550123',
+        id: '1',
+        name: 'Pune Auto Care',
+        address: 'FC Road, Deccan Gymkhana, Pune',
+        location: { type: 'Point', coordinates: [73.8412, 18.5167] },
+        lat: 18.5167,
+        lng: 73.8412,
+        phone: '+91 20 2567 8901',
         rating: 4.8,
-        estimatedCost: '$20 - $100',
+        estimatedCost: '₹500 - ₹2000',
         specialties: ['Engine', 'Electrical', 'Battery', 'Car not starting'],
         vehicleTypes: ['Car', 'Truck'],
         experience: '5 Years',
@@ -37,15 +47,15 @@ const MOCK_MECHANICS = [
         ]
     },
     {
-        _id: '2',
-        name: 'Elite Auto Care',
-        address: '456 Service Blvd',
-        location: { type: 'Point', coordinates: [-122.4344, 37.78925] },
-        lat: 37.78925,
-        lng: -122.4344,
-        phone: '+15550456',
+        id: '2',
+        name: 'Kothrud Mechanic Hub',
+        address: 'Paud Road, Kothrud, Pune',
+        location: { type: 'Point', coordinates: [73.8077, 18.5074] },
+        lat: 18.5074,
+        lng: 73.8077,
+        phone: '+91 20 2543 2109',
         rating: 4.5,
-        estimatedCost: '$30 - $150',
+        estimatedCost: '₹300 - ₹1500',
         specialties: ['Tyre', 'Alignment', 'Flat tire'],
         vehicleTypes: ['Car', 'Bike'],
         experience: '8 Years',
@@ -55,15 +65,15 @@ const MOCK_MECHANICS = [
         ]
     },
     {
-        _id: '3',
-        name: 'MotoAssist 24/7',
-        address: '789 Highway Rd',
-        location: { type: 'Point', coordinates: [-122.4224, 37.79825] },
-        lat: 37.79825,
-        lng: -122.4224,
-        phone: '+15550789',
+        id: '3',
+        name: 'Viman Nagar Auto Solutions',
+        address: 'Symbiosis Road, Viman Nagar, Pune',
+        location: { type: 'Point', coordinates: [73.9143, 18.5679] },
+        lat: 18.5679,
+        lng: 73.9143,
+        phone: '+91 20 2663 4567',
         rating: 4.9,
-        estimatedCost: '$50 - $200',
+        estimatedCost: '₹800 - ₹5000',
         specialties: ['Accident', 'Towing', 'Engine overheating'],
         vehicleTypes: ['Car', 'Truck', 'Bike'],
         experience: '12 Years',
@@ -77,21 +87,36 @@ const MOCK_MECHANICS = [
 
 export const AppProvider = ({ children }) => {
     const { user } = useAuth();
+    const locationContext = useLocation();
+    const userLocation = locationContext?.location;
     const [mechanics, setMechanics] = useState([]);
     const [towingServices] = useState(TOWING_SERVICES);
     const [favorites, setFavorites] = useState([]);
     const [currentOrder, setCurrentOrder] = useState(null);
     const [loading, setLoading] = useState(false);
+    const userLocationRef = useRef(userLocation);
+
+    useEffect(() => {
+        userLocationRef.current = userLocation;
+    }, [userLocation]);
 
     useEffect(() => {
         fetchMechanics();
-    }, []);
+    }, [fetchMechanics]);
 
-    const fetchMechanics = async () => {
+    useEffect(() => {
+        if (userLocation) {
+            if (userLocation?.coords) {
+                fetchMechanics(userLocation);
+            }
+        }
+    }, [userLocation?.coords, fetchMechanics]);
+
+    const fetchMechanics = useCallback(async (locParam = null) => {
         try {
-            // Default location (SF) for demo if location service fails
-            const lat = 37.78825;
-            const lng = -122.4324;
+            const loc = locParam || userLocationRef.current;
+            const lat = loc?.coords?.latitude || 18.5204;
+            const lng = loc?.coords?.longitude || 73.8567;
 
             // Add timeout to fail fast and switch to mock data
             const controller = new AbortController();
@@ -112,16 +137,16 @@ export const AppProvider = ({ children }) => {
                 // Normalize data: Ensure lat/lng exist from coordinates
                 const normalizedMechanics = data.data.map(m => ({
                     ...m,
-                    lat: m.location?.coordinates[1] || m.lat,
-                    lng: m.location?.coordinates[0] || m.lng
+                    lat: m.location?.lat || m.location?.coordinates?.[1] || m.lat,
+                    lng: m.location?.lng || m.location?.coordinates?.[0] || m.lng
                 }));
                 setMechanics(normalizedMechanics);
             }
-        } catch (error) {
+        } catch (_error) {
             console.warn('Network failed, using mock data');
             setMechanics(MOCK_MECHANICS); // Fallback to local mock
         }
-    };
+    }, []);
 
     /**
      * Places a new order for a mechanic.
@@ -131,8 +156,8 @@ export const AppProvider = ({ children }) => {
      */
     const placeOrder = async (garageId, vehicleDetails, userLocation) => {
         setLoading(true);
-        // Default location if not provided
-        const loc = userLocation || { lat: 37.78825, lng: -122.4324 };
+        // Default location if not provided (Pune, India)
+        const loc = userLocation || { lat: 18.5204, lng: 73.8567 };
 
         try {
             const response = await fetch(`${API_URL}/orders`, {
@@ -152,13 +177,13 @@ export const AppProvider = ({ children }) => {
                 setCurrentOrder(data.data);
                 return data.data;
             }
-        } catch (error) {
+        } catch (_error) {
             console.warn('Order API failed, using mock order');
             // Client-side mock order
             const mockOrder = {
-                _id: 'local_mock_' + Date.now(),
+                id: 'local_mock_' + Date.now(),
                 status: 'PENDING',
-                garageId: MOCK_MECHANICS.find(m => m._id === garageId) || MOCK_MECHANICS[0],
+                garageId: MOCK_MECHANICS.find(m => m.id === garageId) || MOCK_MECHANICS[0],
                 vehicleDetails,
                 mechanicLocation: { lat: loc.lat - 0.01, lng: loc.lng - 0.01 },
                 userLocation: loc
@@ -173,6 +198,9 @@ export const AppProvider = ({ children }) => {
     const trackOrderStatus = async (orderId) => {
         try {
             const response = await fetch(`${API_URL}/orders/${orderId}/track`);
+            if (!response.ok) {
+                throw new Error(`HTTP Error! status: ${response.status}`);
+            }
             const data = await response.json();
             if (data.success) {
                 setCurrentOrder(data.data);
@@ -208,6 +236,98 @@ export const AppProvider = ({ children }) => {
         );
     };
 
+    const [garageOrders, setGarageOrders] = useState([]);
+    const [myGarage, setMyGarage] = useState(null);
+
+    const fetchGarageByOwner = useCallback(async (email) => {
+        try {
+            const response = await fetch(`${API_URL}/garages/owner/${email}`);
+            const data = await response.json();
+            if (data.success) {
+                setMyGarage(data.data);
+                return data.data;
+            }
+        } catch (error) {
+            console.error('Fetch My Garage Error:', error);
+            // Fallback for demo
+            const mockGarage = MOCK_MECHANICS[0];
+            setMyGarage(mockGarage);
+            return mockGarage;
+        }
+    }, []);
+
+    const fetchGarageOrders = useCallback(async (garageId) => {
+        try {
+            const response = await fetch(`${API_URL}/orders/garage/${garageId}`);
+            const data = await response.json();
+            if (data.success) {
+                setGarageOrders(data.data);
+                return data.data;
+            }
+        } catch (error) {
+            console.error('Fetch Garage Orders Error:', error);
+            setGarageOrders([]);
+        }
+    }, []);
+
+    const updateOrderStatus = async (orderId, status) => {
+        try {
+            const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Update local status if in the list
+                setGarageOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+                if (currentOrder && currentOrder.id === orderId) {
+                    setCurrentOrder(prev => ({ ...prev, status }));
+                }
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Update Order Status Error:', error);
+            return false;
+        }
+    };
+
+    const addReview = async (garageId, reviewData) => {
+        try {
+            const response = await fetch(`${API_URL}/garages/${garageId}/reviews`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: user?.name,
+                    ...reviewData
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Update local mechanics list with new review
+                setMechanics(prev => prev.map(m => {
+                    if (m.id === garageId) {
+                        const newReviews = [data.data, ...(m.reviews || [])];
+                        const totalRating = newReviews.reduce((sum, r) => sum + r.rating, 0);
+                        return {
+                            ...m,
+                            reviews: newReviews,
+                            rating: parseFloat((totalRating / newReviews.length).toFixed(1)),
+                            reviewCount: newReviews.length
+                        };
+                    }
+                    return m;
+                }));
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Add Review Error:', error);
+            return false;
+        }
+    };
+
     return (
         <AppContext.Provider
             value={{
@@ -218,7 +338,13 @@ export const AppProvider = ({ children }) => {
                 placeOrder,
                 trackOrderStatus,
                 currentOrder,
-                loading
+                loading,
+                garageOrders,
+                myGarage,
+                fetchGarageByOwner,
+                fetchGarageOrders,
+                updateOrderStatus,
+                addReview
             }}
         >
             {children}

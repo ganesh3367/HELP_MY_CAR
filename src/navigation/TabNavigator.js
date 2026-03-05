@@ -7,10 +7,14 @@ import { Animated, Dimensions, Platform, StyleSheet, Text, TouchableOpacity, Vie
 import { COLORS, SHADOWS } from '../constants/theme';
 
 import CarStuckScreen from '../screens/CarStuckScreen';
+import GarageDashboardScreen from '../screens/GarageDashboardScreen';
+import GarageOrdersScreen from '../screens/GarageOrdersScreen';
 import HomeScreen from '../screens/HomeScreen';
 import MechanicsScreen from '../screens/MechanicsScreen';
 import NearbyMechanicsScreen from '../screens/NearbyMechanicsScreen';
 import TowingScreen from '../screens/TowingScreen';
+
+import { useAuth } from '../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 const Tab = createBottomTabNavigator();
@@ -21,6 +25,8 @@ const TAB_COLORS = {
     CarStuck: '#FF3B30',
     Towing: '#34C759',
     Nearby: '#5856D6',
+    Dashboard: '#007AFF',
+    Orders: '#FF8C00'
 };
 
 const CustomTabBar = ({ state, descriptors, navigation }) => {
@@ -103,6 +109,9 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 };
 
 const TabNavigator = () => {
+    const { user } = useAuth();
+    const isGarage = user?.role === 'garage';
+
     return (
         <Tab.Navigator
             tabBar={(props) => <CustomTabBar {...props} />}
@@ -110,46 +119,68 @@ const TabNavigator = () => {
                 headerShown: false,
             }}
         >
-            <Tab.Screen
-                name="Home"
-                component={HomeScreen}
-                options={{
-                    tabBarIcon: (props) => <Home {...props} />,
-                }}
-            />
-            <Tab.Screen
-                name="CarStuck"
-                component={CarStuckScreen}
-                options={{
-                    title: 'Stuck?',
-                    headerShown: false,
-                    tabBarIcon: (props) => <ShieldAlert {...props} />,
-                }}
-            />
-            <Tab.Screen
-                name="Mechanics"
-                component={MechanicsScreen}
-                options={{
-                    headerShown: true,
-                    tabBarIcon: (props) => <Wrench {...props} />,
-                }}
-            />
-            <Tab.Screen
-                name="Towing"
-                component={TowingScreen}
-                options={{
-                    headerShown: true,
-                    tabBarIcon: (props) => <Truck {...props} />,
-                }}
-            />
-            <Tab.Screen
-                name="Nearby"
-                component={NearbyMechanicsScreen}
-                options={{
-                    headerShown: false,
-                    tabBarIcon: (props) => <MapPin {...props} />,
-                }}
-            />
+            {isGarage ? (
+                <>
+                    <Tab.Screen
+                        name="Dashboard"
+                        component={GarageDashboardScreen}
+                        options={{
+                            tabBarIcon: (props) => <Home {...props} />,
+                        }}
+                    />
+                    <Tab.Screen
+                        name="Orders"
+                        component={GarageOrdersScreen}
+                        options={{
+                            title: 'Orders',
+                            tabBarIcon: (props) => <Wrench {...props} />,
+                        }}
+                    />
+                </>
+            ) : (
+                <>
+                    <Tab.Screen
+                        name="Home"
+                        component={HomeScreen}
+                        options={{
+                            tabBarIcon: (props) => <Home {...props} />,
+                        }}
+                    />
+                    <Tab.Screen
+                        name="CarStuck"
+                        component={CarStuckScreen}
+                        options={{
+                            title: 'Stuck?',
+                            headerShown: false,
+                            tabBarIcon: (props) => <ShieldAlert {...props} />,
+                        }}
+                    />
+                    <Tab.Screen
+                        name="Mechanics"
+                        component={MechanicsScreen}
+                        options={{
+                            headerShown: true,
+                            tabBarIcon: (props) => <Wrench {...props} />,
+                        }}
+                    />
+                    <Tab.Screen
+                        name="Towing"
+                        component={TowingScreen}
+                        options={{
+                            headerShown: true,
+                            tabBarIcon: (props) => <Truck {...props} />,
+                        }}
+                    />
+                    <Tab.Screen
+                        name="Nearby"
+                        component={NearbyMechanicsScreen}
+                        options={{
+                            headerShown: false,
+                            tabBarIcon: (props) => <MapPin {...props} />,
+                        }}
+                    />
+                </>
+            )}
         </Tab.Navigator>
     );
 };

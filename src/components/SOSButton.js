@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { Animated, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, SHADOWS } from '../constants/theme';
 
-const SOSButton = ({ onPress }) => {
+const SOSButton = ({ onPress = () => { } }) => {
     const scale = useRef(new Animated.Value(1)).current;
 
     const onPressIn = () => {
@@ -28,6 +28,8 @@ const SOSButton = ({ onPress }) => {
                 onPressOut={onPressOut}
                 activeOpacity={1}
                 style={styles.button}
+                accessibilityLabel="SOS Button"
+                accessibilityRole="button"
             >
                 <PhoneCall size={32} color={COLORS.white} />
             </TouchableOpacity>

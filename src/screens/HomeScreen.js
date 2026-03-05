@@ -31,6 +31,14 @@ const HomeScreen = ({ navigation }) => {
     const [isEmergencyModalVisible, setIsEmergencyModalVisible] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
+    const filteredMechanics = searchQuery.trim()
+        ? mechanics.filter(m =>
+            m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            m.specialties?.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            m.address?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        : mechanics;
+
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener(state => {
             setIsConnected(state.isConnected);
@@ -39,8 +47,8 @@ const HomeScreen = ({ navigation }) => {
     }, []);
 
     const initialRegion = {
-        latitude: 37.78825,
-        longitude: -122.4324,
+        latitude: 18.5204,
+        longitude: 73.8567,
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
     };
@@ -61,7 +69,7 @@ const HomeScreen = ({ navigation }) => {
                     showsMyLocationButton={false}
                     onError={() => setMapError(true)}
                 >
-                    {mechanics.map((mechanic, index) => (
+                    {filteredMechanics.map((mechanic, index) => (
                         <Marker
                             key={mechanic._id || mechanic.id || index}
                             coordinate={{ latitude: mechanic.lat, longitude: mechanic.lng }}

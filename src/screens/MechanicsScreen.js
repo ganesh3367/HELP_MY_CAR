@@ -1,7 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
 import { Filter, Search, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import ServiceCard from '../components/ServiceCard';
 import { COLORS, SHADOWS, SIZES, SPACING } from '../constants/theme';

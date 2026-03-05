@@ -1,10 +1,8 @@
 import { AlertTriangle, Battery, Car, CheckCircle, ChevronRight, Flame, Info, ShieldAlert, Siren, Thermometer, Truck, Wrench, X } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Dimensions, Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
-
-const { width } = Dimensions.get('window');
 
 const CarStuckScreen = ({ navigation }) => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -172,7 +170,7 @@ const CarStuckScreen = ({ navigation }) => {
                 </View>
 
                 {/* Quick Issues */}
-                <Text style={styles.sectionTitle}>What's the problem?</Text>
+                <Text style={styles.sectionTitle}>What{"'"}s the problem?</Text>
                 <View style={styles.issuesGrid}>
                     {quickIssues.map((issue) => (
                         <TouchableOpacity

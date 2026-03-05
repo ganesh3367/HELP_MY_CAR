@@ -140,7 +140,9 @@ const OrderTrackingScreen = () => {
                         </View>
                     </View>
                     <View style={styles.timeBadge}>
-                        <Text style={styles.timeText}>15 min</Text>
+                        <Text style={styles.timeText}>
+                            {orderStatus.status === 'ARRIVED' ? 'Arrived' : `${orderStatus.etaMinutes || '--'} min`}
+                        </Text>
                     </View>
                 </View>
 
@@ -151,7 +153,7 @@ const OrderTrackingScreen = () => {
                     <View style={[styles.progressBar, { width: orderStatus.status === 'ARRIVED' ? '100%' : '50%', backgroundColor: statusInfo.color }]} />
                 </View>
                 <Text style={styles.progressText}>
-                    {orderStatus.status === 'ARRIVED' ? 'Mechanic has arrived!' : 'Arriving in approximately 15 minutes'}
+                    {orderStatus.status === 'ARRIVED' ? 'Mechanic has arrived!' : `Arriving in approximately ${orderStatus.etaMinutes || '--'} minutes`}
                 </Text>
 
 

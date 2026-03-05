@@ -16,20 +16,20 @@ const LocationPickerScreen = ({ navigation, route }) => {
         longitudeDelta: 0.005,
     });
 
-    // If passed a prior location, use it
     useEffect(() => {
         if (route.params?.initialLocation) {
             setRegion({
-                ...region,
                 latitude: route.params.initialLocation.lat,
                 longitude: route.params.initialLocation.lng,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
             });
         } else if (location?.coords) {
-            setRegion({
-                ...region,
+            setRegion((prev) => ({
+                ...prev,
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
-            });
+            }));
         }
     }, [location, route.params]);
 

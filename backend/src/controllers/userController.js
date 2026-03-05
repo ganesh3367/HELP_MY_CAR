@@ -1,26 +1,74 @@
-const User = require('../models/User');
+const { db } = require('../config/firebase');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 // @desc    Register user
 // @route   POST /api/users/signup
 // @access  Public
 exports.signup = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role, garageName, address, phone } = req.body;
+        const userRole = role === 'garage' ? 'garage' : 'user';
 
-        // Create user
-        const user = await User.create({
+        if (!db) {
+            console.log('Firebase not initialized. Using MOCK MODE for signup.');
+            return res.status(201).json({
+                success: true,
+                token: 'mock-token-' + Date.now(),
+                data: { id: 'mock-user-id', name, email, role: userRole }
+            });
+        }
+
+        // Check if user exists
+        const userRef = db.collection('users').doc(email);
+        const doc = await userRef.get();
+        if (doc.exists) {
+            return res.status(400).json({ success: false, error: 'User already exists' });
+        }
+
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Create user in Firestore
+        const newUser = {
             name,
             email,
-            password
-        });
+            password: hashedPassword,
+            role: userRole,
+            createdAt: new Date().toISOString()
+        };
 
-        sendTokenResponse(user, 201, res);
+        // If role is garage, create a garage document
+        if (userRole === 'garage') {
+            const garageRef = db.collection('garages').doc();
+            const newGarage = {
+                ownerEmail: email,
+                name: garageName || `${name}'s Garage`,
+                address: address || 'Not Provided',
+                phone: phone || 'Not Provided',
+                // Default Indian Geolocation (Pune)
+                location: { lat: 18.5204, lng: 73.8567 },
+                rating: 0,
+                estimatedCost: 'TBD',
+                specialties: ['General Repair'],
+                createdAt: new Date().toISOString()
+            };
+
+            const batch = db.batch();
+            batch.set(userRef, newUser);
+            batch.set(garageRef, newGarage);
+            await batch.commit();
+        } else {
+            await userRef.set(newUser);
+        }
+
+        // Return response (excluding password)
+        const userData = { id: email, name, email, role: userRole };
+        sendTokenResponse(userData, 201, res);
     } catch (err) {
-        res.status(400).json({
-            success: false,
-            error: err.message
-        });
+        console.error('Signup Error:', err);
+        res.status(400).json({ success: false, error: err.message });
     }
 };
 
@@ -31,48 +79,47 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Validate email & password
-        if (!email || !password) {
-            return res.status(400).json({ success: false, error: 'Please provide an email and password' });
+        if (!db) {
+            console.log('Firebase not initialized. Using MOCK MODE for login.');
+            return res.status(200).json({
+                success: true,
+                token: 'mock-token-' + Date.now(),
+                data: { id: 'mock-user-id', name: email.split('@')[0], email }
+            });
         }
 
         // Check for user
-        const user = await User.findOne({ email }).select('+password');
+        const userRef = db.collection('users').doc(email);
+        const doc = await userRef.get();
 
-        if (!user) {
+        if (!doc.exists) {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
 
-        // Check if password matches
-        const isMatch = await user.matchPassword(password);
+        const user = doc.data();
 
+        // Check password
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
 
-        sendTokenResponse(user, 200, res);
+        const userData = { id: email, name: user.name, email: user.email, role: user.role };
+        sendTokenResponse(userData, 200, res);
     } catch (err) {
-        res.status(400).json({
-            success: false,
-            error: err.message
-        });
+        console.error('Login Error:', err);
+        res.status(400).json({ success: false, error: err.message });
     }
 };
 
-// Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
-    // Create token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
         expiresIn: '30d'
     });
 
     res.status(statusCode).json({
         success: true,
         token,
-        data: {
-            id: user._id,
-            name: user.name,
-            email: user.email
-        }
+        data: user
     });
 };

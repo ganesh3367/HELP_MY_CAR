@@ -4,12 +4,34 @@
  * Persists user state using AsyncStorage.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const AuthContext = createContext();
 
-// Use your machine's IP (e.g., 192.168.x.x) if testing on physical device.
-const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5001/api' : 'http://localhost:5001/api';
+// Get the host IP dynamically for physical devices and emulators
+const getApiUrl = () => {
+    const debuggerHost = Constants.expoConfig?.hostUri || '';
+    let host = debuggerHost.split(':')[0];
+
+    if (!host) {
+        // Fallback for emulators/simulators when not connected to a debugger
+        host = Platform.OS === 'android' ? '10.0.2.2' : '127.0.0.1';
+    }
+
+    // If it's a tunnel URL, it likely won't work for a local backend on port 5002
+    // without a separate tunnel. We warn about this in logs.
+    if (host.includes('exp.direct')) {
+        console.warn('[AuthContext] WARNING: You are using an Expo Tunnel. Local API on port 5002 may not be reachable without a separate tunnel.');
+    }
+
+    const url = `http://${host}:5002/api`;
+    return url;
+};
+
+const API_URL = getApiUrl();
+
+console.log('[AuthContext] Calculated API_URL:', API_URL);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -70,13 +92,19 @@ export const AuthProvider = ({ children }) => {
     /**
      * Registers a new user.
      */
-    const signup = async (name, email, password) => {
+    const signup = async (name, email, password, role = 'user', garageDetails = null) => {
         setLoading(true);
         try {
+            const bodyPayload = { name, email, password, role };
+            if (role === 'garage' && garageDetails) {
+                // Merge garage details if role is garage
+                Object.assign(bodyPayload, garageDetails);
+            }
+
             const response = await fetch(`${API_URL}/users/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password }),
+                body: JSON.stringify(bodyPayload),
             });
 
             const data = await response.json();

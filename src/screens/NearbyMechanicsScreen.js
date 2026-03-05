@@ -1,6 +1,6 @@
 import { useRoute } from '@react-navigation/native';
 import { MapPin } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import ServiceCard from '../components/ServiceCard';
@@ -20,10 +20,12 @@ const NearbyMechanicsScreen = ({ navigation }) => {
     const pickedLocation = params?.pickedLocation;
 
     // Use picked location IF available, else GPS
-    const activeLocation = pickedLocation || (location?.coords ? {
-        lat: location.coords.latitude,
-        lng: location.coords.longitude
-    } : null);
+    const activeLocation = useMemo(() => {
+        return pickedLocation || (location?.coords ? {
+            lat: location.coords.latitude,
+            lng: location.coords.longitude
+        } : null);
+    }, [pickedLocation, location?.coords]);
 
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371; // Radius of the earth in km
@@ -65,7 +67,7 @@ const NearbyMechanicsScreen = ({ navigation }) => {
         } else if (!locationLoading && !activeLocation) {
             setLoading(false);
         }
-    }, [location, locationLoading, mechanics, filterIssue, pickedLocation]);
+    }, [location, locationLoading, mechanics, filterIssue, pickedLocation, activeLocation]);
 
     const renderSkeleton = () => (
         <View style={styles.skeletonContainer}>

@@ -1,5 +1,6 @@
 import { ArrowLeft, ChevronRight, History, Info, LogOut, MessageSquare, Phone, Settings, Shield } from 'lucide-react-native';
-import { Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 

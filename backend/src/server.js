@@ -1,19 +1,27 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db');
+require('./config/firebase'); // Initialize Firebase Admin
 
 // Load env vars
 dotenv.config();
-
-// Connect to database
-connectDB();
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Request logger
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    if (req.body && Object.keys(req.body).length > 0) {
+        const sensitiveBody = { ...req.body };
+        if (sensitiveBody.password) sensitiveBody.password = '********';
+        console.log('Body:', sensitiveBody);
+    }
+    next();
+});
 
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
@@ -24,15 +32,33 @@ app.get('/', (req, res) => {
     res.send('Help My Car API is running');
 });
 
+// 404 Handler
+app.use((req, res) => {
+    res.status(404).json({ success: false, error: `Route ${req.originalUrl} not found` });
+});
+
 const PORT = process.env.PORT || 5001;
 
-const server = app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
-    console.log(`Error: ${err.message}`);
+    console.log(`Unhandled Rejection: ${err?.message || err || 'Unknown error'}`);
+    if (err?.stack) console.log(err.stack);
     // Close server & exit process
-    server.close(() => process.exit(1));
+    if (server) {
+        server.close(() => process.exit(1));
+    } else {
+        process.exit(1);
+    }
 });
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+    console.log(`Uncaught Exception: ${err?.message || err || 'Unknown error'}`);
+    if (err?.stack) console.log(err.stack);
+    process.exit(1);
+});
+
