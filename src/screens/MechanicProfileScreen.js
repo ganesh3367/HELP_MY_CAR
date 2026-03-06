@@ -1,25 +1,71 @@
 import { ArrowLeft, Award, CheckCircle, Clock, MapPin, Star, Wrench } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+    Alert, Image, KeyboardAvoidingView, Modal,
+    Platform, ScrollView, StyleSheet, Text,
+    TextInput, TouchableOpacity, View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
+import { useLocation } from '../context/LocationContext';
+
+const SERVICES = [
+    { id: 'oil', label: '🛢  Oil Change', type: 'General Service' },
+    { id: 'battery', label: '🔋 Battery Repair', type: 'Electrical' },
+    { id: 'tyre', label: '🔄 Tyre Change', type: 'Tyre Change' },
+    { id: 'engine', label: '⚙️  Engine Issue', type: 'Engine Repair' },
+    { id: 'brake', label: '🛑 Brake Repair', type: 'Brakes' },
+    { id: 'ac', label: '❄️  AC Service', type: 'AC Service' },
+    { id: 'other', label: '🔧 Other', type: 'General Repair' },
+];
 
 const MechanicProfileScreen = ({ navigation, route }) => {
     const { mechanic } = route.params;
     const { placeOrder, addReview } = useAppContext();
+    const { location } = useLocation();
+
     const [bookingLoading, setBookingLoading] = useState(false);
+    const [showServiceModal, setShowServiceModal] = useState(false);
+    const [selectedService, setSelectedService] = useState(null);
+    const [issueDescription, setIssueDescription] = useState('');
+
     const [userRating, setUserRating] = useState(5);
     const [reviewComment, setReviewComment] = useState('');
     const [submittingReview, setSubmittingReview] = useState(false);
 
-    const handleBookNow = async () => {
+    // Open service picker modal
+    const handleBookNow = () => setShowServiceModal(true);
+
+    // Confirm booking after service selected
+    const handleConfirmBooking = async () => {
+        if (!selectedService) {
+            Alert.alert('Select a service', 'Please choose the type of service you need.');
+            return;
+        }
+        setShowServiceModal(false);
         setBookingLoading(true);
-        // Direct booking flow for now - in future stages this could go to a "Select Service" screen
-        const order = await placeOrder(mechanic.id || mechanic._id, { make: 'Toyota', model: 'Camry', year: '2020', issue: 'General Checkup' });
+
+        const userLat = location?.coords?.latitude || 18.5204;
+        const userLng = location?.coords?.longitude || 73.8567;
+
+        const vehicleDetails = {
+            make: 'My Car',
+            model: 'Vehicle',
+            year: String(new Date().getFullYear()),
+            issue: issueDescription.trim() || selectedService.type,
+            serviceType: selectedService.type,
+        };
+
+        const order = await placeOrder(mechanic.id || mechanic._id, vehicleDetails, {
+            lat: userLat, lng: userLng,
+        });
         setBookingLoading(false);
+
         if (order) {
             navigation.navigate('OrderTracking', { order });
+        } else {
+            Alert.alert('Booking Failed', 'Could not place order. Please try again.');
         }
     };
 
@@ -164,16 +210,71 @@ const MechanicProfileScreen = ({ navigation, route }) => {
             <View style={styles.bottomBar}>
                 <View>
                     <Text style={styles.costLabel}>Estimated Cost</Text>
-                    <Text style={styles.costValue}>{mechanic.estimatedCost}</Text>
+                    <Text style={styles.costValue}>{mechanic.estimatedCost || 'Varies'}</Text>
                 </View>
                 <TouchableOpacity
                     style={[styles.bookBtn, bookingLoading && { opacity: 0.6 }]}
                     onPress={handleBookNow}
                     disabled={bookingLoading}
                 >
-                    <Text style={styles.bookBtnText}>{bookingLoading ? 'Booking...' : 'Book Now'}</Text>
+                    <Text style={styles.bookBtnText}>{bookingLoading ? '⏳ Booking...' : '🔧 Book Mechanic'}</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* ── Service Picker Modal ───────────────────────── */}
+            <Modal
+                visible={showServiceModal}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setShowServiceModal(false)}
+            >
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.modalOverlay}
+                >
+                    <TouchableOpacity style={styles.modalDismiss} onPress={() => setShowServiceModal(false)} />
+                    <SafeAreaView style={styles.modalSheet}>
+                        <View style={styles.modalHandle} />
+                        <Text style={styles.modalTitle}>What do you need?</Text>
+                        <Text style={styles.modalSub}>Select the service type</Text>
+
+                        <View style={styles.serviceGrid}>
+                            {SERVICES.map(svc => {
+                                const isActive = selectedService?.id === svc.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={svc.id}
+                                        style={[styles.serviceChip, isActive && styles.serviceChipActive]}
+                                        onPress={() => setSelectedService(svc)}
+                                    >
+                                        <Text style={[styles.serviceChipText, isActive && { color: COLORS.white }]}>
+                                            {svc.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+
+                        <Text style={styles.descLabel}>Describe the issue (optional)</Text>
+                        <TextInput
+                            style={styles.descInput}
+                            placeholder="e.g. Engine makes noise when starting..."
+                            placeholderTextColor={COLORS.textLight}
+                            value={issueDescription}
+                            onChangeText={setIssueDescription}
+                            multiline
+                            numberOfLines={3}
+                        />
+
+                        <TouchableOpacity
+                            style={[styles.confirmBtn, !selectedService && { opacity: 0.5 }]}
+                            onPress={handleConfirmBooking}
+                        >
+                            <Text style={styles.confirmBtnText}>Confirm Booking 🚀</Text>
+                        </TouchableOpacity>
+                    </SafeAreaView>
+                </KeyboardAvoidingView>
+            </Modal>
         </View>
     );
 };
@@ -432,6 +533,35 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 15,
     },
+    // ── Service Picker Modal ─────────────────────────────────────────────────
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+    modalDismiss: { flex: 1 },
+    modalSheet: {
+        backgroundColor: COLORS.white, borderTopLeftRadius: 32, borderTopRightRadius: 32,
+        padding: SPACING.lg, paddingBottom: SPACING.xl,
+        ...SHADOWS.large,
+    },
+    modalHandle: { width: 44, height: 4, borderRadius: 2, backgroundColor: '#DDD', alignSelf: 'center', marginBottom: 20 },
+    modalTitle: { fontSize: 22, fontWeight: '900', color: COLORS.text, textAlign: 'center' },
+    modalSub: { fontSize: 14, color: COLORS.textLight, textAlign: 'center', marginBottom: 20 },
+    serviceGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
+    serviceChip: {
+        paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14,
+        backgroundColor: '#F0F2F5', borderWidth: 1.5, borderColor: 'transparent',
+    },
+    serviceChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+    serviceChipText: { fontSize: 14, fontWeight: '700', color: COLORS.text },
+    descLabel: { fontSize: 14, fontWeight: '700', color: COLORS.text, marginBottom: 10 },
+    descInput: {
+        backgroundColor: '#F7F8FA', borderRadius: 14, padding: 14,
+        fontSize: 14, color: COLORS.text, borderWidth: 1, borderColor: '#E0E0E0',
+        minHeight: 80, textAlignVertical: 'top', marginBottom: 20,
+    },
+    confirmBtn: {
+        backgroundColor: COLORS.primary, borderRadius: 18, paddingVertical: 18,
+        alignItems: 'center', ...SHADOWS.medium,
+    },
+    confirmBtnText: { fontSize: 17, fontWeight: '900', color: COLORS.white },
 });
 
 export default MechanicProfileScreen;

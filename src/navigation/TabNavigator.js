@@ -147,12 +147,12 @@ const TabNavigator = () => {
                         }}
                     />
                     <Tab.Screen
-                        name="CarStuck"
-                        component={CarStuckScreen}
+                        name="Nearby"
+                        component={NearbyMechanicsScreen}
                         options={{
-                            title: 'Stuck?',
+                            title: 'Nearby',
                             headerShown: false,
-                            tabBarIcon: (props) => <ShieldAlert {...props} />,
+                            tabBarIcon: (props) => <MapPin {...props} />,
                         }}
                     />
                     <Tab.Screen
@@ -172,11 +172,12 @@ const TabNavigator = () => {
                         }}
                     />
                     <Tab.Screen
-                        name="Nearby"
-                        component={NearbyMechanicsScreen}
+                        name="CarStuck"
+                        component={CarStuckScreen}
                         options={{
+                            title: 'Stuck?',
                             headerShown: false,
-                            tabBarIcon: (props) => <MapPin {...props} />,
+                            tabBarIcon: (props) => <ShieldAlert {...props} />,
                         }}
                     />
                 </>

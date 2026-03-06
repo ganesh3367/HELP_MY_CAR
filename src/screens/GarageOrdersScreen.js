@@ -1,5 +1,6 @@
+import * as Location from 'expo-location';
 import { AlertCircle, CheckCircle, Clock, MapPin, Phone, XCircle } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -13,10 +14,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
+import socket, { connectSocket, joinOrder } from '../services/socket';
 
 const GarageOrdersScreen = () => {
     const { myGarage, garageOrders, fetchGarageOrders, updateOrderStatus } = useAppContext();
     const [loading, setLoading] = useState(false);
+    const locationSubscription = useRef(null);
 
     useEffect(() => {
         if (myGarage?.id) {
@@ -24,15 +27,67 @@ const GarageOrdersScreen = () => {
         }
     }, [myGarage?.id]);
 
+    useEffect(() => {
+        // Cleanup location tracking on unmount
+        return () => {
+            if (locationSubscription.current) {
+                locationSubscription.current.remove();
+            }
+        };
+    }, []);
+
     const loadOrders = async () => {
         setLoading(true);
         await fetchGarageOrders(myGarage.id);
         setLoading(false);
     };
 
+    const startLocationTracking = async (orderId) => {
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission denied', 'Location permission is required for tracking.');
+                return;
+            }
+
+            connectSocket();
+            joinOrder(orderId);
+
+            locationSubscription.current = await Location.watchPositionAsync(
+                {
+                    accuracy: Location.Accuracy.High,
+                    distanceInterval: 10, // Update every 10 meters
+                    timeInterval: 5000,    // Or every 5 seconds
+                },
+                (location) => {
+                    const coords = {
+                        lat: location.coords.latitude,
+                        lng: location.coords.longitude
+                    };
+                    console.log('Sending location update:', coords);
+                    socket.emit('update_location', { orderId, location: coords });
+                }
+            );
+        } catch (error) {
+            console.error('Tracking Error:', error);
+        }
+    };
+
+    const stopLocationTracking = () => {
+        if (locationSubscription.current) {
+            locationSubscription.current.remove();
+            locationSubscription.current = null;
+        }
+    };
+
     const handleStatusUpdate = async (orderId, newStatus) => {
         const success = await updateOrderStatus(orderId, newStatus);
         if (success) {
+            if (newStatus === 'ON_THE_WAY') {
+                startLocationTracking(orderId);
+            } else if (newStatus === 'ARRIVED' || newStatus === 'COMPLETED') {
+                stopLocationTracking();
+            }
             Alert.alert('Success', `Order status updated to ${newStatus}`);
         } else {
             Alert.alert('Error', 'Failed to update status. Please try again.');

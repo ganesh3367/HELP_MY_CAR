@@ -208,6 +208,15 @@ const HomeScreen = ({ navigation }) => {
                                 <Text style={styles.actionLabel}>Guides</Text>
                             </TouchableOpacity>
 
+                            <TouchableOpacity
+                                style={[styles.actionCard, { backgroundColor: '#FFFDE6' }]}
+                                onPress={() => navigation.navigate('Main', { screen: 'CostEstimator' })}
+                            >
+                                <View style={[styles.actionIconPill, { backgroundColor: '#B8860B' }]}>
+                                    <Flame size={20} color={COLORS.white} />
+                                </View>
+                                <Text style={styles.actionLabel}>Cost Calc</Text>
+                            </TouchableOpacity>
 
                         </View>
                     </View>

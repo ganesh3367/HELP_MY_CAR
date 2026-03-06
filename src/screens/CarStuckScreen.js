@@ -301,7 +301,8 @@ const CarStuckScreen = ({ navigation }) => {
                                     style={styles.findHelpBtn}
                                     onPress={() => {
                                         setModalVisible(false);
-                                        navigation.navigate('Nearby', { filterIssue: selectedIssue });
+                                        navigation.navigate('Main', { screen: 'Nearby', params: { filterIssue: selectedIssue } });
+
                                     }}
                                 >
                                     <Text style={styles.findHelpText}>Find Professional Help</Text>

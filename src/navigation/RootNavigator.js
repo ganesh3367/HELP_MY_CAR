@@ -1,12 +1,9 @@
-/**
- * Root Navigation Controller
- * Handles authentication state to switch between Auth and App stacks.
- */
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator, View } from 'react-native';
 import { COLORS } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
+import CarDiagnosticScreen from '../screens/CarDiagnosticScreen';
 import LocationPickerScreen from '../screens/LocationPickerScreen';
 import LoginScreen from '../screens/LoginScreen';
 import MechanicProfileScreen from '../screens/MechanicProfileScreen';
@@ -63,10 +60,15 @@ const RootNavigator = () => {
                     <Stack.Screen
                         name="OrderTracking"
                         component={OrderTrackingScreen}
-                        options={{ title: 'Track Service', headerShown: true }}
+                        options={{ headerShown: false }}
                     />
                     <Stack.Screen name="LocationPicker" component={LocationPickerScreen} />
                     <Stack.Screen name="MechanicProfile" component={MechanicProfileScreen} options={{ headerShown: false }} />
+                    <Stack.Screen
+                        name="CarDiagnostic"
+                        component={CarDiagnosticScreen}
+                        options={{ headerShown: true, title: '🔍 Car Diagnostic', headerTintColor: COLORS.primary, headerTitleStyle: { fontWeight: 'bold' } }}
+                    />
                 </>
             ) : (
                 <>

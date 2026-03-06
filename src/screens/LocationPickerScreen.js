@@ -38,11 +38,13 @@ const LocationPickerScreen = ({ navigation, route }) => {
     };
 
     const confirmLocation = () => {
-        // Pass back the center of the map (where the pin is fixed)
-        navigation.navigate('Nearby', {
-            pickedLocation: {
-                lat: region.latitude,
-                lng: region.longitude,
+        navigation.navigate('Main', {
+            screen: 'Nearby',
+            params: {
+                pickedLocation: {
+                    lat: region.latitude,
+                    lng: region.longitude,
+                }
             }
         });
     };

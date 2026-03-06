@@ -1,348 +1,515 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { CheckCircle, Clock, MapPin, MessageSquare, Phone } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import * as Haptics from 'expo-haptics';
+import {
+    CheckCircle,
+    Clock,
+    MapPin,
+    Phone,
+    Wrench,
+    X,
+} from 'lucide-react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+    Alert,
+    Animated,
+    Dimensions,
+    Linking,
+    Platform,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import RatingModal from '../components/RatingModal';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
+import {
+    connectSocket,
+    disconnectSocket,
+    joinOrder,
+    offLocationUpdate,
+    offOrderStatusUpdate,
+    onLocationUpdate,
+    onOrderStatusUpdate,
+} from '../services/socket';
 
+const { width, height } = Dimensions.get('window');
+
+// ── Step config (Zomato/Uber-style order progress) ───────────────────────────
+const ORDER_STEPS = [
+    { key: 'PENDING', label: 'Request Sent', icon: Clock },
+    { key: 'ACCEPTED', label: 'Mechanic Assigned', icon: CheckCircle },
+    { key: 'ON_THE_WAY', label: 'On the Way', icon: MapPin },
+    { key: 'ARRIVED', label: 'Arrived', icon: Wrench },
+    { key: 'IN_PROGRESS', label: 'Working on Car', icon: Wrench },
+    { key: 'COMPLETED', label: 'Done!', icon: CheckCircle },
+];
+
+const stepIndex = (status) => ORDER_STEPS.findIndex(s => s.key === status);
+
+// ── Haversine ─────────────────────────────────────────────────────────────────
+const haversine = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2
+        + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+const etaMinutes = (dist) => Math.max(1, Math.round(dist * 3)); // ~3 min/km city
+
+// ── Pulse dot for "live" indicator ───────────────────────────────────────────
+const PulseDot = ({ color }) => {
+    const scale = useRef(new Animated.Value(1)).current;
+    useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(scale, { toValue: 1.5, duration: 700, useNativeDriver: true }),
+                Animated.timing(scale, { toValue: 1, duration: 700, useNativeDriver: true }),
+            ])
+        ).start();
+    }, [scale]);
+    return (
+        <Animated.View style={[styles.pulseDot, { backgroundColor: color, transform: [{ scale }] }]} />
+    );
+};
+
+// ── Car / Mechanic animated marker ───────────────────────────────────────────
+const MechanicMarker = ({ status }) => {
+    const bounce = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        if (status === 'ON_THE_WAY') {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(bounce, { toValue: -6, duration: 400, useNativeDriver: true }),
+                    Animated.timing(bounce, { toValue: 0, duration: 400, useNativeDriver: true }),
+                ])
+            ).start();
+        }
+    }, [status, bounce]);
+    return (
+        <Animated.View style={[styles.mechanicMarker, { transform: [{ translateY: bounce }] }]}>
+            <Text style={{ fontSize: 24 }}>🔧</Text>
+        </Animated.View>
+    );
+};
+
+// ── OrderTrackingScreen ───────────────────────────────────────────────────────
 const OrderTrackingScreen = () => {
     const navigation = useNavigation();
     const { params } = useRoute();
-    const { trackOrderStatus, currentOrder } = useAppContext();
-    const [orderStatus, setOrderStatus] = useState(params?.order || currentOrder);
-    const [isRatingVisible, setIsRatingVisible] = useState(false);
+    const { trackOrderStatus } = useAppContext();
 
+    const [order, setOrder] = useState(params?.order || null);
+    const [mechanicCoords, setMechanicCoords] = useState(
+        order?.mechanicLocation ? { lat: order.mechanicLocation.lat, lng: order.mechanicLocation.lng } : null
+    );
+    const [locationPath, setLocationPath] = useState([]); // breadcrumb trail
+    const [isRatingVisible, setIsRatingVisible] = useState(false);
+    const mapRef = useRef(null);
+    const slideAnim = useRef(new Animated.Value(300)).current;
+
+    // ── Slide up bottom card on mount ─────────────────────────────────────
     useEffect(() => {
-        const fetchStatus = async () => {
-            // In a real app you'd use the ID from params
-            const orderId = orderStatus?._id || params?.order?._id;
-            if (orderId) {
-                const updatedOrder = await trackOrderStatus(orderId);
-                if (updatedOrder) {
-                    setOrderStatus(updatedOrder);
-                }
-            }
-        };
+        Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, bounciness: 6 }).start();
+    }, [slideAnim]);
+
+    // ── Poll + socket ─────────────────────────────────────────────────────
+    useEffect(() => {
+        const orderId = order?._id || order?.id;
+        if (!orderId) return;
 
         // Initial fetch
-        fetchStatus();
+        const fetchOnce = async () => {
+            const updated = await trackOrderStatus(orderId);
+            if (updated) setOrder(updated);
+        };
+        fetchOnce();
 
-        // Poll every 3 seconds for updates
-        const interval = setInterval(fetchStatus, 3000);
+        // Socket setup
+        connectSocket();
+        joinOrder(orderId);
 
+        onLocationUpdate((newCoords) => {
+            setMechanicCoords(newCoords);
+            setLocationPath(prev => [...prev.slice(-50), { latitude: newCoords.lat, longitude: newCoords.lng }]);
+            // Auto-pan map to keep both markers visible
+            panMapToBoth(newCoords);
+        });
 
-        return () => clearInterval(interval);
-    }, [orderStatus?._id, params?.order?._id, trackOrderStatus]);
+        onOrderStatusUpdate((updated) => {
+            setOrder(prev => ({ ...prev, ...updated }));
+            if (updated.status === 'ARRIVED') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+        });
 
-    const handleComplete = () => {
-        setIsRatingVisible(true);
-    };
+        return () => {
+            offLocationUpdate();
+            offOrderStatusUpdate();
+            disconnectSocket();
+        };
+    }, [order?._id]);
 
-    const handleSaveRating = (data) => {
-        console.log('Rating saved:', data);
-        Alert.alert('Thank you!', 'Your feedback helps improve our service.');
-        navigation.navigate('Main');
-    };
+    // ── Pan map to show both user + mechanic ──────────────────────────────
+    const panMapToBoth = useCallback((mechCoords) => {
+        if (!mapRef.current || !order?.userLocation) return;
+        const uLat = order.userLocation.lat;
+        const uLng = order.userLocation.lng;
+        const mLat = mechCoords?.lat;
+        const mLng = mechCoords?.lng;
+        if (!mLat || !mLng) return;
+        const midLat = (uLat + mLat) / 2;
+        const midLng = (uLng + mLng) / 2;
+        const delta = Math.max(Math.abs(uLat - mLat), Math.abs(uLng - mLng)) * 2.2 + 0.01;
+        mapRef.current.animateToRegion({ latitude: midLat, longitude: midLng, latitudeDelta: delta, longitudeDelta: delta }, 500);
+    }, [order?.userLocation]);
 
-    // Helper to get status color/text
-    const getStatusInfo = (status) => {
-        switch (status) {
-            case 'PENDING': return { color: '#FFA500', text: 'Finding a Mechanic...', icon: Clock };
-            case 'ACCEPTED': return { color: '#007AFF', text: 'Order Accepted', icon: CheckCircle };
-            case 'ON_THE_WAY': return { color: '#34C759', text: 'Mechanic on the way', icon: MapPin };
-            case 'ARRIVED': return { color: '#5856D6', text: 'Mechanic Arrived', icon: CheckCircle };
-            case 'COMPLETED': return { color: '#8E8E93', text: 'Service Completed', icon: CheckCircle };
-            default: return { color: COLORS.text, text: status, icon: Clock };
-        }
-    };
+    const status = order?.status || 'PENDING';
+    const currentStep = stepIndex(status);
+    const isOnWay = status === 'ON_THE_WAY';
+    const isArrived = status === 'ARRIVED' || status === 'IN_PROGRESS';
+    const isDone = status === 'COMPLETED';
 
-    const statusInfo = getStatusInfo(orderStatus?.status);
-    const StatusIcon = statusInfo.icon;
+    const userLat = order?.userLocation?.lat;
+    const userLng = order?.userLocation?.lng;
+    const mechLat = mechanicCoords?.lat;
+    const mechLng = mechanicCoords?.lng;
+    const hasUserLoc = userLat && userLng;
+    const hasMechLoc = mechLat && mechLng;
 
-    // Ensure locations exist before rendering map
-    const isValidLocation = orderStatus?.userLocation?.lat && orderStatus?.mechanicLocation?.lat;
+    const distKm = hasUserLoc && hasMechLoc ? haversine(userLat, userLng, mechLat, mechLng) : null;
+    const eta = distKm ? etaMinutes(distKm) : null;
 
-    if (!orderStatus) return (
-        <SafeAreaView style={styles.container}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-        </SafeAreaView>
-    );
+    // ── Status chip style ─────────────────────────────────────────────────
+    const statusColor = {
+        PENDING: '#FF9500',
+        ACCEPTED: '#007AFF',
+        ON_THE_WAY: '#34C759',
+        ARRIVED: '#5856D6',
+        IN_PROGRESS: '#FF8C00',
+        COMPLETED: '#8E8E93',
+    }[status] || COLORS.primary;
+
+    const statusLabel = {
+        PENDING: '🔍 Finding a mechanic…',
+        ACCEPTED: '✅ Mechanic Assigned!',
+        ON_THE_WAY: '🏍 Mechanic is on the way',
+        ARRIVED: '📍 Mechanic has arrived!',
+        IN_PROGRESS: '🔧 Working on your car',
+        COMPLETED: '✅ Service Complete!',
+    }[status] || status;
+
+    const initialRegion = hasUserLoc
+        ? { latitude: userLat, longitude: userLng, latitudeDelta: 0.025, longitudeDelta: 0.025 }
+        : { latitude: 18.5204, longitude: 73.8567, latitudeDelta: 0.05, longitudeDelta: 0.05 };
+
+    if (!order) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.center}>
+                    <PulseDot color={COLORS.primary} />
+                    <Text style={styles.loadingText}>Loading order…</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.mapContainer}>
-                {isValidLocation ? (
-                    <MapView
-                        provider={PROVIDER_GOOGLE}
-                        style={styles.map}
-                        region={{
-                            latitude: (orderStatus.userLocation.lat + orderStatus.mechanicLocation.lat) / 2,
-                            longitude: (orderStatus.userLocation.lng + orderStatus.mechanicLocation.lng) / 2,
-                            latitudeDelta: Math.abs(orderStatus.userLocation.lat - orderStatus.mechanicLocation.lat) * 2 + 0.005,
-                            longitudeDelta: Math.abs(orderStatus.userLocation.lng - orderStatus.mechanicLocation.lng) * 2 + 0.005,
-                        }}
+        <View style={styles.container}>
+            {/* ── FULL SCREEN MAP ────────────────────────────────── */}
+            <MapView
+                ref={mapRef}
+                style={StyleSheet.absoluteFill}
+                initialRegion={initialRegion}
+                showsCompass={false}
+                showsMyLocationButton={false}
+                pitchEnabled={false}
+            >
+                {/* User dot */}
+                {hasUserLoc && (
+                    <Marker
+                        coordinate={{ latitude: userLat, longitude: userLng }}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        tracksViewChanges={false}
                     >
-                        {/* User Marker */}
-                        <Marker
-                            coordinate={{ latitude: orderStatus.userLocation.lat, longitude: orderStatus.userLocation.lng }}
-                            title="You"
-                        >
-                            <View style={styles.userMarker}>
-                                <View style={styles.userMarkerDot} />
-                            </View>
-                        </Marker>
-
-                        {/* Mechanic Marker */}
-                        <Marker
-                            coordinate={{ latitude: orderStatus.mechanicLocation.lat, longitude: orderStatus.mechanicLocation.lng }}
-                            title="Mechanic"
-                            anchor={{ x: 0.5, y: 0.5 }}
-                        >
-                            <View style={styles.mechanicMarker}>
-                                <StatusIcon size={20} color={COLORS.white} />
-                            </View>
-                        </Marker>
-                    </MapView>
-                ) : (
-                    <View style={styles.mapPlaceholder}>
-                        <ActivityIndicator size="small" color={COLORS.primary} />
-                        <Text style={{ marginTop: 10, color: COLORS.textLight }}>Loading Map...</Text>
-                    </View>
+                        <View style={styles.userDotOuter}>
+                            <View style={styles.userDotInner} />
+                        </View>
+                    </Marker>
                 )}
 
-                {/* Status Overlay */}
-                <View style={styles.statusOverlay}>
-                    <View style={[styles.statusPill, { backgroundColor: statusInfo.color + '20' }]}>
-                        <StatusIcon size={16} color={statusInfo.color} />
-                        <Text style={[styles.statusPillText, { color: statusInfo.color }]}>{statusInfo.text}</Text>
-                    </View>
-                </View>
-            </View>
+                {/* Mechanic animated car marker */}
+                {hasMechLoc && (
+                    <Marker
+                        coordinate={{ latitude: mechLat, longitude: mechLng }}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        tracksViewChanges
+                    >
+                        <MechanicMarker status={status} />
+                    </Marker>
+                )}
 
-            <View style={styles.card}>
-                {/* Driver Info */}
-                <View style={styles.driverSection}>
-                    <Image
-                        source={{ uri: 'https://images.unsplash.com/photo-1599420186946-7b6fb4e297f0?q=80&w=200&auto=format&fit=crop' }}
-                        style={styles.avatar}
+                {/* Breadcrumb route trail */}
+                {locationPath.length > 1 && (
+                    <Polyline
+                        coordinates={locationPath}
+                        strokeColor={COLORS.primary}
+                        strokeWidth={3}
+                        lineDashPattern={[8, 4]}
                     />
-                    <View style={styles.driverInfo}>
+                )}
+            </MapView>
+
+            {/* ── TOP STATUS CHIP ────────────────────────────────── */}
+            <SafeAreaView style={styles.topOverlay} pointerEvents="box-none">
+                <View style={styles.topRow}>
+                    <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+                        <X size={20} color={COLORS.text} />
+                    </TouchableOpacity>
+                    <View style={[styles.statusChip, { backgroundColor: statusColor + '20', borderColor: statusColor + '40' }]}>
+                        <PulseDot color={statusColor} />
+                        <Text style={[styles.statusChipText, { color: statusColor }]}>{statusLabel}</Text>
+                    </View>
+                    {eta && (
+                        <View style={styles.etaChip}>
+                            <Text style={styles.etaNumber}>{eta}</Text>
+                            <Text style={styles.etaUnit}>min</Text>
+                        </View>
+                    )}
+                </View>
+            </SafeAreaView>
+
+            {/* ── BOTTOM SLIDE-UP CARD ────────────────────────────── */}
+            <Animated.View style={[styles.card, { transform: [{ translateY: slideAnim }] }]}>
+                {/* Handle */}
+                <View style={styles.handle} />
+
+                {/* Mechanic info row */}
+                <View style={styles.mechanicRow}>
+                    <View style={styles.avatarCircle}>
+                        <Text style={{ fontSize: 28 }}>🧑‍🔧</Text>
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 14 }}>
                         <Text style={styles.mechanicLabel}>Your Mechanic</Text>
-                        <Text style={styles.garageName}>{orderStatus.garageId?.name || 'Mechanic'}</Text>
+                        <Text style={styles.mechanicName}>
+                            {order.garageName || order.mechanic?.name || 'Assigned Mechanic'}
+                        </Text>
                         <View style={styles.ratingRow}>
-                            <Text style={styles.ratingText}>★ 4.8</Text>
-                            <Text style={styles.dot}>•</Text>
-                            <Text style={styles.vehicleText}>
-                                {orderStatus.vehicleDetails?.make} {orderStatus.vehicleDetails?.model}
+                            <Text style={styles.stars}>★ {order.mechanic?.rating || '4.8'}</Text>
+                            <Text style={styles.bullet}> • </Text>
+                            <Text style={styles.subText}>
+                                {order.vehicleDetails?.make} {order.vehicleDetails?.model}
                             </Text>
                         </View>
                     </View>
-                    <View style={styles.timeBadge}>
-                        <Text style={styles.timeText}>
-                            {orderStatus.status === 'ARRIVED' ? 'Arrived' : `${orderStatus.etaMinutes || '--'} min`}
+                    {/* Call button */}
+                    <TouchableOpacity
+                        style={styles.callBtn}
+                        onPress={() => Linking.openURL(`tel:${order.mechanic?.phone || '+911234567890'}`)}
+                    >
+                        <Phone size={20} color={COLORS.white} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* ── Status timeline (Zomato-style) ───────────────── */}
+                <View style={styles.timeline}>
+                    {ORDER_STEPS.slice(0, 5).map((step, i) => {
+                        const done = i <= currentStep;
+                        const active = i === currentStep;
+                        const Icon = step.icon;
+                        return (
+                            <View key={step.key} style={styles.timelineItem}>
+                                {/* Connector line */}
+                                {i < ORDER_STEPS.length - 2 && (
+                                    <View style={[styles.timelineConnector, done && i < currentStep && { backgroundColor: COLORS.primary }]} />
+                                )}
+                                {/* Dot */}
+                                <View style={[styles.timelineDot, done && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }]}>
+                                    {done ? <Icon size={10} color={COLORS.white} /> : null}
+                                </View>
+                                {/* Label */}
+                                <Text style={[styles.timelineLabel, done && { color: COLORS.text, fontWeight: '700' }]}>
+                                    {step.label}
+                                </Text>
+                            </View>
+                        );
+                    })}
+                </View>
+
+                {/* ── Live location info ───────────────────────────── */}
+                {distKm && isOnWay && (
+                    <View style={styles.liveInfoRow}>
+                        <PulseDot color="#34C759" />
+                        <Text style={styles.liveText}>
+                            Mechanic is <Text style={styles.liveHighlight}>{distKm.toFixed(1)} km</Text> away — arrives in ~<Text style={styles.liveHighlight}>{eta} min</Text>
                         </Text>
                     </View>
-                </View>
+                )}
 
-                <View style={styles.divider} />
+                {isArrived && !isDone && (
+                    <View style={[styles.liveInfoRow, { backgroundColor: '#F0FFF4' }]}>
+                        <Text style={{ fontSize: 20 }}>📍</Text>
+                        <Text style={[styles.liveText, { color: '#1a8a3c' }]}>Mechanic has arrived at your location!</Text>
+                    </View>
+                )}
 
-                {/* Progress Bar (Visual only for now) */}
-                <View style={styles.progressContainer}>
-                    <View style={[styles.progressBar, { width: orderStatus.status === 'ARRIVED' ? '100%' : '50%', backgroundColor: statusInfo.color }]} />
-                </View>
-                <Text style={styles.progressText}>
-                    {orderStatus.status === 'ARRIVED' ? 'Mechanic has arrived!' : `Arriving in approximately ${orderStatus.etaMinutes || '--'} minutes`}
-                </Text>
-
-
-                <View style={styles.actions}>
-                    {orderStatus.status === 'ARRIVED' ? (
-                        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: COLORS.primary }]} onPress={handleComplete}>
-                            <CheckCircle size={24} color={COLORS.white} />
-                            <Text style={[styles.actionText, { color: COLORS.white }]}>Complete Job</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <>
-                            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#E5F1FF' }]}>
-                                <Phone size={24} color={COLORS.primary} />
-                                <Text style={[styles.actionText, { color: COLORS.primary }]}>Call</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#E8F8EE' }]}>
-                                <MessageSquare size={24} color="#34C759" />
-                                <Text style={[styles.actionText, { color: '#34C759' }]}>Message</Text>
-                            </TouchableOpacity>
-                        </>
-                    )}
-                </View>
-            </View>
+                {/* ── Action buttons ───────────────────────────────── */}
+                {isDone ? (
+                    <TouchableOpacity style={styles.rateBtn} onPress={() => setIsRatingVisible(true)}>
+                        <Text style={styles.rateBtnText}>⭐ Rate your experience</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <View style={styles.issueRow}>
+                        <MapPin size={14} color={COLORS.textLight} />
+                        <Text style={styles.issueText} numberOfLines={2}>
+                            {order.vehicleDetails?.issue || 'General service request'}
+                        </Text>
+                    </View>
+                )}
+            </Animated.View>
 
             <RatingModal
                 visible={isRatingVisible}
                 onClose={() => setIsRatingVisible(false)}
-                onSave={handleSaveRating}
-                mechanicName={orderStatus.garageId?.name || 'Mechanic'}
+                onSave={(data) => {
+                    Alert.alert('Thank you!', 'Your feedback helps us improve.');
+                    navigation.navigate('Home');
+                }}
+                mechanicName={order.garageName || 'Mechanic'}
             />
-        </SafeAreaView>
+        </View>
     );
 };
 
+// ── Styles ────────────────────────────────────────────────────────────────────
+const CARD_HEIGHT = height * 0.44;
+
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: COLORS.background,
+    container: { flex: 1, backgroundColor: '#EEF2F8' },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
+    loadingText: { fontSize: 16, color: COLORS.textLight, fontWeight: '600' },
+
+    // ─ Map markers ───────────────────────────────────────────────────────────
+    userDotOuter: {
+        width: 22, height: 22, borderRadius: 11,
+        backgroundColor: 'rgba(0,122,255,0.25)', alignItems: 'center', justifyContent: 'center',
+        borderWidth: 2.5, borderColor: '#007AFF',
     },
-    mapContainer: {
-        flex: 1,
-        overflow: 'hidden',
-    },
-    mapPlaceholder: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#f0f0f0'
-    },
-    map: {
-        ...StyleSheet.absoluteFillObject,
-    },
-    userMarker: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        backgroundColor: 'rgba(0, 122, 255, 0.3)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    userMarkerDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: '#007AFF',
-        borderWidth: 2,
-        borderColor: COLORS.white,
-    },
+    userDotInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#007AFF' },
     mechanicMarker: {
-        backgroundColor: COLORS.primary,
-        padding: 8,
-        borderRadius: 20,
-        ...SHADOWS.medium,
-        borderWidth: 2,
-        borderColor: COLORS.white,
+        backgroundColor: COLORS.white, borderRadius: 24,
+        padding: 8, ...SHADOWS.large,
+        borderWidth: 2, borderColor: COLORS.primary,
     },
+
+    // ─ Top overlay ───────────────────────────────────────────────────────────
+    topOverlay: {
+        position: 'absolute', top: 0, left: 0, right: 0,
+        paddingHorizontal: SPACING.md,
+        paddingTop: Platform.OS === 'ios' ? 12 : 30,
+        zIndex: 20,
+    },
+    topRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    backBtn: {
+        width: 40, height: 40, borderRadius: 20,
+        backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center', ...SHADOWS.medium,
+    },
+    statusChip: {
+        flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
+        paddingHorizontal: 14, paddingVertical: 10, borderRadius: 24,
+        borderWidth: 1, backgroundColor: COLORS.white, ...SHADOWS.medium,
+    },
+    statusChipText: { fontSize: 13, fontWeight: '700', flexShrink: 1 },
+    etaChip: {
+        backgroundColor: COLORS.primary, borderRadius: 16,
+        paddingHorizontal: 12, paddingVertical: 6, alignItems: 'center',
+        ...SHADOWS.medium,
+    },
+    etaNumber: { fontSize: 18, fontWeight: '900', color: COLORS.white },
+    etaUnit: { fontSize: 10, color: 'rgba(255,255,255,0.8)', fontWeight: '700' },
+
+    // ─ Pulse dot ─────────────────────────────────────────────────────────────
+    pulseDot: { width: 8, height: 8, borderRadius: 4 },
+
+    // ─ Bottom card ───────────────────────────────────────────────────────────
     card: {
+        position: 'absolute', bottom: 0, left: 0, right: 0,
         backgroundColor: COLORS.white,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        padding: SPACING.xl,
-        ...SHADOWS.large,
+        borderTopLeftRadius: 32, borderTopRightRadius: 32,
+        paddingHorizontal: SPACING.lg, paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+        paddingTop: 14, ...SHADOWS.large,
+        minHeight: CARD_HEIGHT,
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: SPACING.lg,
+    handle: {
+        width: 44, height: 4, borderRadius: 2, backgroundColor: '#DDDDE3',
+        alignSelf: 'center', marginBottom: 20,
     },
-    statusOverlay: {
-        position: 'absolute',
-        top: 60,
-        alignSelf: 'center',
-        zIndex: 10,
+
+    // ─ Mechanic row ──────────────────────────────────────────────────────────
+    mechanicRow: {
+        flexDirection: 'row', alignItems: 'center', marginBottom: 20,
+        backgroundColor: '#F7F8FA', borderRadius: 20, padding: 12,
     },
-    statusPill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        gap: 8,
-        ...SHADOWS.medium,
-        backgroundColor: COLORS.white, // Fallback if translucent bg fails
-        borderWidth: 1,
-        borderColor: COLORS.white,
+    avatarCircle: {
+        width: 56, height: 56, borderRadius: 28,
+        backgroundColor: COLORS.primary + '15', alignItems: 'center', justifyContent: 'center',
+        borderWidth: 2, borderColor: COLORS.primary + '30',
     },
-    statusPillText: {
-        fontSize: 14,
-        fontWeight: '700',
+    mechanicLabel: { fontSize: 11, color: COLORS.textLight, fontWeight: '600' },
+    mechanicName: { fontSize: 17, fontWeight: '800', color: COLORS.text },
+    ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+    stars: { fontSize: 13, color: '#B8860B', fontWeight: '700' },
+    bullet: { color: COLORS.textLight },
+    subText: { fontSize: 12, color: COLORS.textLight },
+    callBtn: {
+        width: 44, height: 44, borderRadius: 22,
+        backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', ...SHADOWS.small,
     },
-    driverSection: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: SPACING.xl,
+
+    // ─ Timeline ──────────────────────────────────────────────────────────────
+    timeline: {
+        flexDirection: 'row', alignItems: 'flex-start',
+        justifyContent: 'space-between', marginBottom: 18,
     },
-    mechanicLabel: {
-        fontSize: 12,
-        color: COLORS.textLight,
-        marginBottom: 2,
+    timelineItem: { alignItems: 'center', flex: 1, position: 'relative' },
+    timelineConnector: {
+        position: 'absolute', top: 12, left: '50%', right: '-50%',
+        height: 2, backgroundColor: '#E0E0E0', zIndex: 0,
     },
-    driverInfo: {
-        flex: 1,
-        marginLeft: SPACING.md,
+    timelineDot: {
+        width: 24, height: 24, borderRadius: 12,
+        backgroundColor: '#E0E0E0', borderWidth: 2, borderColor: '#E0E0E0',
+        alignItems: 'center', justifyContent: 'center', marginBottom: 6, zIndex: 1,
     },
-    ratingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 4,
-    },
-    ratingText: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: COLORS.text,
-    },
-    dot: {
-        marginHorizontal: 6,
-        color: COLORS.textLight,
-    },
-    timeBadge: {
-        backgroundColor: '#F2F2F7',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
-    },
-    timeText: {
-        fontWeight: '700',
-        color: COLORS.text,
-        fontSize: 14,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#F2F2F7',
-        marginBottom: SPACING.xl,
-    },
-    progressContainer: {
-        height: 6,
-        backgroundColor: '#F2F2F7',
-        borderRadius: 3,
-        marginBottom: 8,
-        overflow: 'hidden',
-    },
-    progressBar: {
-        height: '100%',
-        borderRadius: 3,
-    },
-    progressText: {
-        fontSize: 13,
-        color: COLORS.textLight,
+    timelineLabel: {
+        fontSize: 9, color: COLORS.textLight, fontWeight: '600',
         textAlign: 'center',
-        marginBottom: SPACING.xl,
     },
-    actions: {
-        flexDirection: 'row',
-        gap: 12,
+
+    // ─ Live info ─────────────────────────────────────────────────────────────
+    liveInfoRow: {
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        backgroundColor: '#F0FFF7', borderRadius: 14, padding: 12, marginBottom: 14,
+        borderWidth: 1, borderColor: '#B7EBD5',
     },
-    actionBtn: {
-        flex: 1,
-        height: 56,
-        borderRadius: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
+    liveText: { fontSize: 13, color: COLORS.text, fontWeight: '500', flex: 1 },
+    liveHighlight: { fontWeight: '800', color: '#1a8a3c' },
+
+    // ─ Issue / Rate ──────────────────────────────────────────────────────────
+    issueRow: {
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: '#F7F8FA', borderRadius: 12, padding: 12,
     },
-    actionText: {
-        fontSize: 16,
-        fontWeight: '600',
-    }
+    issueText: { flex: 1, fontSize: 13, color: COLORS.textLight, fontWeight: '500' },
+    rateBtn: {
+        backgroundColor: '#FFF8E1', borderRadius: 16, padding: 16,
+        alignItems: 'center', borderWidth: 1, borderColor: '#FFD700',
+    },
+    rateBtnText: { fontSize: 16, fontWeight: '800', color: '#B8860B' },
 });
 
 export default OrderTrackingScreen;
