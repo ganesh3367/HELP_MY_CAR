@@ -19,9 +19,7 @@ import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 import { useLocation } from '../context/LocationContext';
 
-// ─── Keys ────────────────────────────────────────────────────────────────────
-// ⚠  Replace this with your own key from console.cloud.google.com
-//    Enable: Maps SDK for Android/iOS  +  Places API (New)
+// Replace this with your own key from console.cloud.google.com
 const GOOGLE_MAPS_API_KEY = 'AIzaSyA3oFvnPMBJWcPLvqSHHvLcMfgbxLNq7oo';
 
 // ─── Haversine (km) ───────────────────────────────────────────────────────────
@@ -38,7 +36,6 @@ const haversine = (lat1, lon1, lat2, lon2) => {
 const { width, height } = Dimensions.get('window');
 const MAP_HEIGHT = height * 0.52;
 
-// ─── Dynamic API URL (works on emulator AND physical device) ──────────────────
 const getApiUrl = () => {
     const debuggerHost = Constants.expoConfig?.hostUri || '';
     let host = debuggerHost.split(':')[0];
@@ -49,28 +46,138 @@ const getApiUrl = () => {
 };
 const API_URL = getApiUrl();
 
-// ─── Custom car / wrench marker component ────────────────────────────────────
 const MechanicMarker = ({ selected }) => (
     <View style={[styles.marker, selected && styles.markerSelected]}>
         <Wrench size={16} color={selected ? COLORS.white : COLORS.primary} />
     </View>
 );
 
-// ─── User's live blue dot ─────────────────────────────────────────────────────
 const UserMarker = () => (
     <View style={styles.userDotOuter}>
         <View style={styles.userDotInner} />
     </View>
 );
 
-// ─── ETA badge ────────────────────────────────────────────────────────────────
+const MechanicCard = ({ item, index, isSelected, onSelect, navigation }) => {
+    const etaMin = item.distance != null ? Math.ceil(item.distance * 3) : null;
+    const isElite = (item.rating || 0) >= 4.5;
+    const experience = item.yearsOfExperience || (isElite ? 10 + (index % 5) : 3 + (index % 7));
+
+    const translateY = useRef(new Animated.Value(50)).current;
+    const opacity = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.spring(translateY, {
+                toValue: 0,
+                useNativeDriver: true,
+                friction: 8,
+                delay: index * 100
+            }),
+            Animated.timing(opacity, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: true,
+                delay: index * 100
+            })
+        ]).start();
+    }, [index, opacity, translateY]);
+
+    return (
+        <Animated.View style={{ transform: [{ translateY }], opacity }}>
+            <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={onSelect}
+                style={[styles.card, isSelected && styles.cardSelected]}
+            >
+                <View style={styles.cardContent}>
+                    <View style={styles.cardHeader}>
+                        <View style={{ flex: 1 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+                                {isElite && (
+                                    <View style={styles.eliteBadge}>
+                                        <ShieldCheck size={12} color="#D4AF37" />
+                                        <Text style={styles.eliteText}>Elite</Text>
+                                    </View>
+                                )}
+                            </View>
+                            <View style={styles.addressRow}>
+                                <MapPin size={12} color={COLORS.textLight} />
+                                <Text style={styles.cardAddress} numberOfLines={1}>{item.address}</Text>
+                            </View>
+                        </View>
+                        <View style={styles.ratingRow}>
+                            <Star size={14} color="#FFB800" fill="#FFB800" />
+                            <Text style={styles.ratingText}>{item.rating?.toFixed(1) || '—'}</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.trustRow}>
+                        <View style={styles.experienceTag}>
+                            <Text style={styles.experienceText}>{experience}+ Years EXP</Text>
+                        </View>
+                        <View style={styles.specialtyTag}>
+                            <Text style={styles.specialtyText}>
+                                {item.specialties?.[0] || 'Car Specialist'}
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.statRow}>
+                        <View style={styles.statItem}>
+                            <Clock size={14} color={COLORS.primary} />
+                            <Text style={styles.statText}>{etaMin ? `${etaMin} min` : '5 min'}</Text>
+                        </View>
+                        <View style={styles.statDot} />
+                        <View style={styles.statItem}>
+                            <MapPin size={14} color={COLORS.primary} />
+                            <Text style={styles.statText}>{item.distance != null ? `${item.distance.toFixed(1)} km` : 'Near'}</Text>
+                        </View>
+                        {item.openNow !== undefined && (
+                            <>
+                                <View style={styles.statDot} />
+                                <Text style={[styles.statusText, { color: item.openNow ? '#27ae60' : '#e74c3c' }]}>
+                                    {item.openNow ? 'Open Now' : 'Closed'}
+                                </Text>
+                            </>
+                        )}
+                    </View>
+
+                    <View style={styles.actionRow}>
+                        <TouchableOpacity
+                            style={styles.navBtn}
+                            onPress={() => {
+                                const lat = item.lat || item.location?.lat;
+                                const lng = item.lng || item.location?.lng;
+                                const url = Platform.select({
+                                    ios: `maps://app?daddr=${lat},${lng}`,
+                                    android: `google.navigation:q=${lat},${lng}`
+                                });
+                                require('react-native').Linking.openURL(url);
+                            }}
+                        >
+                            <Navigation size={18} color={COLORS.primary} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.bookBtn}
+                            onPress={() => navigation.navigate('MechanicProfile', { mechanic: item })}
+                        >
+                            <Text style={styles.bookBtnText}>Book Mechanic</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </TouchableOpacity>
+        </Animated.View>
+    );
+};
+
 const EtaBadge = ({ minutes }) => (
     <View style={styles.etaBadge}>
         <Text style={styles.etaText}>{minutes ? `${minutes} min` : '~5 min'}</Text>
     </View>
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
 const NearbyMechanicsScreen = ({ navigation }) => {
     const { params } = useRoute();
     const { location, loading: locationLoading, requestLocation } = useLocation();
@@ -84,7 +191,6 @@ const NearbyMechanicsScreen = ({ navigation }) => {
     const listRef = useRef(null);
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
-    // Pulsing animation for user dot
     useEffect(() => {
         Animated.loop(
             Animated.sequence([
@@ -94,22 +200,18 @@ const NearbyMechanicsScreen = ({ navigation }) => {
         ).start();
     }, [pulseAnim]);
 
-    // ── Active coordinates ──────────────────────────────────────────────────
     const activeCoords = useMemo(() => {
         if (pickedLocation) return pickedLocation;
         if (location?.coords) {
             return { lat: location.coords.latitude, lng: location.coords.longitude };
         }
-        return null; // not ready yet
+        return null;
     }, [pickedLocation, location?.coords]);
 
-    // ── Fetch nearby mechanics ──────────────────────────────────────────────
-    // Priority: 1) Google Places Nearby Search   2) App backend   3) Mock data
     const fetchMechanics = useCallback(async () => {
         if (!activeCoords) return;
         setLoading(true);
 
-        // ── 1. Google Places Nearby Search ─────────────────────────────────
         try {
             const { lat, lng } = activeCoords;
             const url =
@@ -145,15 +247,10 @@ const NearbyMechanicsScreen = ({ navigation }) => {
                 setLoading(false);
                 return;
             }
-
-            if (json.status === 'REQUEST_DENIED') {
-                console.warn('[Places] Key issue:', json.error_message);
-            }
-        } catch (placeErr) {
-            console.warn('[Places] Request failed:', placeErr.message);
+        } catch (err) {
+            console.warn('[Places] Request failed:', err.message);
         }
 
-        // ── 2. App backend fallback ─────────────────────────────────────────
         try {
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 3000);
@@ -170,7 +267,6 @@ const NearbyMechanicsScreen = ({ navigation }) => {
             console.warn('[NearbyMechanics] Backend unreachable, using mock data');
         }
 
-        // ── 3. Local mock fallback ──────────────────────────────────────────
         const withDistance = (contextMechanics || []).map(m => {
             const mLat = m.location?.lat ?? m.lat;
             const mLng = m.location?.lng ?? m.lng;
@@ -191,7 +287,6 @@ const NearbyMechanicsScreen = ({ navigation }) => {
         }
     }, [locationLoading, activeCoords, fetchMechanics]);
 
-    // ── Pan map to user ─────────────────────────────────────────────────────
     const goToUser = () => {
         if (!activeCoords || !mapRef.current) return;
         mapRef.current.animateToRegion(
@@ -274,25 +369,6 @@ const NearbyMechanicsScreen = ({ navigation }) => {
                             </Marker>
                         )}
 
-                        {/* Mechanic markers */}
-                        {mechanics.map((m, idx) => {
-                            const lat = m.location?.lat;
-                            const lng = m.location?.lng;
-                            if (!lat || !lng) return null;
-                            const isSelected = (m._id || m.id) === selectedId;
-                            return (
-                                <Marker
-                                    key={m._id || m.id || idx}
-                                    coordinate={{ latitude: lat, longitude: lng }}
-                                    anchor={{ x: 0.5, y: 0.5 }}
-                                    tracksViewChanges={false}
-                                    onPress={() => handleSelectMechanic(m, idx)}
-                                >
-                                    <MechanicMarker selected={isSelected} />
-                                    {isSelected && <EtaBadge />}
-                                </Marker>
-                            );
-                        })}
                     </MapView>
                 ) : (
                     <View style={styles.mapLoading}>
@@ -372,111 +448,15 @@ const NearbyMechanicsScreen = ({ navigation }) => {
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.horizontalList}
                         onScrollToIndexFailed={() => { }}
-                        renderItem={({ item, index }) => {
-                            const isSelected = (item._id || item.id) === selectedId;
-                            const etaMin = item.distance != null ? Math.ceil(item.distance * 3) : null;
-                            const isElite = (item.rating || 0) >= 4.5;
-                            const experience = item.yearsOfExperience || (isElite ? 10 + (index % 5) : 3 + (index % 7));
-
-                            // Entrance Animation
-                            const translateY = useRef(new Animated.Value(50)).current;
-                            const opacity = useRef(new Animated.Value(0)).current;
-
-                            useEffect(() => {
-                                Animated.parallel([
-                                    Animated.spring(translateY, { toValue: 0, useNativeDriver: true, friction: 8, delay: index * 100 }),
-                                    Animated.timing(opacity, { toValue: 1, duration: 400, useNativeDriver: true, delay: index * 100 })
-                                ]).start();
-                            }, []);
-
-                            return (
-                                <Animated.View style={{ transform: [{ translateY }], opacity }}>
-                                    <TouchableOpacity
-                                        activeOpacity={0.8}
-                                        onPress={() => handleSelectMechanic(item, index)}
-                                        style={[styles.card, isSelected && styles.cardSelected]}
-                                    >
-                                        <View style={styles.cardContent}>
-                                            <View style={styles.cardHeader}>
-                                                <View style={{ flex: 1 }}>
-                                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                                        <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-                                                        {isElite && (
-                                                            <View style={styles.eliteBadge}>
-                                                                <ShieldCheck size={12} color="#D4AF37" />
-                                                                <Text style={styles.eliteText}>Elite</Text>
-                                                            </View>
-                                                        )}
-                                                    </View>
-                                                    <View style={styles.addressRow}>
-                                                        <MapPin size={12} color={COLORS.textLight} />
-                                                        <Text style={styles.cardAddress} numberOfLines={1}>{item.address}</Text>
-                                                    </View>
-                                                </View>
-                                                <View style={styles.ratingRow}>
-                                                    <Star size={14} color="#FFB800" fill="#FFB800" />
-                                                    <Text style={styles.ratingText}>{item.rating?.toFixed(1) || '—'}</Text>
-                                                </View>
-                                            </View>
-
-                                            <View style={styles.trustRow}>
-                                                <View style={styles.experienceTag}>
-                                                    <Text style={styles.experienceText}>{experience}+ Years EXP</Text>
-                                                </View>
-                                                <View style={styles.specialtyTag}>
-                                                    <Text style={styles.specialtyText}>
-                                                        {item.specialties?.[0] || 'Car Specialist'}
-                                                    </Text>
-                                                </View>
-                                            </View>
-
-                                            <View style={styles.statRow}>
-                                                <View style={styles.statItem}>
-                                                    <Clock size={14} color={COLORS.primary} />
-                                                    <Text style={styles.statText}>{etaMin ? `${etaMin} min` : '5 min'}</Text>
-                                                </View>
-                                                <View style={styles.statDot} />
-                                                <View style={styles.statItem}>
-                                                    <MapPin size={14} color={COLORS.primary} />
-                                                    <Text style={styles.statText}>{item.distance != null ? `${item.distance.toFixed(1)} km` : 'Near'}</Text>
-                                                </View>
-                                                {item.openNow !== undefined && (
-                                                    <>
-                                                        <View style={styles.statDot} />
-                                                        <Text style={[styles.statusText, { color: item.openNow ? '#27ae60' : '#e74c3c' }]}>
-                                                            {item.openNow ? 'Open Now' : 'Closed'}
-                                                        </Text>
-                                                    </>
-                                                )}
-                                            </View>
-
-                                            <View style={styles.actionRow}>
-                                                <TouchableOpacity
-                                                    style={styles.navBtn}
-                                                    onPress={() => {
-                                                        const lat = item.lat || item.location?.lat;
-                                                        const lng = item.lng || item.location?.lng;
-                                                        const url = Platform.select({
-                                                            ios: `maps://app?daddr=${lat},${lng}`,
-                                                            android: `google.navigation:q=${lat},${lng}`
-                                                        });
-                                                        require('react-native').Linking.openURL(url);
-                                                    }}
-                                                >
-                                                    <Navigation size={18} color={COLORS.primary} />
-                                                </TouchableOpacity>
-                                                <TouchableOpacity
-                                                    style={styles.bookBtn}
-                                                    onPress={() => navigation.navigate('MechanicProfile', { mechanic: item })}
-                                                >
-                                                    <Text style={styles.bookBtnText}>Book Mechanic</Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        </View>
-                                    </TouchableOpacity>
-                                </Animated.View>
-                            );
-                        }}
+                        renderItem={({ item, index }) => (
+                            <MechanicCard
+                                item={item}
+                                index={index}
+                                isSelected={(item._id || item.id) === selectedId}
+                                onSelect={() => handleSelectMechanic(item, index)}
+                                navigation={navigation}
+                            />
+                        )}
                     />
                 )}
             </View>
@@ -484,7 +464,6 @@ const NearbyMechanicsScreen = ({ navigation }) => {
     );
 };
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -833,8 +812,8 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     sheetTitle: {
-        fontSize: 20,
-        fontWeight: '700',
+        fontSize: 17,
+        fontWeight: '800',
         color: COLORS.text,
     },
 });

@@ -1,9 +1,3 @@
-/**
- * MechanicsScreen — Browse, filter, sort and quick-book mechanics
- * Features: filter by specialty, sort by rating/distance/price, verified badge,
- *           quick-book with service selector, "Available Now" toggle
- */
-import { useNavigation } from '@react-navigation/native';
 import {
     CheckCircle,
     ChevronDown,
@@ -25,7 +19,6 @@ import { useLocation } from '../context/LocationContext';
 
 const { width } = Dimensions.get('window');
 
-// ── Filter / sort config ──────────────────────────────────────────────────────
 const SORT_OPTIONS = [
     { key: 'rating', label: '★ Top Rated' },
     { key: 'distance', label: '📍 Nearest' },
@@ -45,7 +38,6 @@ const SPECIALTY_FILTERS = [
     'Suspension',
 ];
 
-// ── Haversine ─────────────────────────────────────────────────────────────────
 const haversine = (lat1, lon1, lat2, lon2) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) return 999;
     const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
@@ -53,7 +45,6 @@ const haversine = (lat1, lon1, lat2, lon2) => {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-// ── Mechanic card ─────────────────────────────────────────────────────────────
 const MechanicCard = ({ item, dist, index, onBook, onProfile }) => {
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -62,7 +53,6 @@ const MechanicCard = ({ item, dist, index, onBook, onProfile }) => {
     const isElite = (item.rating || 0) >= 4.5;
     const experience = item.yearsOfExperience || (isElite ? 10 + (index % 5) : 3 + (index % 7));
 
-    // Entrance Animation
     const translateY = useRef(new Animated.Value(50)).current;
     const opacity = useRef(new Animated.Value(0)).current;
 
@@ -179,7 +169,6 @@ const MechanicCard = ({ item, dist, index, onBook, onProfile }) => {
     );
 };
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
 const MechanicsScreen = () => {
     const navigation = useNavigation();
     const { mechanics } = useAppContext();
@@ -208,7 +197,6 @@ const MechanicsScreen = () => {
             reviewCount: m.reviewCount ?? m.reviews?.length ?? Math.floor(Math.random() * 200 + 10),
         }));
 
-        // Search
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter(m =>
@@ -225,10 +213,8 @@ const MechanicsScreen = () => {
             ));
         }
 
-        // Available only toggle
         if (availableOnly) list = list.filter(m => m.available !== false);
 
-        // Sort
         list.sort((a, b) => {
             if (sortKey === 'rating') return (b.rating || 0) - (a.rating || 0);
             if (sortKey === 'distance') return a._dist - b._dist;
@@ -248,7 +234,6 @@ const MechanicsScreen = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* ── Header ─────────────────────────────────────── */}
             <View style={styles.header}>
                 <View style={styles.titleRow}>
                     <Text style={styles.title}>Mechanics</Text>
@@ -311,7 +296,6 @@ const MechanicsScreen = () => {
                 </ScrollView>
             </View>
 
-            {/* ── List ────────────────────────────────────────── */}
             {loading ? (
                 <View style={{ padding: SPACING.lg }}>
                     {[1, 2, 3].map(i => (
@@ -412,8 +396,6 @@ const styles = StyleSheet.create({
     filterChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
     filterChipText: { fontSize: 13, fontWeight: '700', color: COLORS.textLight },
 
-    // Card
-    // Card Refinement
     list: { padding: 18, paddingBottom: 100 },
     card: {
         backgroundColor: COLORS.white,
