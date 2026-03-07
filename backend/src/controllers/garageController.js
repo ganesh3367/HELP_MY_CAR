@@ -1,4 +1,4 @@
-const Garage = require('../models/Garage');
+const { db } = require('../config/firebase');
 
 // Haversine formula to compute distance in km
 const haversine = (lat1, lon1, lat2, lon2) => {
@@ -11,6 +11,33 @@ const haversine = (lat1, lon1, lat2, lon2) => {
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
+
+const MOCK_GARAGES = [
+    {
+        id: 'mock-1',
+        name: 'Pune Auto Care',
+        address: 'FC Road, Deccan Gymkhana, Pune',
+        location: { lat: 18.5167, lng: 73.8412 },
+        phone: '+91 20 2567 8901',
+        rating: 4.7,
+        reviewCount: 12,
+        estimatedCost: '₹500 - ₹2000',
+        specialties: ['General Service', 'Oil Change'],
+        experience: '10 Years'
+    },
+    {
+        id: 'mock-2',
+        name: 'Kothrud Mechanic Hub',
+        address: 'Paud Road, Kothrud, Pune',
+        location: { lat: 18.5074, lng: 73.8077 },
+        phone: '+91 20 2543 2109',
+        rating: 4.5,
+        reviewCount: 8,
+        estimatedCost: '₹300 - ₹1500',
+        specialties: ['Brakes', 'Clutch Repair'],
+        experience: '8 Years'
+    }
+];
 
 // @desc    Get garages within radius
 // @route   GET /api/garages/nearby
@@ -26,33 +53,26 @@ const getNearbyGarages = async (req, res) => {
         const userLat = parseFloat(lat);
         const userLng = parseFloat(lng);
 
-        const garages = await Garage.find({
-            location: {
-                $nearSphere: {
-                    $geometry: {
-                        type: 'Point',
-                        coordinates: [userLng, userLat]
-                    },
-                    $maxDistance: parseFloat(radius) * 1000
-                }
-            }
-        });
+        let garages = [];
+
+        if (!db) {
+            console.log('Firebase not initialized. Using MOCK GARAGES.');
+            garages = MOCK_GARAGES;
+        } else {
+            const snapshot = await db.collection('garages').get();
+            garages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
 
         const results = garages.map(g => {
-            const doc = g.toObject();
-            const garageLat = doc.location.coordinates[1];
-            const garageLng = doc.location.coordinates[0];
+            const garageLat = g.location.lat;
+            const garageLng = g.location.lng;
             const distance = haversine(userLat, userLng, garageLat, garageLng);
             return {
-                ...doc,
-                id: doc._id,
-                location: {
-                    lat: garageLat,
-                    lng: garageLng
-                },
+                ...g,
                 distance: parseFloat(distance.toFixed(2))
             };
-        });
+        }).filter(g => g.distance <= parseFloat(radius))
+            .sort((a, b) => a.distance - b.distance);
 
         res.status(200).json({
             success: true,
@@ -73,21 +93,29 @@ const addReview = async (req, res) => {
         const { id } = req.params;
         const { rating } = req.body;
 
-        const garage = await Garage.findById(id);
-        if (!garage) {
+        if (!db) {
+            return res.status(200).json({ success: true, message: 'Mock review added (Firebase disabled)' });
+        }
+
+        const garageRef = db.collection('garages').doc(id);
+        const doc = await garageRef.get();
+        if (!doc.exists) {
             return res.status(404).json({ success: false, message: 'Garage not found' });
         }
 
-        // Simplistic review update for demo
-        const newTotalRating = (garage.rating * garage.reviewCount) + parseFloat(rating);
-        garage.reviewCount += 1;
-        garage.rating = parseFloat((newTotalRating / garage.reviewCount).toFixed(1));
+        const garage = doc.data();
+        const reviewCount = (garage.reviewCount || 0) + 1;
+        const currentRating = garage.rating || 0;
+        const newRating = parseFloat(((currentRating * (reviewCount - 1) + parseFloat(rating)) / reviewCount).toFixed(1));
 
-        await garage.save();
+        await garageRef.update({
+            reviewCount,
+            rating: newRating
+        });
 
         res.status(200).json({
             success: true,
-            data: garage
+            data: { ...garage, id, reviewCount, rating: newRating }
         });
     } catch (error) {
         console.error('Add Review Error:', error);
@@ -100,69 +128,57 @@ const addReview = async (req, res) => {
 // @access  Public
 const seedGarages = async (req, res) => {
     try {
-        await Garage.deleteMany({});
-
         const mockMechanics = [
             {
                 name: 'Pune Auto Care',
                 address: 'FC Road, Deccan Gymkhana, Pune',
-                location: { type: 'Point', coordinates: [73.8412, 18.5167] },
+                location: { lat: 18.5167, lng: 73.8412 },
                 phone: '+91 20 2567 8901',
                 rating: 4.7,
                 reviewCount: 12,
                 estimatedCost: '₹500 - ₹2000',
                 specialties: ['General Service', 'Oil Change'],
-                experience: '10 Years'
+                experience: '10 Years',
+                createdAt: new Date().toISOString()
             },
             {
                 name: 'Kothrud Mechanic Hub',
                 address: 'Paud Road, Kothrud, Pune',
-                location: { type: 'Point', coordinates: [73.8077, 18.5074] },
+                location: { lat: 18.5074, lng: 73.8077 },
                 phone: '+91 20 2543 2109',
                 rating: 4.5,
                 reviewCount: 8,
                 estimatedCost: '₹300 - ₹1500',
                 specialties: ['Brakes', 'Clutch Repair'],
-                experience: '8 Years'
+                experience: '8 Years',
+                createdAt: new Date().toISOString()
             },
             {
                 name: 'Viman Nagar Auto Solutions',
                 address: 'Symbiosis Road, Viman Nagar, Pune',
-                location: { type: 'Point', coordinates: [73.9143, 18.5679] },
+                location: { lat: 18.5679, lng: 73.9143 },
                 phone: '+91 20 2663 4567',
                 rating: 4.8,
                 reviewCount: 15,
                 estimatedCost: '₹800 - ₹5000',
                 specialties: ['AC Service', 'Electrical'],
-                experience: '12 Years'
-            },
-            {
-                name: 'Hinjewadi Quick Fix',
-                address: 'Phase 1, IT Park, Hinjewadi, Pune',
-                location: { type: 'Point', coordinates: [73.7389, 18.5913] },
-                phone: '+91 20 2293 8888',
-                rating: 4.6,
-                reviewCount: 5,
-                estimatedCost: '₹400 - ₹2500',
-                specialties: ['Tyre Change', 'Battery'],
-                experience: '5 Years'
-            },
-            {
-                name: 'Hadapsar Royal Mechanics',
-                address: 'Magarpatta City, Hadapsar, Pune',
-                location: { type: 'Point', coordinates: [73.9260, 18.5089] },
-                phone: '+91 20 2689 9999',
-                rating: 4.9,
-                reviewCount: 20,
-                estimatedCost: '₹1000 - ₹7000',
-                specialties: ['Engine Overhaul', 'Painting'],
-                experience: '15 Years'
+                experience: '12 Years',
+                createdAt: new Date().toISOString()
             }
         ];
 
-        await Garage.insertMany(mockMechanics);
+        if (!db) {
+            return res.status(201).json({ success: true, message: 'Garages seeded successfully to MOCK MODE' });
+        }
 
-        res.status(201).json({ success: true, message: 'Garages seeded successfully to MongoDB' });
+        const batch = db.batch();
+        mockMechanics.forEach(mech => {
+            const ref = db.collection('garages').doc();
+            batch.set(ref, mech);
+        });
+        await batch.commit();
+
+        res.status(201).json({ success: true, message: 'Garages seeded successfully to Firestore' });
     } catch (error) {
         console.error('Seed Error Detail:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -176,15 +192,23 @@ const getGarageByOwner = async (req, res) => {
     try {
         const { email } = req.params;
 
-        const garage = await Garage.findOne({ ownerEmail: email });
+        if (!db) {
+            return res.status(200).json({
+                success: true,
+                data: MOCK_GARAGES[0]
+            });
+        }
 
-        if (!garage) {
+        const snapshot = await db.collection('garages').where('ownerEmail', '==', email).limit(1).get();
+
+        if (snapshot.empty) {
             return res.status(404).json({ success: false, message: 'Garage not found for this owner email' });
         }
 
+        const doc = snapshot.docs[0];
         res.status(200).json({
             success: true,
-            data: garage
+            data: { id: doc.id, ...doc.data() }
         });
     } catch (error) {
         console.error('Get Garage By Owner Error:', error);

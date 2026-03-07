@@ -1,5 +1,4 @@
-const Order = require('../models/Order');
-const Garage = require('../models/Garage');
+const { db } = require('../config/firebase');
 
 // @desc    Create a new order
 // @route   POST /api/orders
@@ -12,36 +11,51 @@ const createOrder = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Missing required order fields.' });
         }
 
-        const garage = await Garage.findById(garageId);
-        if (!garage) {
-            return res.status(404).json({ success: false, message: 'Garage not found' });
+        let garageName = 'Unknown Garage';
+        let mechanicLocation = { lat: 18.5204, lng: 73.8567 }; // Default
+
+        if (db) {
+            const garageDoc = await db.collection('garages').doc(garageId).get();
+            if (garageDoc.exists) {
+                const garage = garageDoc.data();
+                garageName = garage.name;
+                mechanicLocation = garage.location;
+            }
+        } else {
+            console.log('Firebase not initialized. Using MOCK GARAGE for order.');
+            garageName = 'Mock Garage';
         }
 
-        // Initialize mechanic location from garage location
-        const mechanicLocation = {
-            lat: garage.location.coordinates[1],
-            lng: garage.location.coordinates[0]
-        };
-
-        const order = new Order({
+        const newOrder = {
             userId,
             garageId,
-            garageName: garage.name,
+            garageName,
             vehicleDetails,
             userLocation,
             mechanicLocation,
-            status: 'PENDING'
-        });
+            status: 'PENDING',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
 
-        await order.save();
+        let orderId = 'mock-order-' + Date.now();
 
-        // Emit socket event if needed (optional here, usually handled in tracking)
+        if (db) {
+            const orderRef = await db.collection('orders').add(newOrder);
+            orderId = orderRef.id;
+        }
+
+        const orderData = { id: orderId, ...newOrder };
+
+        // Emit socket event
         const io = req.app.get('io');
-        // io.emit('new_order', order); // Notify mechanics if widespread
+        if (io) {
+            io.emit('new_order', orderData);
+        }
 
         res.status(201).json({
             success: true,
-            data: order
+            data: orderData
         });
     } catch (error) {
         console.error('Create Order Error:', error);
@@ -56,15 +70,26 @@ const trackOrder = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const order = await Order.findById(id);
+        if (!db || id.startsWith('mock-')) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    id,
+                    status: 'PENDING',
+                    mechanicLocation: { lat: 18.5204, lng: 73.8567 }
+                }
+            });
+        }
 
-        if (!order) {
+        const doc = await db.collection('orders').doc(id).get();
+
+        if (!doc.exists) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
         res.status(200).json({
             success: true,
-            data: order
+            data: { id: doc.id, ...doc.data() }
         });
     } catch (error) {
         console.error('Track Order Error:', error);
@@ -79,7 +104,16 @@ const getGarageOrders = async (req, res) => {
     try {
         const { garageId } = req.params;
 
-        const orders = await Order.find({ garageId }).sort({ createdAt: -1 });
+        if (!db) {
+            return res.status(200).json({
+                success: true,
+                count: 0,
+                data: []
+            });
+        }
+
+        const snapshot = await db.collection('orders').where('garageId', '==', garageId).orderBy('createdAt', 'desc').get();
+        const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         res.status(200).json({
             success: true,
@@ -105,21 +139,30 @@ const updateOrderStatus = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid status' });
         }
 
-        const updateData = { updatedAt: new Date() };
+        const updateData = { updatedAt: new Date().toISOString() };
         if (status) updateData.status = status;
         if (mechanicLocation) updateData.mechanicLocation = mechanicLocation;
 
-        const order = await Order.findByIdAndUpdate(id, updateData, { new: true });
-
-        if (!order) {
-            return res.status(404).json({ success: false, message: 'Order not found' });
+        if (!db || id.startsWith('mock-')) {
+            return res.status(200).json({
+                success: true,
+                data: { id, ...updateData }
+            });
         }
 
-        // Emit Socket.io update to users tracking this order
+        const orderRef = db.collection('orders').doc(id);
+        await orderRef.update(updateData);
+
+        const updatedDoc = await orderRef.get();
+        const order = { id: updatedDoc.id, ...updatedDoc.data() };
+
+        // Emit Socket.io update
         const io = req.app.get('io');
-        io.to(id).emit('order_updated', order);
-        if (mechanicLocation) {
-            io.to(id).emit('location_updated', mechanicLocation);
+        if (id) {
+            io.to(id).emit('order_updated', order);
+            if (mechanicLocation) {
+                io.to(id).emit('location_updated', mechanicLocation);
+            }
         }
 
         res.status(200).json({
