@@ -3,7 +3,6 @@
  * Manages global application state including mechanics list, orders, and favorites.
  * Handles API calls for fetching mechanics and order management with fallback mock data.
  */
-import Constants from 'expo-constants';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { TOWING_SERVICES } from '../constants/mockData';
 import { useAuth } from './AuthContext';
@@ -11,20 +10,7 @@ import { useLocation } from './LocationContext';
 
 const AppContext = createContext();
 
-// Get the host IP dynamically for physical devices and emulators
-import { Platform } from 'react-native';
-
-const getApiUrl = () => {
-    const debuggerHost = Constants.expoConfig?.hostUri || '';
-    let host = debuggerHost.split(':')[0];
-    if (!host) {
-        host = Platform.OS === 'android' ? '10.0.2.2' : '127.0.0.1';
-    }
-    return `http://${host}:5002/api`;
-};
-
-const API_URL = getApiUrl();
-console.log('[AppContext] Calculated API_URL:', API_URL);
+import { API_URL } from '../config';
 
 const MOCK_MECHANICS = [
     {

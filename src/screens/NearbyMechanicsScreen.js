@@ -1,5 +1,4 @@
 import { useRoute } from '@react-navigation/native';
-import Constants from 'expo-constants';
 import { Clock, MapPin, Navigation, Navigation2, RefreshCw, ShieldCheck, Star, Wrench } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -36,15 +35,7 @@ const haversine = (lat1, lon1, lat2, lon2) => {
 const { width, height } = Dimensions.get('window');
 const MAP_HEIGHT = height * 0.52;
 
-const getApiUrl = () => {
-    const debuggerHost = Constants.expoConfig?.hostUri || '';
-    let host = debuggerHost.split(':')[0];
-    if (!host) {
-        host = Platform.OS === 'android' ? '10.0.2.2' : '127.0.0.1';
-    }
-    return `http://${host}:5002/api`;
-};
-const API_URL = getApiUrl();
+import { API_URL } from '../config';
 
 const MechanicMarker = ({ selected }) => (
     <View style={[styles.marker, selected && styles.markerSelected]}>

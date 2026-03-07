@@ -1,13 +1,19 @@
+import { useNavigation } from '@react-navigation/native';
 import {
     CheckCircle,
     ChevronDown,
+    Clock,
     Filter,
+    MapPin,
+    Navigation,
     Phone, Search,
+    ShieldCheck,
     Star, Wrench, X
 } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Animated, Dimensions, FlatList, Modal,
+    Platform,
     ScrollView,
     StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
