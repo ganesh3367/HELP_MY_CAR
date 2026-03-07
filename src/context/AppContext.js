@@ -170,15 +170,27 @@ export const AppProvider = ({ children }) => {
             const mockOrder = {
                 id: 'local_mock_' + Date.now(),
                 _id: 'local_mock_' + Date.now(),
-                status: 'ON_THE_WAY',
+                status: 'PENDING', // Start with PENDING
                 garageId,
                 garageName: garage?.name || 'Nearby Mechanic',
                 mechanic: { name: garage?.name, rating: garage?.rating || 4.8, phone: '+911234567890' },
                 vehicleDetails,
-                mechanicLocation: { lat: loc.lat + (Math.random() - 0.5) * 0.03, lng: loc.lng + (Math.random() - 0.5) * 0.03 },
+                mechanicLocation: {
+                    lat: loc.lat + (Math.random() - 0.5) * 0.05,
+                    lng: loc.lng + (Math.random() - 0.5) * 0.05
+                },
                 userLocation: loc,
-                etaMinutes: 8,
+                etaMinutes: 12,
             };
+
+            // Auto-advance mock order status for better UX
+            setTimeout(() => {
+                setCurrentOrder(prev => prev?.id === mockOrder.id ? { ...prev, status: 'ACCEPTED' } : prev);
+                setTimeout(() => {
+                    setCurrentOrder(prev => prev?.id === mockOrder.id ? { ...prev, status: 'ON_THE_WAY', etaMinutes: 8 } : prev);
+                }, 3000);
+            }, 3000);
+
             setCurrentOrder(mockOrder);
             return mockOrder;
         } finally {

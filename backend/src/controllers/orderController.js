@@ -53,6 +53,21 @@ const createOrder = async (req, res) => {
             io.emit('new_order', orderData);
         }
 
+        // AUTO-ADVANCE order status for demo purposes
+        if (io) {
+            setTimeout(async () => {
+                const statusUpdate = { status: 'ACCEPTED', updatedAt: new Date().toISOString() };
+                if (db) await db.collection('orders').doc(orderId).update(statusUpdate);
+                io.emit('order_updated', { id: orderId, ...statusUpdate });
+
+                setTimeout(async () => {
+                    const statusUpdate2 = { status: 'ON_THE_WAY', updatedAt: new Date().toISOString() };
+                    if (db) await db.collection('orders').doc(orderId).update(statusUpdate2);
+                    io.emit('order_updated', { id: orderId, ...statusUpdate2 });
+                }, 5000);
+            }, 3000);
+        }
+
         res.status(201).json({
             success: true,
             data: orderData

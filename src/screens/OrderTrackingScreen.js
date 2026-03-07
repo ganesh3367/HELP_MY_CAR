@@ -119,13 +119,19 @@ const OrderTrackingScreen = () => {
 
     // ── Poll + socket ─────────────────────────────────────────────────────
     useEffect(() => {
-        const orderId = order?._id || order?.id;
+        const orderId = order?.id || order?._id;
         if (!orderId) return;
 
         // Initial fetch
         const fetchOnce = async () => {
             const updated = await trackOrderStatus(orderId);
-            if (updated) setOrder(updated);
+            if (updated) {
+                setOrder(updated);
+                // Also update mechanic coords if available
+                if (updated.mechanicLocation) {
+                    setMechanicCoords({ lat: updated.mechanicLocation.lat, lng: updated.mechanicLocation.lng });
+                }
+            }
         };
         fetchOnce();
 
@@ -136,7 +142,6 @@ const OrderTrackingScreen = () => {
         onLocationUpdate((newCoords) => {
             setMechanicCoords(newCoords);
             setLocationPath(prev => [...prev.slice(-50), { latitude: newCoords.lat, longitude: newCoords.lng }]);
-            // Auto-pan map to keep both markers visible
             panMapToBoth(newCoords);
         });
 
@@ -152,7 +157,7 @@ const OrderTrackingScreen = () => {
             offOrderStatusUpdate();
             disconnectSocket();
         };
-    }, [order?._id]);
+    }, [order?.id, order?._id]);
 
     // ── Pan map to show both user + mechanic ──────────────────────────────
     const panMapToBoth = useCallback((mechCoords) => {
