@@ -64,7 +64,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                         onPress={() => navigation.navigate('Profile')}
                     >
                         <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'G'}</Text>
+                            <Text style={styles.avatarText}>{(user?.name || 'G').charAt(0)}</Text>
                         </View>
                     </TouchableOpacity>
                 </View>

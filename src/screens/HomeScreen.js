@@ -130,7 +130,7 @@ const HomeScreen = ({ navigation }) => {
                                     onPress={() => navigation.navigate('Profile')}
                                 >
                                     <View style={styles.avatarLarge}>
-                                        <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'G'}</Text>
+                                        <Text style={styles.avatarText}>{(user?.name || 'G').charAt(0)}</Text>
                                     </View>
                                 </TouchableOpacity>
                             </>

@@ -189,7 +189,7 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                         <View key={review.id} style={styles.reviewCard}>
                             <View style={styles.reviewHeader}>
                                 <View style={styles.reviewerAvatar}>
-                                    <Text style={styles.reviewerInitials}>{review.user.charAt(0)}</Text>
+                                    <Text style={styles.reviewerInitials}>{(review.user || 'U').charAt(0)}</Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
                                     <Text style={styles.reviewerName}>{review.user}</Text>
