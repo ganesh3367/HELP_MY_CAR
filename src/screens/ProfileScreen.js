@@ -31,7 +31,7 @@ const ProfileScreen = ({ navigation }) => {
             <ScrollView contentContainerStyle={styles.scroll}>
                 <View style={styles.profileHeader}>
                     <View style={styles.avatarLarge}>
-                        <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase() || 'U'}</Text>
+                        <Text style={styles.avatarText}>{(user?.name || 'U').charAt(0).toUpperCase()}</Text>
                     </View>
                     <Text style={styles.profileName}>{user?.name || 'User'}</Text>
                     <Text style={styles.profileEmail}>{user?.email || 'user@example.com'}</Text>
