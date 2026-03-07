@@ -51,7 +51,7 @@ exports.signup = async (req, res) => {
                 location: { lat: 18.5204, lng: 73.8567 },
                 rating: 0,
                 estimatedCost: 'TBD',
-                specialties: ['General Repair'],
+                specialties: ['General Repair', 'Towing'],
                 createdAt: new Date().toISOString()
             };
 

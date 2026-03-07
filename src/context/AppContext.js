@@ -76,7 +76,7 @@ export const AppProvider = ({ children }) => {
     const locationContext = useLocation();
     const userLocation = locationContext?.location;
     const [mechanics, setMechanics] = useState([]);
-    const [towingServices] = useState(TOWING_SERVICES);
+    const [towingServices, setTowingServices] = useState(TOWING_SERVICES);
     const [favorites, setFavorites] = useState([]);
     const [currentOrder, setCurrentOrder] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -127,10 +127,28 @@ export const AppProvider = ({ children }) => {
                     lng: m.location?.lng || m.location?.coordinates?.[0] || m.lng
                 }));
                 setMechanics(normalizedMechanics);
+
+                // Dynamically update towing services from mechanics who offer it
+                const dynamicTowing = normalizedMechanics
+                    .filter(m => m.specialties?.some(s => s.toLowerCase().includes('towing')))
+                    .map(m => ({
+                        id: m.id || m._id,
+                        type: m.name,
+                        costPerKm: '₹20-50',
+                        availability: 'Available',
+                        phone: m.phone,
+                        rating: m.rating,
+                        lat: m.lat,
+                        lng: m.lng,
+                        isGarage: true
+                    }));
+
+                setTowingServices([...TOWING_SERVICES, ...dynamicTowing]);
             }
         } catch (_error) {
             console.warn('Network failed, using mock data');
-            setMechanics(MOCK_MECHANICS); // Fallback to local mock
+            setMechanics(MOCK_MECHANICS);
+            setTowingServices(TOWING_SERVICES); // Fallback to basic mock
         }
     }, []);
 

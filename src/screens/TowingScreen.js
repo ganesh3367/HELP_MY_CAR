@@ -35,9 +35,12 @@ const TowingScreen = () => {
                     renderItem={({ item }) => (
                         <ServiceCard
                             title={item.type}
-                            distance={item.availability}
+                            distance={item.availability === 'Available' ? 'Nearby' : item.availability}
                             cost={item.costPerKm}
                             phone={item.phone}
+                            image={item.image}
+                            lat={item.lat || 18.5204}
+                            lng={item.lng || 73.8567}
                             type="towing"
                         />
                     )}
