@@ -20,7 +20,10 @@ export const getApiUrl = () => {
     }
 
     // 3. Construct the final URL
-    // Backend defaults to port 5002 as per .env
+    // For Production, uncomment the line below and add your Render URL:
+    // return 'https://your-backend-app-name.onrender.com/api';
+
+    // Default local behavior
     const url = `http://${host}:5002/api`;
 
     return url;

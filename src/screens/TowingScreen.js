@@ -5,8 +5,14 @@ import ServiceCard from '../components/ServiceCard';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 
+import { useLocation } from '../context/LocationContext';
+
 const TowingScreen = () => {
     const { towingServices } = useAppContext();
+    const { location } = useLocation();
+
+    // Default to a generic Pune location string if coordinates exist but no reverse geocoding is available
+    const locationName = location?.coords ? 'Pune, Maharashtra' : 'Fetching location...';
 
     return (
         <SafeAreaView style={styles.container}>
@@ -18,7 +24,11 @@ const TowingScreen = () => {
                     </View>
                     <View style={styles.headerText}>
                         <Text style={styles.title}>Towing Services</Text>
-                        <Text style={styles.subtitle}>24/7 roadside towing assistance</Text>
+                        <Text style={styles.subtitle}>Showing nearby services in</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                            <AlertCircle size={14} color={COLORS.primary} style={{ marginRight: 4 }} />
+                            <Text style={styles.locationText}>{locationName}</Text>
+                        </View>
                     </View>
                 </View>
                 <View style={styles.availabilityPill}>
@@ -107,10 +117,15 @@ const styles = StyleSheet.create({
         letterSpacing: -0.5,
     },
     subtitle: {
-        fontSize: 14,
+        fontSize: 13,
         color: COLORS.textLight,
         fontWeight: '500',
         marginTop: 2,
+    },
+    locationText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: COLORS.primary,
     },
     availabilityPill: {
         flexDirection: 'row',

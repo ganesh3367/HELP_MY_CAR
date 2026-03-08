@@ -127,8 +127,10 @@ const getGarageOrders = async (req, res) => {
             });
         }
 
-        const snapshot = await db.collection('orders').where('garageId', '==', garageId).orderBy('createdAt', 'desc').get();
-        const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const snapshot = await db.collection('orders').where('garageId', '==', garageId).get();
+        const orders = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         res.status(200).json({
             success: true,

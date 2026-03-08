@@ -69,7 +69,9 @@ const ServiceCard = ({
 
                     <View style={styles.priceRow}>
                         <Text style={styles.priceLabel}>{type === 'mechanic' ? 'Est. Service' : 'Rate/km'}</Text>
-                        <Text style={styles.priceValue}>{cost}</Text>
+                        <Text style={styles.priceValue}>
+                            {cost ? (cost.toString().includes('₹') ? cost : `₹${cost}`) : '₹N/A'}
+                        </Text>
                     </View>
                 </View>
             </View>
@@ -81,16 +83,16 @@ const ServiceCard = ({
                         <Text style={styles.primaryActionText}>View Profile</Text>
                     </TouchableOpacity>
                 ) : (
-                    <TouchableOpacity onPress={makeCall} style={[styles.primaryAction, { backgroundColor: '#5856D6' }]}>
+                    <TouchableOpacity onPress={makeCall} style={[styles.primaryAction, { backgroundColor: '#FF9500' }]}>
                         <Text style={styles.primaryActionText}>Request Tow</Text>
                     </TouchableOpacity>
                 )}
 
                 <View style={styles.iconActions}>
                     <TouchableOpacity onPress={openMaps} style={styles.secondaryAction}>
-                        <MapPin size={20} color={COLORS.primary} />
+                        <MapPin size={20} color={type === 'towing' ? '#FF9500' : COLORS.primary} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={makeCall} style={[styles.secondaryAction, styles.callAction]}>
+                    <TouchableOpacity onPress={makeCall} style={[styles.secondaryAction, type === 'towing' ? styles.callActionTowing : styles.callAction]}>
                         <Phone size={20} color={COLORS.white} />
                     </TouchableOpacity>
                 </View>
@@ -238,6 +240,10 @@ const styles = StyleSheet.create({
     callAction: {
         backgroundColor: COLORS.primary,
         borderColor: COLORS.primary,
+    },
+    callActionTowing: {
+        backgroundColor: '#FF9500',
+        borderColor: '#FF9500',
     },
 });
 
