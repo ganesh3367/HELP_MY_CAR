@@ -3,7 +3,14 @@ const path = require('path');
 
 // NOTE: Replace the file below with your actual service account key JSON file
 try {
-    const serviceAccount = require('./serviceAccountKey.json');
+    // If Render mounts the Secret File directly in the Root Directory (backend)
+    // we should try to require it from the root first, and fallback to the local config folder.
+    let serviceAccount;
+    try {
+        serviceAccount = require('../../serviceAccountKey.json');
+    } catch {
+        serviceAccount = require('./serviceAccountKey.json');
+    }
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         databaseURL: "https://helpmycar-7362b-default-rtdb.firebaseio.com"
