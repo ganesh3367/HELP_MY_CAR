@@ -3,7 +3,6 @@ import { useState } from 'react';
 import {
     Alert,
     Platform,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
@@ -11,6 +10,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../components/Button';
 import { COLORS, SHADOWS, SIZES, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';

@@ -7,13 +7,13 @@ import {
     Dimensions,
     FlatList,
     Platform,
-    SafeAreaView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
 import MapView, { Circle, Marker } from 'react-native-maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 import { useLocation } from '../context/LocationContext';

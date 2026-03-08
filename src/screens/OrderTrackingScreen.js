@@ -15,13 +15,13 @@ import {
     Dimensions,
     Linking,
     Platform,
-    SafeAreaView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import RatingModal from '../components/RatingModal';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';

@@ -17,7 +17,7 @@ const Button = ({
         <TouchableOpacity
             onPress={onPress}
             disabled={disabled || loading}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
             style={[
                 styles.container,
                 isSecondary && styles.secondary,
@@ -69,6 +69,7 @@ const styles = StyleSheet.create({
         color: COLORS.white,
         fontSize: 16,
         fontWeight: '700',
+        textAlign: 'center',
     },
     textOutline: {
         color: COLORS.primary,

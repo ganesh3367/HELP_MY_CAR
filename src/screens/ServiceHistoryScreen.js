@@ -1,5 +1,6 @@
 import { Calendar, CheckCircle, Clock } from 'lucide-react-native';
-import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 
 const MOCK_HISTORY = [
