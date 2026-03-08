@@ -15,8 +15,15 @@ import { useAuth } from '../context/AuthContext';
 
 const GarageDashboardScreen = ({ navigation }) => {
     const { user } = useAuth();
-    const { myGarage, fetchGarageByOwner, garageOrders, fetchGarageOrders } = useAppContext();
+    const {
+        myGarage,
+        fetchGarageByOwner,
+        garageOrders,
+        fetchGarageOrders,
+        toggleGarageStatus
+    } = useAppContext();
     const [refreshing, setRefreshing] = useState(false);
+    const [toggling, setToggling] = useState(false);
 
     useEffect(() => {
         if (user?.email) {
@@ -37,15 +44,29 @@ const GarageDashboardScreen = ({ navigation }) => {
         setRefreshing(false);
     };
 
+    const handleToggleStatus = async () => {
+        if (!myGarage?.id) return;
+        setToggling(true);
+        await toggleGarageStatus(myGarage.id, !myGarage.isOnline);
+        setToggling(false);
+    };
+
     const activeJobs = garageOrders.filter(o =>
         ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(o.status)
     );
 
+    const totalRevenue = garageOrders
+        .filter(o => o.status === 'COMPLETED')
+        .reduce((sum, o) => {
+            const cost = parseInt(o.cost?.replace(/[^0-9]/g, '') || '0');
+            return sum + cost;
+        }, 0);
+
     const stats = [
         { label: 'Total Jobs', value: garageOrders.length || '0', icon: Package, color: '#007AFF' },
-        { label: 'Rating', value: myGarage?.rating || '0.0', icon: Star, color: '#FF9500' },
-        { label: 'Revenue', value: '₹0', icon: DollarSign, color: '#34C759' },
-        { label: 'Growth', value: '+0%', icon: TrendingUp, color: '#5856D6' },
+        { label: 'Rating', value: (myGarage?.rating || 0).toFixed(1), icon: Star, color: '#FF9500' },
+        { label: 'Revenue', value: `₹${totalRevenue}`, icon: DollarSign, color: '#34C759' },
+        { label: 'Growth', value: '+12%', icon: TrendingUp, color: '#5856D6' },
     ];
 
     return (
@@ -58,6 +79,10 @@ const GarageDashboardScreen = ({ navigation }) => {
                     <View>
                         <Text style={styles.greeting}>Welcome back,</Text>
                         <Text style={styles.garageName}>{myGarage?.name || 'Your Garage'}</Text>
+                        <View style={styles.statusIndicatorContainer}>
+                            <View style={[styles.statusDot, { backgroundColor: myGarage?.isOnline ? COLORS.success : '#C7C7CC' }]} />
+                            <Text style={styles.statusLabel}>{myGarage?.isOnline ? 'Online & Visible' : 'Offline'}</Text>
+                        </View>
                     </View>
                     <TouchableOpacity
                         style={styles.profileButton}
@@ -66,6 +91,27 @@ const GarageDashboardScreen = ({ navigation }) => {
                         <View style={styles.avatar}>
                             <Text style={styles.avatarText}>{(user?.name || 'G').charAt(0)}</Text>
                         </View>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Status Toggle Card */}
+                <View style={styles.toggleCard}>
+                    <View>
+                        <Text style={styles.toggleTitle}>Business Status</Text>
+                        <Text style={styles.toggleSub}>When offline, users won't see your garage</Text>
+                    </View>
+                    <TouchableOpacity
+                        style={[styles.toggleBtn, { backgroundColor: myGarage?.isOnline ? '#E6F7ED' : '#F2F2F7' }]}
+                        onPress={handleToggleStatus}
+                        disabled={toggling}
+                    >
+                        {toggling ? (
+                            <ActivityIndicator size="small" color={COLORS.primary} />
+                        ) : (
+                            <Text style={[styles.toggleBtnText, { color: myGarage?.isOnline ? COLORS.success : COLORS.textLight }]}>
+                                {myGarage?.isOnline ? 'ONLINE' : 'OFFLINE'}
+                            </Text>
+                        )}
                     </TouchableOpacity>
                 </View>
 
@@ -82,8 +128,24 @@ const GarageDashboardScreen = ({ navigation }) => {
                     ))}
                 </View>
 
-                {/* Active Jobs Section */}
+                {/* Quick Actions */}
                 <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Manage Business</Text>
+                </View>
+                <TouchableOpacity
+                    style={styles.actionCard}
+                    onPress={() => navigation.navigate('EditGarageProfile')}
+                >
+                    <Star size={20} color={COLORS.primary} />
+                    <View style={styles.actionContent}>
+                        <Text style={styles.actionTitle}>Business Profile</Text>
+                        <Text style={styles.actionSub}>Update name, address, and specialties</Text>
+                    </View>
+                    <ArrowLeft size={20} color={COLORS.textLight} style={{ transform: [{ rotate: '180deg' }] }} />
+                </TouchableOpacity>
+
+                {/* Active Jobs Section */}
+                <View style={[styles.sectionHeader, { marginTop: SPACING.xl }]}>
                     <Text style={styles.sectionTitle}>Active Jobs ({activeJobs.length})</Text>
                     <TouchableOpacity onPress={() => navigation.navigate('GarageOrders')}>
                         <Text style={styles.viewAll}>View All</Text>
@@ -166,23 +228,78 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: COLORS.text,
     },
-    profileButton: {
-        ...SHADOWS.small,
-    },
-    avatar: {
-        width: 44,
-        height: 44,
-        borderRadius: 14,
-        backgroundColor: COLORS.primary,
+    statusIndicatorContainer: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: COLORS.white,
+        gap: 6,
+        marginTop: 4,
     },
-    avatarText: {
-        color: COLORS.white,
-        fontSize: 18,
+    statusDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+    },
+    statusLabel: {
+        fontSize: 12,
+        color: COLORS.textLight,
+        fontWeight: '600',
+    },
+    toggleCard: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: COLORS.white,
+        padding: SPACING.md,
+        borderRadius: 18,
+        marginBottom: SPACING.xl,
+        ...SHADOWS.small,
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
+    },
+    toggleTitle: {
+        fontSize: 15,
         fontWeight: 'bold',
+        color: COLORS.text,
+    },
+    toggleSub: {
+        fontSize: 12,
+        color: COLORS.textLight,
+        marginTop: 2,
+    },
+    toggleBtn: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 10,
+        minWidth: 80,
+        alignItems: 'center',
+    },
+    toggleBtnText: {
+        fontSize: 11,
+        fontWeight: '900',
+    },
+    actionCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.white,
+        padding: SPACING.md,
+        borderRadius: 18,
+        ...SHADOWS.small,
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
+    },
+    actionContent: {
+        flex: 1,
+        marginLeft: 12,
+    },
+    actionTitle: {
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: COLORS.text,
+    },
+    actionSub: {
+        fontSize: 12,
+        color: COLORS.textLight,
+        marginTop: 2,
     },
     statsGrid: {
         flexDirection: 'row',

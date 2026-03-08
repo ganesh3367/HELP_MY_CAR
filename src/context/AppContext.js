@@ -259,20 +259,40 @@ export const AppProvider = ({ children }) => {
 
     const [userOrders, setUserOrders] = useState([]);
 
-    const fetchUserOrders = useCallback(async (userId) => {
+    const fetchUserOrders = async (userId) => {
         try {
             const response = await fetch(`${API_URL}/orders/user/${userId}`);
             const data = await response.json();
             if (data.success) {
                 setUserOrders(data.data);
-                return data.data;
             }
-            return [];
         } catch (error) {
             console.error('Fetch User Orders Error:', error);
-            return [];
         }
-    }, []);
+    };
+
+    const updateGarageProfile = async (garageId, updateData) => {
+        try {
+            const response = await fetch(`${API_URL}/garages/${garageId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData),
+            });
+            const data = await response.json();
+            if (data.success) {
+                setMyGarage(data.data);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Update Garage Profile Error:', error);
+            return false;
+        }
+    };
+
+    const toggleGarageStatus = async (garageId, isOnline) => {
+        return await updateGarageProfile(garageId, { isOnline });
+    };
 
     const submitFeedback = async (feedbackData) => {
         try {
@@ -423,6 +443,8 @@ export const AppProvider = ({ children }) => {
                 addReview,
                 userOrders,
                 fetchUserOrders,
+                updateGarageProfile,
+                toggleGarageStatus,
                 submitFeedback
             }}
         >

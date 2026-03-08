@@ -219,9 +219,44 @@ const getGarageByOwner = async (req, res) => {
     }
 };
 
+// @desc    Update garage details
+// @route   PATCH /api/garages/:id
+// @access  Public (Should be private in production)
+const updateGarage = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = { ...req.body, updatedAt: new Date().toISOString() };
+
+        if (!db) {
+            return res.status(200).json({
+                success: true,
+                data: { id, ...updateData }
+            });
+        }
+
+        const garageRef = db.collection('garages').doc(id);
+        const doc = await garageRef.get();
+        if (!doc.exists) {
+            return res.status(404).json({ success: false, message: 'Garage not found' });
+        }
+
+        await garageRef.update(updateData);
+        const updatedDoc = await garageRef.get();
+
+        res.status(200).json({
+            success: true,
+            data: { id: updatedDoc.id, ...updatedDoc.data() }
+        });
+    } catch (error) {
+        console.error('Update Garage Error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     getNearbyGarages,
     seedGarages,
     getGarageByOwner,
+    updateGarage,
     addReview
 };

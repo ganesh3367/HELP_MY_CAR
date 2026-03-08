@@ -199,9 +199,14 @@ const MechanicsScreen = () => {
             ...m,
             _dist: haversine(userLat, userLng, m.lat ?? m.location?.lat, m.lng ?? m.location?.lng),
             verified: m.verified ?? Math.random() > 0.4,
-            available: m.available ?? Math.random() > 0.25,
+            available: m.isOnline !== false, // Use isOnline as availability
             reviewCount: m.reviewCount ?? m.reviews?.length ?? Math.floor(Math.random() * 200 + 10),
         }));
+
+        // Filter out offline garages unless searched by name specifically
+        if (!searchQuery.trim()) {
+            list = list.filter(m => m.isOnline !== false);
+        }
 
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
