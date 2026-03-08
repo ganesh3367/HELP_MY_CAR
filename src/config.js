@@ -21,12 +21,11 @@ export const getApiUrl = () => {
 
     // 3. Construct the final URL
     // For Production, uncomment the line below and add your Render URL:
-    // return 'https://your-backend-app-name.onrender.com/api';
+    return 'https://help-my-car.onrender.com/api';
 
     // Default local behavior
-    const url = `http://${host}:5002/api`;
-
-    return url;
+    // const url = `http://${host}:5002/api`;
+    // return url;
 };
 
 export const API_URL = getApiUrl();
