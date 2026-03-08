@@ -58,6 +58,43 @@ const createOrder = async (req, res) => {
             success: true,
             data: orderData
         });
+
+        // AUTO-ADVANCE order status for demo purposes
+        if (io) {
+            setTimeout(async () => {
+                const statusUpdate = { status: 'ACCEPTED', updatedAt: new Date().toISOString() };
+                if (db) await db.collection('orders').doc(orderId).update(statusUpdate);
+                io.emit('order_updated', { id: orderId, ...statusUpdate });
+
+                setTimeout(async () => {
+                    const statusUpdate2 = { status: 'ON_THE_WAY', updatedAt: new Date().toISOString() };
+                    if (db) await db.collection('orders').doc(orderId).update(statusUpdate2);
+                    io.emit('order_updated', { id: orderId, ...statusUpdate2 });
+
+                    // Simulate movement
+                    let currentLat = mechanicLocation.lat;
+                    let currentLng = mechanicLocation.lng;
+                    const destLat = userLocation.lat;
+                    const destLng = userLocation.lng;
+
+                    const interval = setInterval(() => {
+                        currentLat += (destLat - currentLat) * 0.2;
+                        currentLng += (destLng - currentLng) * 0.2;
+
+                        io.to(orderId).emit('location_updated', { lat: currentLat, lng: currentLng });
+
+                        // Check if arrived
+                        if (Math.abs(currentLat - destLat) < 0.001 && Math.abs(currentLng - destLng) < 0.001) {
+                            clearInterval(interval);
+                            const statusUpdate3 = { status: 'ARRIVED', updatedAt: new Date().toISOString() };
+                            if (db) db.collection('orders').doc(orderId).update(statusUpdate3);
+                            io.emit('order_updated', { id: orderId, ...statusUpdate3 });
+                        }
+                    }, 3000);
+
+                }, 5000);
+            }, 3000);
+        }
     } catch (error) {
         console.error('Create Order Error:', error);
         res.status(500).json({ success: false, message: error.message });

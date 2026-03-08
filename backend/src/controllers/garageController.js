@@ -44,7 +44,7 @@ const MOCK_GARAGES = [
 // @access  Public
 const getNearbyGarages = async (req, res) => {
     try {
-        const { lat, lng, radius = 5 } = req.query;
+        const { lat, lng, radius = 50 } = req.query;
 
         if (!lat || !lng) {
             return res.status(400).json({ success: false, message: 'Please provide latitude and longitude' });
@@ -63,7 +63,7 @@ const getNearbyGarages = async (req, res) => {
             garages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
 
-        const results = garages.map(g => {
+        let results = garages.map(g => {
             const garageLat = g.location?.lat || g.lat || 18.5204;
             const garageLng = g.location?.lng || g.lng || 73.8567;
             const distance = haversine(userLat, userLng, garageLat, garageLng);
@@ -71,13 +71,16 @@ const getNearbyGarages = async (req, res) => {
                 ...g,
                 distance: parseFloat(distance.toFixed(2))
             };
-        }).filter(g => g.distance <= parseFloat(radius))
-            .sort((a, b) => a.distance - b.distance);
+        }).sort((a, b) => a.distance - b.distance);
+
+        // If no results in radius, take top 10 closest ones anyway
+        const filtered = results.filter(g => g.distance <= parseFloat(radius));
+        const finalData = filtered.length > 0 ? filtered : results.slice(0, 10);
 
         res.status(200).json({
             success: true,
-            count: results.length,
-            data: results
+            count: finalData.length,
+            data: finalData
         });
     } catch (error) {
         console.error('Fetch Garages Error:', error);
