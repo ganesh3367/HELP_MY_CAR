@@ -45,14 +45,29 @@ const ProfileScreen = ({ navigation }) => {
                         subtitle="Your previous requests"
                         onPress={() => navigation.navigate('ServiceHistory')}
                     />
-                    <MenuItem icon={Shield} title="Privacy & Safety" subtitle="Manage your data" />
-                    <MenuItem icon={Settings} title="Settings" subtitle="App preferences" />
+                    <MenuItem
+                        icon={Shield}
+                        title="Privacy & Safety"
+                        subtitle="Manage your data"
+                        onPress={() => navigation.navigate('PrivacySafety')}
+                    />
+                    <MenuItem
+                        icon={Settings}
+                        title="Settings"
+                        subtitle="App preferences"
+                        onPress={() => navigation.navigate('Settings')}
+                    />
                 </View>
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Support</Text>
                     <MenuItem icon={Phone} title="Emergency Numbers" subtitle="Police, Ambulance, Fire" />
-                    <MenuItem icon={MessageSquare} title="Send Feedback" subtitle="Help us improve" />
+                    <MenuItem
+                        icon={MessageSquare}
+                        title="Send Feedback"
+                        subtitle="Help us improve"
+                        onPress={() => navigation.navigate('Feedback')}
+                    />
                     <MenuItem icon={Info} title="App Info" subtitle="Version 1.2.0" />
                 </View>
 

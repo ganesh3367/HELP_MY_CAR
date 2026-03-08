@@ -47,25 +47,11 @@ const createOrder = async (req, res) => {
 
         const orderData = { id: orderId, ...newOrder };
 
-        // Emit socket event
+        // Emit socket event to the garage room (if we had specific garage rooms)
+        // For now, simpler broadcast or room-based
         const io = req.app.get('io');
         if (io) {
             io.emit('new_order', orderData);
-        }
-
-        // AUTO-ADVANCE order status for demo purposes
-        if (io) {
-            setTimeout(async () => {
-                const statusUpdate = { status: 'ACCEPTED', updatedAt: new Date().toISOString() };
-                if (db) await db.collection('orders').doc(orderId).update(statusUpdate);
-                io.emit('order_updated', { id: orderId, ...statusUpdate });
-
-                setTimeout(async () => {
-                    const statusUpdate2 = { status: 'ON_THE_WAY', updatedAt: new Date().toISOString() };
-                    if (db) await db.collection('orders').doc(orderId).update(statusUpdate2);
-                    io.emit('order_updated', { id: orderId, ...statusUpdate2 });
-                }, 5000);
-            }, 3000);
         }
 
         res.status(201).json({
@@ -192,9 +178,41 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
+// @desc    Get all orders for a specific user
+// @route   GET /api/orders/user/:userId
+// @access  Public
+const getUserOrders = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        if (!db) {
+            return res.status(200).json({
+                success: true,
+                count: 0,
+                data: []
+            });
+        }
+
+        const snapshot = await db.collection('orders').where('userId', '==', userId).get();
+        const orders = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        res.status(200).json({
+            success: true,
+            count: orders.length,
+            data: orders
+        });
+    } catch (error) {
+        console.error('Get User Orders Error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     createOrder,
     trackOrder,
     getGarageOrders,
-    updateOrderStatus
+    updateOrderStatus,
+    getUserOrders
 };

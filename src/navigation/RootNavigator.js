@@ -4,12 +4,15 @@ import { COLORS } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
 import CarDiagnosticScreen from '../screens/CarDiagnosticScreen';
+import FeedbackScreen from '../screens/FeedbackScreen';
 import LocationPickerScreen from '../screens/LocationPickerScreen';
 import LoginScreen from '../screens/LoginScreen';
 import MechanicProfileScreen from '../screens/MechanicProfileScreen';
 import OrderTrackingScreen from '../screens/OrderTrackingScreen';
+import PrivacySafetyScreen from '../screens/PrivacySafetyScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ServiceHistoryScreen from '../screens/ServiceHistoryScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import SignupScreen from '../screens/SignupScreen';
 import SplashScreen from '../screens/SplashScreen';
 import TabNavigator from './TabNavigator';
@@ -56,6 +59,9 @@ const RootNavigator = () => {
                             headerTitleStyle: { fontWeight: 'bold' }
                         }}
                     />
+                    <Stack.Screen name="Settings" component={SettingsScreen} />
+                    <Stack.Screen name="PrivacySafety" component={PrivacySafetyScreen} />
+                    <Stack.Screen name="Feedback" component={FeedbackScreen} />
                     <Stack.Screen name="Profile" component={ProfileScreen} />
                     <Stack.Screen
                         name="OrderTracking"

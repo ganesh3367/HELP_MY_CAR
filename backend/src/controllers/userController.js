@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 // @access  Public
 exports.signup = async (req, res) => {
     try {
-        const { name, email, password, role, garageName, address, phone } = req.body;
+        const { name, email, password, role, garageName, address, phone, specialties } = req.body;
         const userRole = role === 'garage' ? 'garage' : 'user';
 
         if (!db) {
@@ -51,7 +51,7 @@ exports.signup = async (req, res) => {
                 location: { lat: 18.5204, lng: 73.8567 },
                 rating: 0,
                 estimatedCost: 'TBD',
-                specialties: ['General Repair', 'Towing'],
+                specialties: specialties || ['General Repair', 'Engine Repair', 'Electrical'],
                 createdAt: new Date().toISOString()
             };
 

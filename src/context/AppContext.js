@@ -257,6 +257,43 @@ export const AppProvider = ({ children }) => {
         );
     };
 
+    const [userOrders, setUserOrders] = useState([]);
+
+    const fetchUserOrders = useCallback(async (userId) => {
+        try {
+            const response = await fetch(`${API_URL}/orders/user/${userId}`);
+            const data = await response.json();
+            if (data.success) {
+                setUserOrders(data.data);
+                return data.data;
+            }
+            return [];
+        } catch (error) {
+            console.error('Fetch User Orders Error:', error);
+            return [];
+        }
+    }, []);
+
+    const submitFeedback = async (feedbackData) => {
+        try {
+            const response = await fetch(`${API_URL}/feedback`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user?.id,
+                    userName: user?.name,
+                    email: user?.email,
+                    ...feedbackData
+                })
+            });
+            const data = await response.json();
+            return data.success;
+        } catch (error) {
+            console.error('Submit Feedback Error:', error);
+            return false;
+        }
+    };
+
     const [garageOrders, setGarageOrders] = useState([]);
     const [myGarage, setMyGarage] = useState(null);
 
@@ -268,12 +305,12 @@ export const AppProvider = ({ children }) => {
                 setMyGarage(data.data);
                 return data.data;
             }
+            setMyGarage(null);
+            return null;
         } catch (error) {
             console.error('Fetch My Garage Error:', error);
-            // Fallback for demo
-            const mockGarage = MOCK_MECHANICS[0];
-            setMyGarage(mockGarage);
-            return mockGarage;
+            setMyGarage(null);
+            return null;
         }
     }, []);
 
@@ -383,7 +420,10 @@ export const AppProvider = ({ children }) => {
                 fetchGarageByOwner,
                 fetchGarageOrders,
                 updateOrderStatus,
-                addReview
+                addReview,
+                userOrders,
+                fetchUserOrders,
+                submitFeedback
             }}
         >
             {children}

@@ -1,56 +1,64 @@
-import { Calendar, CheckCircle, Clock } from 'lucide-react-native';
+import { Calendar, CheckCircle, Clock, RefreshControl } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
-
-const MOCK_HISTORY = [
-    {
-        id: '1',
-        service: 'Engine Repair',
-        provider: 'Quick Fix Motors',
-        date: 'Oct 24, 2025',
-        time: '10:30 AM',
-        status: 'Completed',
-        cost: '$85.00',
-    },
-    {
-        id: '2',
-        service: 'Towing Service',
-        provider: 'Elite Towing',
-        date: 'Sep 12, 2025',
-        time: '02:15 PM',
-        status: 'Completed',
-        cost: '$45.00',
-    },
-];
+import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 
 const ServiceHistoryScreen = ({ navigation }) => {
-    const renderItem = ({ item }) => (
-        <TouchableOpacity style={styles.historyCard}>
-            <View style={styles.cardHeader}>
-                <View>
-                    <Text style={styles.serviceText}>{item.service}</Text>
-                    <Text style={styles.providerText}>{item.provider}</Text>
-                </View>
-                <Text style={styles.costText}>{item.cost}</Text>
-            </View>
+    const { user } = useAuth();
+    const { userOrders, fetchUserOrders } = useAppContext();
+    const [refreshing, setRefreshing] = useState(false);
 
-            <View style={styles.cardFooter}>
-                <View style={styles.detailRow}>
-                    <Calendar size={14} color={COLORS.textLight} />
-                    <Text style={styles.detailText}>{item.date}</Text>
+    useEffect(() => {
+        if (user?.id) {
+            fetchUserOrders(user.id);
+        }
+    }, [user?.id]);
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        if (user?.id) {
+            await fetchUserOrders(user.id);
+        }
+        setRefreshing(false);
+    };
+
+    const renderItem = ({ item }) => {
+        const dateObj = new Date(item.createdAt);
+        const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+        return (
+            <TouchableOpacity style={styles.historyCard}>
+                <View style={styles.cardHeader}>
+                    <View>
+                        <Text style={styles.serviceText}>{item.vehicleDetails?.serviceType || 'Car Service'}</Text>
+                        <Text style={styles.providerText}>{item.garageName}</Text>
+                    </View>
+                    <Text style={styles.costText}>{item.cost || 'TBD'}</Text>
                 </View>
-                <View style={styles.detailRow}>
-                    <Clock size={14} color={COLORS.textLight} />
-                    <Text style={styles.detailText}>{item.time}</Text>
+
+                <View style={styles.cardFooter}>
+                    <View style={styles.detailRow}>
+                        <Calendar size={14} color={COLORS.textLight} />
+                        <Text style={styles.detailText}>{dateStr}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Clock size={14} color={COLORS.textLight} />
+                        <Text style={styles.detailText}>{timeStr}</Text>
+                    </View>
+                    <View style={[styles.statusBadge, { backgroundColor: item.status === 'COMPLETED' ? '#E6F7ED' : '#FFF9E6' }]}>
+                        <CheckCircle size={12} color={item.status === 'COMPLETED' ? COLORS.success : COLORS.warning} />
+                        <Text style={[styles.statusText, { color: item.status === 'COMPLETED' ? COLORS.success : COLORS.warning }]}>
+                            {item.status}
+                        </Text>
+                    </View>
                 </View>
-                <View style={styles.statusBadge}>
-                    <CheckCircle size={12} color={COLORS.success} />
-                    <Text style={styles.statusText}>{item.status}</Text>
-                </View>
-            </View>
-        </TouchableOpacity>
-    );
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -58,13 +66,14 @@ const ServiceHistoryScreen = ({ navigation }) => {
                 <Text style={styles.title}>Service History</Text>
             </View>
 
-            {MOCK_HISTORY.length > 0 ? (
+            {userOrders && userOrders.length > 0 ? (
                 <FlatList
-                    data={MOCK_HISTORY}
+                    data={userOrders}
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
                     contentContainerStyle={styles.list}
                     showsVerticalScrollIndicator={false}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
                 />
             ) : (
                 <View style={styles.emptyContainer}>

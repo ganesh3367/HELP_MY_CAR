@@ -57,6 +57,7 @@ app.use((req, res, next) => {
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/garages', require('./routes/garageRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/feedback', require('./routes/feedbackRoutes'));
 
 app.get('/', (req, res) => {
     res.send('Help My Car API is running (MongoDB + Socket.io)');

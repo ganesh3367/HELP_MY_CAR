@@ -64,8 +64,8 @@ const getNearbyGarages = async (req, res) => {
         }
 
         const results = garages.map(g => {
-            const garageLat = g.location.lat;
-            const garageLng = g.location.lng;
+            const garageLat = g.location?.lat || g.lat || 18.5204;
+            const garageLng = g.location?.lng || g.lng || 73.8567;
             const distance = haversine(userLat, userLng, garageLat, garageLng);
             return {
                 ...g,

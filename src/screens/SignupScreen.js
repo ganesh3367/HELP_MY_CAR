@@ -24,6 +24,9 @@ const SignupScreen = ({ navigation }) => {
     const [garageName, setGarageName] = useState('');
     const [garageAddress, setGarageAddress] = useState('');
     const [garagePhone, setGaragePhone] = useState('');
+    const [selectedSpecialties, setSelectedSpecialties] = useState(['General Repair']);
+
+    const specialtiesList = ['Engine Repair', 'Electrical', 'Tyre Change', 'AC Service', 'Brakes', 'Towing', 'Battery', 'Suspension'];
 
     const { signup } = useAuth();
     const [loading, setLoading] = useState(false);
@@ -51,7 +54,8 @@ const SignupScreen = ({ navigation }) => {
             await signup(name, email, password, role, {
                 garageName,
                 address: garageAddress,
-                phone: garagePhone
+                phone: garagePhone,
+                specialties: selectedSpecialties
             });
         } catch (error) {
             Alert.alert('Signup Failed', String(error));
@@ -172,6 +176,31 @@ const SignupScreen = ({ navigation }) => {
                                     onChangeText={setGaragePhone}
                                 />
                             </View>
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Specialties</Text>
+                                <View style={styles.specialtiesContainer}>
+                                    {specialtiesList.map((specialty) => {
+                                        const isSelected = selectedSpecialties.includes(specialty);
+                                        return (
+                                            <TouchableOpacity
+                                                key={specialty}
+                                                style={[styles.specialtyChip, isSelected && styles.specialtyChipActive]}
+                                                onPress={() => {
+                                                    if (isSelected) {
+                                                        setSelectedSpecialties(selectedSpecialties.filter(s => s !== specialty));
+                                                    } else {
+                                                        setSelectedSpecialties([...selectedSpecialties, specialty]);
+                                                    }
+                                                }}
+                                            >
+                                                <Text style={[styles.specialtyChipText, isSelected && styles.specialtyChipTextActive]}>
+                                                    {specialty}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </View>
                         </View>
                     )}
 
@@ -276,6 +305,31 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: COLORS.text,
         marginBottom: SPACING.md,
+    },
+    specialtiesContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    specialtyChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: COLORS.white,
+        borderWidth: 1,
+        borderColor: '#E9ECEF',
+    },
+    specialtyChipActive: {
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary,
+    },
+    specialtyChipText: {
+        fontSize: 12,
+        color: COLORS.textLight,
+        fontWeight: '600',
+    },
+    specialtyChipTextActive: {
+        color: COLORS.white,
     },
     form: {
         width: '100%',
