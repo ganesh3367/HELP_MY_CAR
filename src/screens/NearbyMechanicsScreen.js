@@ -802,11 +802,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '700',
     },
-    sheetTitle: {
-        fontSize: 17,
-        fontWeight: '800',
-        color: COLORS.text,
-    },
 });
 
 export default NearbyMechanicsScreen;

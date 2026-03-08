@@ -221,7 +221,7 @@ const CarDiagnosticScreen = () => {
                             <View style={styles.noMatchCard}>
                                 <Text style={{ fontSize: 40, textAlign: 'center' }}>🤔</Text>
                                 <Text style={styles.noMatchText}>
-                                    Couldn't identify the issue from these symptoms. A professional inspection is recommended.
+                                    Couldn{"'"}t identify the issue from these symptoms. A professional inspection is recommended.
                                 </Text>
                             </View>
                         )}

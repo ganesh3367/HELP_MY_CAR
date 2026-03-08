@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
 
     disclaimer: {
         flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-        padding: 16, backgroundColor: '#F7F8FA', gap: 6,
+        padding: 16, backgroundColor: '#F7F8FA',
     },
     disclaimerText: { flex: 1, fontSize: 11, color: '#888', lineHeight: 16 },
 
