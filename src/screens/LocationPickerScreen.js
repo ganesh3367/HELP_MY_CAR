@@ -9,7 +9,7 @@ import { useLocation } from '../context/LocationContext';
 const { width, height } = Dimensions.get('window');
 
 const LocationPickerScreen = ({ navigation, route }) => {
-    const { location } = useLocation();
+    const { location, setManualLocation } = useLocation();
     const [region, setRegion] = useState({
         latitude: 37.78825,
         longitude: -122.4324,
@@ -39,15 +39,8 @@ const LocationPickerScreen = ({ navigation, route }) => {
     };
 
     const confirmLocation = () => {
-        navigation.navigate('Main', {
-            screen: 'Nearby',
-            params: {
-                pickedLocation: {
-                    lat: region.latitude,
-                    lng: region.longitude,
-                }
-            }
-        });
+        setManualLocation(region.latitude, region.longitude);
+        navigation.goBack();
     };
 
     return (

@@ -52,6 +52,28 @@ export const LocationProvider = ({ children }) => {
         }
     };
 
+    const setManualLocation = (lat, lng) => {
+        const manualLoc = {
+            coords: {
+                latitude: lat,
+                longitude: lng,
+                accuracy: 0,
+                altitude: 0,
+                heading: 0,
+                speed: 0,
+            },
+            timestamp: Date.now(),
+            isManual: true,
+        };
+        setLocation(manualLoc);
+
+        // Optionally stop the watcher if you want the manual location to stick
+        if (watcherRef.current) {
+            watcherRef.current.remove();
+            watcherRef.current = null;
+        }
+    };
+
     useEffect(() => {
         requestLocation();
         return () => {
@@ -61,7 +83,7 @@ export const LocationProvider = ({ children }) => {
     }, []);
 
     return (
-        <LocationContext.Provider value={{ location, errorMsg, loading, requestLocation }}>
+        <LocationContext.Provider value={{ location, errorMsg, loading, requestLocation, setManualLocation }}>
             {children}
         </LocationContext.Provider>
     );
