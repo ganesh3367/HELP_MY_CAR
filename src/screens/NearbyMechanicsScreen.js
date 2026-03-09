@@ -276,7 +276,8 @@ const NearbyMechanicsScreen = ({ navigation }) => {
         } else if (!locationLoading && !activeCoords) {
             setLoading(false);
         }
-    }, [locationLoading, activeCoords, fetchMechanics]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [locationLoading, activeCoords?.lat, activeCoords?.lng]);
 
     const goToUser = () => {
         if (!activeCoords || !mapRef.current) return;
