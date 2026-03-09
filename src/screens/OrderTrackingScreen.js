@@ -20,7 +20,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { AnimatedRegion, Marker, Polyline } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import RatingModal from '../components/RatingModal';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
@@ -153,6 +153,15 @@ const OrderTrackingScreen = () => {
     const mapRef = useRef(null);
     const slideAnim = useRef(new Animated.Value(300)).current;
 
+    const mechLocationAnim = useRef(
+        new AnimatedRegion({
+            latitude: order?.mechanicLocation?.lat || 18.5204,
+            longitude: order?.mechanicLocation?.lng || 73.8567,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+        })
+    ).current;
+
     // ── Slide up bottom card on mount ─────────────────────────────────────
     useEffect(() => {
         Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, bounciness: 6 }).start();
@@ -183,6 +192,15 @@ const OrderTrackingScreen = () => {
         onLocationUpdate((newCoords) => {
             setMechanicCoords(newCoords);
             setLocationPath(prev => [...prev.slice(-50), { latitude: newCoords.lat, longitude: newCoords.lng }]);
+
+            // Smoothly animate the marker to new coords
+            mechLocationAnim.timing({
+                latitude: newCoords.lat,
+                longitude: newCoords.lng,
+                duration: 1000,
+                useNativeDriver: false
+            }).start();
+
             panMapToBoth(newCoords);
         });
 
@@ -290,13 +308,13 @@ const OrderTrackingScreen = () => {
 
                 {/* Mechanic animated car marker */}
                 {hasMechLoc && (
-                    <Marker
-                        coordinate={{ latitude: mechLat, longitude: mechLng }}
+                    <Marker.Animated
+                        coordinate={mechLocationAnim}
                         anchor={{ x: 0.5, y: 0.5 }}
                         tracksViewChanges
                     >
                         <MechanicMarker status={status} />
-                    </Marker>
+                    </Marker.Animated>
                 )}
 
                 {/* Breadcrumb route trail */}

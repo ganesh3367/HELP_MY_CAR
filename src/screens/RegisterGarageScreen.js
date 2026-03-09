@@ -13,7 +13,6 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
@@ -35,7 +34,7 @@ const SPECIALTIES = [
     'Suspension'
 ];
 
-const RegisterGarageScreen = ({ navigation }) => {
+const RegisterGarageScreen = ({ navigation, route }) => {
     const { user, logout } = useAuth();
     const { createGarage } = useAppContext();
     const { location: userLoc } = useLocation();
@@ -53,14 +52,20 @@ const RegisterGarageScreen = ({ navigation }) => {
     const [location, setLocation] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    // Initial setup with user location, but overwrite if picked from map
     useEffect(() => {
-        if (userLoc?.coords) {
+        if (route.params?.pickedLocation) {
+            setLocation({
+                lat: route.params.pickedLocation.lat,
+                lng: route.params.pickedLocation.lng,
+            });
+        } else if (userLoc?.coords && !location) {
             setLocation({
                 lat: userLoc.coords.latitude,
                 lng: userLoc.coords.longitude,
             });
         }
-    }, [userLoc]);
+    }, [userLoc, route.params?.pickedLocation]);
 
     const toggleSpecialty = (specialty) => {
         if (selectedSpecialties.includes(specialty)) {
@@ -239,54 +244,30 @@ const RegisterGarageScreen = ({ navigation }) => {
                     <View style={styles.instructionBanner}>
                         <View style={styles.instructionRow}>
                             <View style={styles.stepNum}><Text style={styles.stepNumText}>1</Text></View>
-                            <Text style={styles.instructionText}>Use the <Navigation size={12} color={COLORS.primary} /> button to find your current shop location</Text>
+                            <Text style={styles.instructionText}>Tap the button below to open the Map Screen</Text>
                         </View>
                         <View style={styles.instructionRow}>
                             <View style={styles.stepNum}><Text style={styles.stepNumText}>2</Text></View>
-                            <Text style={styles.instructionText}>Fine-tune by dragging the 📌 marker exactly to your garage entrance</Text>
+                            <Text style={styles.instructionText}>Drag the 📌 marker exactly to your repair shop's exact location to ensure perfect mechanic-to-customer routing.</Text>
                         </View>
                     </View>
 
-                    <View style={styles.mapContainer}>
-                        <MapView
-                            provider={PROVIDER_GOOGLE}
-                            style={styles.map}
-                            initialRegion={{
-                                latitude: location?.lat || 18.5204,
-                                longitude: location?.lng || 73.8567,
-                                latitudeDelta: 0.05,
-                                longitudeDelta: 0.05,
-                            }}
-                        >
-                            {location && (
-                                <Marker
-                                    draggable
-                                    coordinate={{
-                                        latitude: location.lat,
-                                        longitude: location.lng
-                                    }}
-                                    onDragEnd={(e) => setLocation({
-                                        lat: e.nativeEvent.coordinate.latitude,
-                                        lng: e.nativeEvent.coordinate.longitude
-                                    })}
-                                    title={form.name || "Your Garage"}
-                                />
-                            )}
-                        </MapView>
-                        <TouchableOpacity
-                            style={styles.currentLocBtn}
-                            onPress={() => {
-                                if (userLoc?.coords) {
-                                    setLocation({
-                                        lat: userLoc.coords.latitude,
-                                        lng: userLoc.coords.longitude
-                                    });
-                                }
-                            }}
-                        >
-                            <Navigation size={20} color={COLORS.primary} />
-                        </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity
+                        style={[styles.pinDropBtn, location && styles.pinDropBtnSuccess]}
+                        onPress={() => navigation.navigate('LocationPicker', { initialLocation: location, returnScreen: 'RegisterGarage' })}
+                    >
+                        {location ? (
+                            <>
+                                <Check size={20} color={COLORS.white} />
+                                <Text style={styles.pinDropBtnText}>Exact Location Saved!</Text>
+                            </>
+                        ) : (
+                            <>
+                                <Navigation size={20} color={COLORS.primary} />
+                                <Text style={[styles.pinDropBtnText, { color: COLORS.primary }]}>Pin Exact Garage Location</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
 
                     <TouchableOpacity
                         style={[styles.submitButton, loading && { opacity: 0.7 }]}
@@ -455,6 +436,29 @@ const styles = StyleSheet.create({
         color: COLORS.textLight,
         marginBottom: 8,
         fontStyle: 'italic',
+    },
+    // ─ Location Pinning ───────────────────────────────────────────────────────
+    pinDropBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: COLORS.primary + '15',
+        borderWidth: 1.5,
+        borderColor: COLORS.primary + '30',
+        borderRadius: 16,
+        paddingVertical: 18,
+        marginHorizontal: SPACING.lg,
+        marginBottom: SPACING.xl,
+        gap: 10,
+    },
+    pinDropBtnSuccess: {
+        backgroundColor: '#27ae60',
+        borderColor: '#27ae60',
+    },
+    pinDropBtnText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: COLORS.white,
     },
     mapContainer: {
         height: 250,

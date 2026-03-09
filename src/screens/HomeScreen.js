@@ -112,7 +112,7 @@ const HomeScreen = ({ navigation }) => {
                         ) : (
                             <>
                                 <TouchableOpacity style={styles.glassButton} onPress={() => setIsSearchVisible(true)}>
-                                    <Search size={22} color={COLORS.text} />
+                                    <Search size={22} color={COLORS.white} />
                                 </TouchableOpacity>
 
                                 <View style={styles.mainGreeting}>
@@ -179,7 +179,7 @@ const HomeScreen = ({ navigation }) => {
 
                         <View style={styles.actionGrid}>
                             <TouchableOpacity
-                                style={[styles.actionCard, { backgroundColor: '#FFF7F0' }]}
+                                style={styles.actionCard}
                                 onPress={() => navigation.navigate('Mechanics')}
                             >
                                 <View style={[styles.actionIconPill, { backgroundColor: COLORS.primary }]}>
@@ -189,7 +189,7 @@ const HomeScreen = ({ navigation }) => {
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={[styles.actionCard, { backgroundColor: '#F0F7FF' }]}
+                                style={styles.actionCard}
                                 onPress={() => navigation.navigate('Towing')}
                             >
                                 <View style={[styles.actionIconPill, { backgroundColor: '#007AFF' }]}>
@@ -199,7 +199,7 @@ const HomeScreen = ({ navigation }) => {
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={[styles.actionCard, { backgroundColor: '#F0FFF4' }]}
+                                style={styles.actionCard}
                                 onPress={() => navigation.navigate('CarStuck')}
                             >
                                 <View style={[styles.actionIconPill, { backgroundColor: '#34C759' }]}>
@@ -209,7 +209,7 @@ const HomeScreen = ({ navigation }) => {
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={[styles.actionCard, { backgroundColor: '#FFFDE6' }]}
+                                style={styles.actionCard}
                                 onPress={() => navigation.navigate('Main', { screen: 'CostEstimator' })}
                             >
                                 <View style={[styles.actionIconPill, { backgroundColor: '#B8860B' }]}>
@@ -314,14 +314,14 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     glassHeader: {
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        backgroundColor: 'rgba(17, 24, 39, 0.85)',
         paddingBottom: SPACING.md,
         marginHorizontal: 15,
         marginTop: Platform.OS === 'ios' ? 50 : 30,
         borderRadius: 30,
         ...SHADOWS.large,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.5)',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
         position: 'absolute',
         top: 0,
         left: 0,
@@ -405,19 +405,19 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: 'rgba(31, 41, 55, 0.95)',
         height: 50,
         borderRadius: 25,
         paddingHorizontal: 15,
         marginHorizontal: 5,
         ...SHADOWS.medium,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     searchInput: {
         flex: 1,
         fontSize: 15,
-        color: COLORS.text,
+        color: COLORS.white,
         marginLeft: 10,
         fontWeight: '600',
     },
@@ -425,12 +425,12 @@ const styles = StyleSheet.create({
         width: 45,
         height: 45,
         borderRadius: 15,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: 'rgba(31, 41, 55, 0.9)',
         alignItems: 'center',
         justifyContent: 'center',
         ...SHADOWS.medium,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.5)',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     mainGreeting: {
         alignItems: 'center',
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     greetingTitle: {
         fontSize: 22,
         fontWeight: '900',
-        color: COLORS.text,
+        color: COLORS.white,
         letterSpacing: -0.5,
     },
     statusBadge: {
@@ -494,15 +494,17 @@ const styles = StyleSheet.create({
         paddingBottom: 80,
     },
     glassCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: 'rgba(17, 24, 39, 0.9)',
         borderRadius: 24,
         padding: SPACING.lg,
-        ...SHADOWS.medium,
+        ...SHADOWS.large,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)'
     },
     cardTitle: {
         fontSize: 18,
         fontWeight: '900',
-        color: COLORS.text,
+        color: COLORS.white,
         letterSpacing: -0.5,
     },
     actionHeader: {
@@ -533,8 +535,9 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 20,
         alignItems: 'center',
+        backgroundColor: 'rgba(31, 41, 55, 0.8)',
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.03)',
+        borderColor: 'rgba(255, 255, 255, 0.05)',
     },
     actionIconPill: {
         width: 40,
@@ -547,8 +550,8 @@ const styles = StyleSheet.create({
     },
     actionLabel: {
         fontSize: 12,
-        fontWeight: '700',
-        color: COLORS.text,
+        fontWeight: '800',
+        color: COLORS.white,
     },
     markerContainer: {
         padding: 2,

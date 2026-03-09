@@ -40,7 +40,21 @@ const LocationPickerScreen = ({ navigation, route }) => {
 
     const confirmLocation = () => {
         setManualLocation(region.latitude, region.longitude);
-        navigation.goBack();
+
+        let targetScreen = route.params?.returnScreen;
+        if (targetScreen) {
+            navigation.navigate({
+                name: targetScreen,
+                params: { pickedLocation: { lat: region.latitude, lng: region.longitude } },
+                merge: true,
+            });
+        } else {
+            // Fallback for earlier NearbyMechanics implementation
+            navigation.navigate('Main', {
+                screen: 'Nearby',
+                params: { pickedLocation: { lat: region.latitude, lng: region.longitude } }
+            });
+        }
     };
 
     return (
