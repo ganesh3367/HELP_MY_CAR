@@ -17,7 +17,11 @@ const LocationPickerScreen = ({ navigation, route }) => {
         longitudeDelta: 0.005,
     });
 
+    const [hasSetInitialRegion, setHasSetInitialRegion] = useState(false);
+
     useEffect(() => {
+        if (hasSetInitialRegion) return;
+
         if (route.params?.initialLocation) {
             setRegion({
                 latitude: route.params.initialLocation.lat,
@@ -25,14 +29,16 @@ const LocationPickerScreen = ({ navigation, route }) => {
                 latitudeDelta: 0.005,
                 longitudeDelta: 0.005,
             });
+            setHasSetInitialRegion(true);
         } else if (location?.coords) {
             setRegion((prev) => ({
                 ...prev,
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
             }));
+            setHasSetInitialRegion(true);
         }
-    }, [location, route.params]);
+    }, [location, route.params, hasSetInitialRegion]);
 
     const onRegionChangeComplete = (newRegion) => {
         setRegion(newRegion);
