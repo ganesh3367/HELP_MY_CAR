@@ -1,18 +1,12 @@
-import Constants from 'expo-constants';
-import { Platform } from 'react-native';
 import { io } from 'socket.io-client';
 
-// ── Dynamic URL — works on emulator AND physical device ──────────────────────
-const getSocketUrl = () => {
-    const debuggerHost = Constants.expoConfig?.hostUri || '';
-    let host = debuggerHost.split(':')[0];
-    if (!host) {
-        host = Platform.OS === 'android' ? '10.0.2.2' : '127.0.0.1';
-    }
-    return `http://${host}:5001`;
-};
+import { API_URL } from '../config';
 
-const SOCKET_URL = getSocketUrl();
+// ── Dynamic URL — works on emulator, device, and production ──────────────────
+// Automatically strips the '/api' from the end of the URL to get the base domain
+const SOCKET_URL = API_URL.replace('/api', '');
+
+console.log('[Socket] Initialized with URL:', SOCKET_URL);
 
 const socket = io(SOCKET_URL, {
     autoConnect: false,

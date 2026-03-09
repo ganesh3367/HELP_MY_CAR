@@ -428,7 +428,7 @@ const OrderTrackingScreen = () => {
                 onClose={() => setIsRatingVisible(false)}
                 onSave={(data) => {
                     Alert.alert('Thank you!', 'Your feedback helps us improve.');
-                    navigation.navigate('Home');
+                    navigation.replace('Main');
                 }}
                 mechanicName={order.garageName || 'Mechanic'}
             />

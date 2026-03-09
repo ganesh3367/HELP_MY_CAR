@@ -244,7 +244,7 @@ const NearbyMechanicsScreen = ({ navigation }) => {
 
         try {
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 3000);
+            const timer = setTimeout(() => controller.abort(), 90000);
             const url = `${API_URL}/garages/nearby?lat=${activeCoords.lat}&lng=${activeCoords.lng}&radius=5`;
             const res = await fetch(url, { signal: controller.signal });
             clearTimeout(timer);
