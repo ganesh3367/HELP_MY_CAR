@@ -64,6 +64,7 @@ const RootNavigator = () => {
                     <Stack.Screen name="PrivacySafety" component={PrivacySafetyScreen} />
                     <Stack.Screen name="Feedback" component={FeedbackScreen} />
                     <Stack.Screen name="EditGarageProfile" component={EditGarageProfileScreen} />
+                    <Stack.Screen name="RegisterGarage" component={RegisterGarageScreen} />
                     <Stack.Screen name="Profile" component={ProfileScreen} />
                     <Stack.Screen
                         name="OrderTracking"

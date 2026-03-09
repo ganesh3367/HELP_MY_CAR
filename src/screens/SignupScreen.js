@@ -21,10 +21,6 @@ const SignupScreen = ({ navigation }) => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [role, setRole] = useState('user'); // 'user' or 'garage'
-    const [garageName, setGarageName] = useState('');
-    const [garageAddress, setGarageAddress] = useState('');
-    const [garagePhone, setGaragePhone] = useState('');
-    const [selectedSpecialties, setSelectedSpecialties] = useState(['General Repair']);
 
     const specialtiesList = ['Engine Repair', 'Electrical', 'Tyre Change', 'AC Service', 'Brakes', 'Towing', 'Battery', 'Suspension'];
 
@@ -37,13 +33,6 @@ const SignupScreen = ({ navigation }) => {
             return;
         }
 
-        if (role === 'garage') {
-            if (!garageName || !garageAddress || !garagePhone) {
-                Alert.alert('Error', 'Please fill all garage details to register as a service provider');
-                return;
-            }
-        }
-
         if (password !== confirmPassword) {
             Alert.alert('Error', 'Passwords do not match');
             return;
@@ -51,12 +40,10 @@ const SignupScreen = ({ navigation }) => {
 
         setLoading(true);
         try {
-            await signup(name, email, password, role, {
-                garageName,
-                address: garageAddress,
-                phone: garagePhone,
-                specialties: selectedSpecialties
-            });
+            const userData = await signup(name, email, password, role);
+            if (role === 'garage') {
+                navigation.navigate('RegisterGarage');
+            }
         } catch (error) {
             Alert.alert('Signup Failed', String(error));
         } finally {
@@ -143,66 +130,6 @@ const SignupScreen = ({ navigation }) => {
                             onChangeText={setConfirmPassword}
                         />
                     </View>
-
-                    {/* Dynamic Garage Fields */}
-                    {role === 'garage' && (
-                        <View style={styles.garageSection}>
-                            <Text style={styles.sectionTitle}>Garage Details</Text>
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Garage Name</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Super Fix Garage"
-                                    value={garageName}
-                                    onChangeText={setGarageName}
-                                />
-                            </View>
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Street Address</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="123 Main St, City"
-                                    value={garageAddress}
-                                    onChangeText={setGarageAddress}
-                                />
-                            </View>
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Phone Number</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="+1234567890"
-                                    keyboardType="phone-pad"
-                                    value={garagePhone}
-                                    onChangeText={setGaragePhone}
-                                />
-                            </View>
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Specialties</Text>
-                                <View style={styles.specialtiesContainer}>
-                                    {specialtiesList.map((specialty) => {
-                                        const isSelected = selectedSpecialties.includes(specialty);
-                                        return (
-                                            <TouchableOpacity
-                                                key={specialty}
-                                                style={[styles.specialtyChip, isSelected && styles.specialtyChipActive]}
-                                                onPress={() => {
-                                                    if (isSelected) {
-                                                        setSelectedSpecialties(selectedSpecialties.filter(s => s !== specialty));
-                                                    } else {
-                                                        setSelectedSpecialties([...selectedSpecialties, specialty]);
-                                                    }
-                                                }}
-                                            >
-                                                <Text style={[styles.specialtyChipText, isSelected && styles.specialtyChipTextActive]}>
-                                                    {specialty}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        );
-                                    })}
-                                </View>
-                            </View>
-                        </View>
-                    )}
 
                     <View style={styles.termsContainer}>
                         <Text style={styles.termsText}>

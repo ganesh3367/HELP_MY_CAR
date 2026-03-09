@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 // @access  Public
 exports.signup = async (req, res) => {
     try {
-        const { name, email, password, role, garageName, address, phone, specialties } = req.body;
+        const { name, email, password, role } = req.body;
         const userRole = role === 'garage' ? 'garage' : 'user';
 
         if (!db) {
@@ -39,29 +39,7 @@ exports.signup = async (req, res) => {
             createdAt: new Date().toISOString()
         };
 
-        // If role is garage, create a garage document
-        if (userRole === 'garage') {
-            const garageRef = db.collection('garages').doc();
-            const newGarage = {
-                ownerEmail: email,
-                name: garageName || `${name}'s Garage`,
-                address: address || 'Not Provided',
-                phone: phone || 'Not Provided',
-                // Default Indian Geolocation (Pune)
-                location: { lat: 18.5204, lng: 73.8567 },
-                rating: 0,
-                estimatedCost: 'TBD',
-                specialties: specialties || ['General Repair', 'Engine Repair', 'Electrical'],
-                createdAt: new Date().toISOString()
-            };
-
-            const batch = db.batch();
-            batch.set(userRef, newUser);
-            batch.set(garageRef, newGarage);
-            await batch.commit();
-        } else {
-            await userRef.set(newUser);
-        }
+        await userRef.set(newUser);
 
         // Return response (excluding password)
         const userData = { id: email, name, email, role: userRole };

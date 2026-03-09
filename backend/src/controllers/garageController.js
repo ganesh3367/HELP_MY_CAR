@@ -253,10 +253,69 @@ const updateGarage = async (req, res) => {
     }
 };
 
+// @desc    Register a new garage (detailed)
+// @route   POST /api/garages
+// @access  Public (Should be private in production)
+const createGarage = async (req, res) => {
+    try {
+        const {
+            ownerEmail,
+            name,
+            address,
+            phone,
+            experience,
+            estimatedCost,
+            rating,
+            specialties,
+            location
+        } = req.body;
+
+        if (!ownerEmail || !name || !location) {
+            return res.status(400).json({ success: false, message: 'Please provide email, name, and location' });
+        }
+
+        if (!db) {
+            return res.status(201).json({
+                success: true,
+                data: { id: 'mock-id-' + Date.now(), ...req.body }
+            });
+        }
+
+        const newGarage = {
+            ownerEmail,
+            name,
+            address: address || 'Not Provided',
+            phone: phone || 'Not Provided',
+            experience: experience || 'Not Provided',
+            estimatedCost: estimatedCost || 'TBD',
+            rating: parseFloat(rating) || 0,
+            specialties: specialties || [],
+            location: {
+                lat: parseFloat(location.lat),
+                lng: parseFloat(location.lng)
+            },
+            isOnline: true, // Default to online
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        const docRef = await db.collection('garages').add(newGarage);
+
+        res.status(201).json({
+            success: true,
+            data: { id: docRef.id, ...newGarage }
+        });
+    } catch (error) {
+        console.error('Create Garage Error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     getNearbyGarages,
     seedGarages,
     getGarageByOwner,
+    createGarage,
     updateGarage,
     addReview
 };

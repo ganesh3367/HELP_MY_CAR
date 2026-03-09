@@ -294,6 +294,27 @@ export const AppProvider = ({ children }) => {
         return await updateGarageProfile(garageId, { isOnline });
     };
 
+    const createGarage = async (garageData) => {
+        try {
+            const response = await fetch(`${API_URL}/garages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(garageData),
+            });
+            const data = await response.json();
+            if (data.success) {
+                setMyGarage(data.data);
+                // Also refresh mechanics list to include the newly created one
+                fetchMechanics();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Create Garage Error:', error);
+            return false;
+        }
+    };
+
     const submitFeedback = async (feedbackData) => {
         try {
             const response = await fetch(`${API_URL}/feedback`, {
@@ -445,6 +466,7 @@ export const AppProvider = ({ children }) => {
                 fetchUserOrders,
                 updateGarageProfile,
                 toggleGarageStatus,
+                createGarage,
                 submitFeedback
             }}
         >
