@@ -4,6 +4,7 @@ import { COLORS } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
 import CarDiagnosticScreen from '../screens/CarDiagnosticScreen';
+import EditGarageProfileScreen from '../screens/EditGarageProfileScreen';
 import FeedbackScreen from '../screens/FeedbackScreen';
 import LocationPickerScreen from '../screens/LocationPickerScreen';
 import LoginScreen from '../screens/LoginScreen';

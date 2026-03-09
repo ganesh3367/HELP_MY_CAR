@@ -1,6 +1,7 @@
-import { BarChart3, Clock, DollarSign, Package, Star, TrendingUp } from 'lucide-react-native';
+import { ArrowLeft, BarChart3, Clock, DollarSign, Package, Star, TrendingUp } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     RefreshControl,
     ScrollView,
     StyleSheet,
