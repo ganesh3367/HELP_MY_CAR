@@ -12,6 +12,7 @@ import MechanicProfileScreen from '../screens/MechanicProfileScreen';
 import OrderTrackingScreen from '../screens/OrderTrackingScreen';
 import PrivacySafetyScreen from '../screens/PrivacySafetyScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import RegisterGarageScreen from '../screens/RegisterGarageScreen';
 import ServiceHistoryScreen from '../screens/ServiceHistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import SignupScreen from '../screens/SignupScreen';
