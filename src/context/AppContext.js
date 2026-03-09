@@ -106,7 +106,7 @@ export const AppProvider = ({ children }) => {
 
             // Add timeout to fail fast and switch to mock data
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout for Render cold start
 
             const response = await fetch(`${API_URL}/garages/nearby?lat=${lat}&lng=${lng}`, {
                 signal: controller.signal
