@@ -31,6 +31,11 @@ io.on('connection', (socket) => {
         console.log(`Socket ${socket.id} joined order ${orderId}`);
     });
 
+    socket.on('join_garage', (garageId) => {
+        socket.join(`garage_${garageId}`);
+        console.log(`Socket ${socket.id} joined garage room garage_${garageId}`);
+    });
+
     socket.on('update_location', ({ orderId, location }) => {
         // Broadcast location update to anyone tracking this order
         io.to(orderId).emit('location_updated', location);

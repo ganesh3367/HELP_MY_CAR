@@ -1,18 +1,31 @@
-import { ArrowLeft, BarChart3, Clock, DollarSign, Package, Star, TrendingUp } from 'lucide-react-native';
+import {
+    Bell,
+    ChevronRight,
+    Clock,
+    DollarSign,
+    LayoutDashboard,
+    Package,
+    Settings,
+    Star,
+    TrendingUp
+} from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Dimensions,
     RefreshControl,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SHADOWS, SIZES, SPACING } from '../constants/theme';
+import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
+
+const { width } = Dimensions.get('window');
 
 const GarageDashboardScreen = ({ navigation }) => {
     const { user } = useAuth();
@@ -21,7 +34,9 @@ const GarageDashboardScreen = ({ navigation }) => {
         fetchGarageByOwner,
         garageOrders,
         fetchGarageOrders,
-        toggleGarageStatus
+        toggleGarageStatus,
+        unreadOrders,
+        clearUnreadOrders
     } = useAppContext();
     const [refreshing, setRefreshing] = useState(false);
     const [toggling, setToggling] = useState(false);
@@ -64,92 +79,127 @@ const GarageDashboardScreen = ({ navigation }) => {
         }, 0);
 
     const stats = [
-        { label: 'Total Jobs', value: garageOrders.length || '0', icon: Package, color: '#007AFF' },
-        { label: 'Rating', value: (myGarage?.rating || 0).toFixed(1), icon: Star, color: '#FF9500' },
-        { label: 'Revenue', value: `₹${totalRevenue}`, icon: DollarSign, color: '#34C759' },
-        { label: 'Growth', value: '+12%', icon: TrendingUp, color: '#5856D6' },
+        { label: 'Total Jobs', value: garageOrders.length || '0', icon: Package, color: '#3B82F6' },
+        { label: 'Avg Rating', value: (myGarage?.rating || 0).toFixed(1), icon: Star, color: '#F59E0B' },
+        { label: 'Revenue', value: `₹${totalRevenue}`, icon: DollarSign, color: '#10B981' },
+        { label: 'Active', value: activeJobs.length || '0', icon: Clock, color: '#6366F1' },
+    ];
+
+    const quickActions = [
+        { title: 'Orders', icon: LayoutDashboard, color: '#3B82F6', route: 'Orders' },
+        { title: 'Profile', icon: Settings, color: '#6B7280', route: 'EditGarageProfile' },
+        { title: 'Analytics', icon: TrendingUp, color: '#10B981', route: 'Dashboard' },
+        { title: 'Reviews', icon: Star, color: '#F59E0B', route: 'Dashboard' },
     ];
 
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView
+                showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
             >
-                <View style={styles.header}>
-                    <View>
-                        <Text style={styles.greeting}>Welcome back,</Text>
-                        <Text style={styles.garageName}>{myGarage?.name || 'Your Garage'}</Text>
-                        <View style={styles.statusIndicatorContainer}>
-                            <View style={[styles.statusDot, { backgroundColor: myGarage?.isOnline ? COLORS.success : '#C7C7CC' }]} />
-                            <Text style={styles.statusLabel}>{myGarage?.isOnline ? 'Online & Visible' : 'Offline'}</Text>
+                {/* ── Dashboard Header ────────────────────────────────────────── */}
+                <View style={styles.headerArea}>
+                    <View style={styles.headerTop}>
+                        <View>
+                            <Text style={styles.greeting}>Good Day,</Text>
+                            <Text style={styles.garageName}>{myGarage?.name || 'Your Garage'}</Text>
                         </View>
+                        <TouchableOpacity
+                            style={styles.profileBtn}
+                            onPress={() => navigation.navigate('Profile')}
+                        >
+                            <View style={styles.avatar}>
+                                <Text style={styles.avatarText}>{(user?.name || 'G').charAt(0).toUpperCase()}</Text>
+                            </View>
+                        </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                        style={styles.profileButton}
-                        onPress={() => navigation.navigate('Profile')}
-                    >
-                        <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>{(user?.name || 'G').charAt(0)}</Text>
-                        </View>
-                    </TouchableOpacity>
+
+                    {/* Status Ribbon */}
+                    <View style={[styles.statusRibbon, { backgroundColor: myGarage?.isOnline ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)' }]}>
+                        <View style={[styles.statusDot, { backgroundColor: myGarage?.isOnline ? '#10B981' : '#6B7280' }]} />
+                        <Text style={[styles.statusLabel, { color: myGarage?.isOnline ? '#065F46' : '#374151' }]}>
+                            {myGarage?.isOnline ? 'Business is Online & Accepting Requests' : 'Currently Offline'}
+                        </Text>
+                    </View>
                 </View>
 
-                {/* Status Toggle Card */}
-                <View style={styles.toggleCard}>
-                    <View>
-                        <Text style={styles.toggleTitle}>Business Status</Text>
-                        <Text style={styles.toggleSub}>When offline, users won't see your garage</Text>
+                {unreadOrders.length > 0 && (
+                    <TouchableOpacity
+                        style={styles.notificationBanner}
+                        onPress={() => {
+                            clearUnreadOrders();
+                            navigation.navigate('Orders');
+                        }}
+                    >
+                        <View style={styles.notificationIcon}>
+                            <Bell size={18} color={COLORS.white} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.notificationTitle}>New Orders Pending!</Text>
+                            <Text style={styles.notificationSub}>You have {unreadOrders.length} new service request{unreadOrders.length > 1 ? 's' : ''}.</Text>
+                        </View>
+                        <ChevronRight size={18} color="#D97706" />
+                    </TouchableOpacity>
+                )}
+
+                {/* ── Business Controls ────────────────────────────────────────── */}
+                <View style={styles.controlRow}>
+                    <View style={styles.toggleContainer}>
+                        <Text style={styles.toggleTitle}>Availability</Text>
+                        <Text style={styles.toggleSub}>Appear on user maps</Text>
                     </View>
                     <TouchableOpacity
-                        style={[styles.toggleBtn, { backgroundColor: myGarage?.isOnline ? '#E6F7ED' : '#F2F2F7' }]}
+                        style={[styles.mainToggle, { backgroundColor: myGarage?.isOnline ? COLORS.primary : '#E5E7EB' }]}
                         onPress={handleToggleStatus}
                         disabled={toggling}
                     >
                         {toggling ? (
-                            <ActivityIndicator size="small" color={COLORS.primary} />
+                            <ActivityIndicator size="small" color={COLORS.white} />
                         ) : (
-                            <Text style={[styles.toggleBtnText, { color: myGarage?.isOnline ? COLORS.success : COLORS.textLight }]}>
-                                {myGarage?.isOnline ? 'ONLINE' : 'OFFLINE'}
-                            </Text>
+                            <View style={[styles.toggleCircle, { alignSelf: myGarage?.isOnline ? 'flex-end' : 'flex-start' }]} />
                         )}
                     </TouchableOpacity>
                 </View>
 
-                {/* Quick Stats Grid */}
+                {/* ── Stats Grid ──────────────────────────────────────────────── */}
                 <View style={styles.statsGrid}>
-                    {stats.map((stat, index) => (
-                        <View key={index} style={styles.statCard}>
-                            <View style={[styles.statIcon, { backgroundColor: stat.color + '20' }]}>
-                                <stat.icon size={20} color={stat.color} />
+                    {stats.map((stat, idx) => (
+                        <View key={idx} style={styles.statCard}>
+                            <View style={[styles.statIconFrame, { backgroundColor: stat.color + '15' }]}>
+                                <stat.icon size={18} color={stat.color} />
                             </View>
-                            <Text style={styles.statValue}>{stat.value}</Text>
-                            <Text style={styles.statLabel}>{stat.label}</Text>
+                            <View>
+                                <Text style={styles.statVal}>{stat.value}</Text>
+                                <Text style={styles.statLab}>{stat.label}</Text>
+                            </View>
                         </View>
                     ))}
                 </View>
 
-                {/* Quick Actions */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Manage Business</Text>
+                {/* ── Quick Actions ─────────────────────────────────────────── */}
+                <Text style={styles.sectionTitle}>Quick Management</Text>
+                <View style={styles.actionsGrid}>
+                    {quickActions.map((action, idx) => (
+                        <TouchableOpacity
+                            key={idx}
+                            style={styles.actionItem}
+                            onPress={() => navigation.navigate(action.route)}
+                        >
+                            <View style={[styles.actionIcon, { backgroundColor: action.color + '10' }]}>
+                                <action.icon size={22} color={action.color} />
+                            </View>
+                            <Text style={styles.actionLabel}>{action.title}</Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
-                <TouchableOpacity
-                    style={styles.actionCard}
-                    onPress={() => navigation.navigate('EditGarageProfile')}
-                >
-                    <Star size={20} color={COLORS.primary} />
-                    <View style={styles.actionContent}>
-                        <Text style={styles.actionTitle}>Business Profile</Text>
-                        <Text style={styles.actionSub}>Update name, address, and specialties</Text>
-                    </View>
-                    <ArrowLeft size={20} color={COLORS.textLight} style={{ transform: [{ rotate: '180deg' }] }} />
-                </TouchableOpacity>
 
-                {/* Active Jobs Section */}
-                <View style={[styles.sectionHeader, { marginTop: SPACING.xl }]}>
-                    <Text style={styles.sectionTitle}>Active Jobs ({activeJobs.length})</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('GarageOrders')}>
-                        <Text style={styles.viewAll}>View All</Text>
+                {/* ── Active Jobs ───────────────────────────────────────────── */}
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Upcoming & Active Jobs</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Orders')}>
+                        <Text style={styles.seeAll}>See All</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -158,36 +208,32 @@ const GarageDashboardScreen = ({ navigation }) => {
                         <TouchableOpacity
                             key={order.id}
                             style={styles.jobCard}
-                            onPress={() => navigation.navigate('GarageOrders')}
+                            onPress={() => navigation.navigate('Orders')}
                         >
-                            <View style={styles.jobInfo}>
-                                <Text style={styles.carName}>{order.vehicleDetails.make} {order.vehicleDetails.model}</Text>
-                                <Text style={styles.issueText}>{order.vehicleDetails.issue}</Text>
-                                <View style={styles.statusRow}>
-                                    <Clock size={12} color={COLORS.textLight} />
-                                    <Text style={styles.timeText}>Ordered {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                            <View style={styles.jobContent}>
+                                <View style={styles.jobMain}>
+                                    <Text style={styles.carText}>{order.vehicleDetails.make} {order.vehicleDetails.model}</Text>
+                                    <Text style={styles.jobIssue} numberOfLines={1}>{order.vehicleDetails.issue}</Text>
+                                    <View style={styles.timeRow}>
+                                        <Clock size={12} color={COLORS.textLight} />
+                                        <Text style={styles.timeLabel}>Request received {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                                    </View>
                                 </View>
-                            </View>
-                            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) + '20' }]}>
-                                <Text style={[styles.statusTabText, { color: getStatusColor(order.status) }]}>{order.status}</Text>
+                                <View style={[styles.statusTag, { backgroundColor: getStatusColor(order.status) + '15' }]}>
+                                    <Text style={[styles.tagText, { color: getStatusColor(order.status) }]}>{order.status.replace('_', ' ')}</Text>
+                                </View>
                             </View>
                         </TouchableOpacity>
                     ))
                 ) : (
-                    <View style={styles.emptyCard}>
-                        <BarChart3 size={40} color={COLORS.textLight} />
-                        <Text style={styles.emptyTitle}>No Active Jobs</Text>
-                        <Text style={styles.emptySub}>When users request services, they will appear here.</Text>
+                    <View style={styles.emptyState}>
+                        <View style={styles.emptyIconBg}>
+                            <Package size={28} color="#9CA3AF" />
+                        </View>
+                        <Text style={styles.emptyTitle}>Queue is Empty</Text>
+                        <Text style={styles.emptySub}>Switch online to start receiving new service requests from nearby users.</Text>
                     </View>
                 )}
-
-                {/* Performance Chart Placeholder */}
-                <View style={styles.performanceCard}>
-                    <Text style={styles.perfTitle}>Weekly Performance</Text>
-                    <View style={styles.chartPlaceholder}>
-                        <Text style={styles.perfMessage}>Performance analytics will appear here after more jobs are completed.</Text>
-                    </View>
-                </View>
             </ScrollView>
         </SafeAreaView>
     );
@@ -195,45 +241,73 @@ const GarageDashboardScreen = ({ navigation }) => {
 
 const getStatusColor = (status) => {
     switch (status) {
-        case 'PENDING': return COLORS.warning;
-        case 'ACCEPTED': return COLORS.primary;
-        case 'ON_THE_WAY': return '#5856D6';
-        case 'ARRIVED': return COLORS.success;
-        case 'IN_PROGRESS': return COLORS.info;
-        default: return COLORS.textLight;
+        case 'PENDING': return '#F59E0B';
+        case 'ACCEPTED': return '#3B82F6';
+        case 'ON_THE_WAY': return '#8B5CF6';
+        case 'ARRIVED': return '#10B981';
+        case 'IN_PROGRESS': return '#3B82F6';
+        default: return '#6B7280';
     }
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
+        backgroundColor: '#F9FAFB',
     },
     scrollContent: {
         padding: SPACING.lg,
     },
-    header: {
+    // ─ Header Area ────────────────────────────────────────────────────────
+    headerArea: {
+        marginBottom: SPACING.xl,
+    },
+    headerTop: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: SPACING.xl,
-        marginTop: SPACING.md,
+        marginBottom: 16,
     },
     greeting: {
         fontSize: 14,
         color: COLORS.textLight,
         fontWeight: '500',
+        letterSpacing: 0.5,
     },
     garageName: {
         fontSize: 24,
-        fontWeight: 'bold',
+        fontWeight: '800',
         color: COLORS.text,
+        marginTop: 2,
     },
-    statusIndicatorContainer: {
+    profileBtn: {
+        borderRadius: 20,
+        padding: 2,
+        backgroundColor: COLORS.white,
+        ...SHADOWS.small,
+    },
+    avatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: COLORS.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: COLORS.white,
+    },
+    avatarText: {
+        color: COLORS.white,
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    statusRibbon: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        marginTop: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        gap: 8,
     },
     statusDot: {
         width: 8,
@@ -242,66 +316,79 @@ const styles = StyleSheet.create({
     },
     statusLabel: {
         fontSize: 12,
-        color: COLORS.textLight,
         fontWeight: '600',
     },
-    toggleCard: {
+    // ─ Notification ───────────────────────────────────────────────────────
+    notificationBanner: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: COLORS.white,
-        padding: SPACING.md,
-        borderRadius: 18,
-        marginBottom: SPACING.xl,
-        ...SHADOWS.small,
+        backgroundColor: '#FFFBEB',
+        padding: 14,
+        borderRadius: 16,
+        marginBottom: SPACING.lg,
         borderWidth: 1,
-        borderColor: '#F0F0F0',
+        borderColor: '#FEF3C7',
+        gap: 12,
+    },
+    notificationIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: '#F59E0B',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    notificationTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#92400E',
+    },
+    notificationSub: {
+        fontSize: 12,
+        color: '#B45309',
+        marginTop: 2,
+    },
+    // ─ Controls ───────────────────────────────────────────────────────────
+    controlRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: COLORS.white,
+        padding: 20,
+        borderRadius: 24,
+        marginBottom: SPACING.xl,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+        ...SHADOWS.medium,
+    },
+    toggleContainer: {
+        flex: 1,
     },
     toggleTitle: {
-        fontSize: 15,
-        fontWeight: 'bold',
+        fontSize: 16,
+        fontWeight: '800',
         color: COLORS.text,
     },
     toggleSub: {
-        fontSize: 12,
+        fontSize: 13,
         color: COLORS.textLight,
         marginTop: 2,
     },
-    toggleBtn: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 10,
-        minWidth: 80,
-        alignItems: 'center',
+    mainToggle: {
+        width: 52,
+        height: 28,
+        borderRadius: 14,
+        padding: 3,
+        justifyContent: 'center',
     },
-    toggleBtnText: {
-        fontSize: 11,
-        fontWeight: '900',
-    },
-    actionCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    toggleCircle: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
         backgroundColor: COLORS.white,
-        padding: SPACING.md,
-        borderRadius: 18,
         ...SHADOWS.small,
-        borderWidth: 1,
-        borderColor: '#F0F0F0',
     },
-    actionContent: {
-        flex: 1,
-        marginLeft: 12,
-    },
-    actionTitle: {
-        fontSize: 15,
-        fontWeight: 'bold',
-        color: COLORS.text,
-    },
-    actionSub: {
-        fontSize: 12,
-        color: COLORS.textLight,
-        marginTop: 2,
-    },
+    // ─ Stats Grid ─────────────────────────────────────────────────────────
     statsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -309,139 +396,161 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.xl,
     },
     statCard: {
-        width: (SIZES.width - SPACING.lg * 2 - 12) / 2,
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: (width - SPACING.lg * 2 - 12) / 2,
         backgroundColor: COLORS.white,
-        borderRadius: 20,
-        padding: SPACING.md,
-        ...SHADOWS.small,
+        borderRadius: 16,
+        padding: 16,
+        gap: 12,
         borderWidth: 1,
-        borderColor: '#F0F0F0',
+        borderColor: '#F1F5F9',
     },
-    statIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: 10,
+    statIconFrame: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 10,
     },
-    statValue: {
-        fontSize: 18,
-        fontWeight: 'bold',
+    statVal: {
+        fontSize: 16,
+        fontWeight: '800',
         color: COLORS.text,
     },
-    statLabel: {
-        fontSize: 12,
+    statLab: {
+        fontSize: 11,
         color: COLORS.textLight,
-        marginTop: 2,
+        fontWeight: '500',
     },
+    // ─ Quick Actions ──────────────────────────────────────────────────────
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: COLORS.text,
+        marginBottom: 12,
+    },
+    actionsGrid: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: SPACING.xl,
+    },
+    actionItem: {
+        flex: 1,
+        backgroundColor: COLORS.white,
+        borderRadius: 20,
+        padding: 16,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+    },
+    actionIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 8,
+    },
+    actionLabel: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: COLORS.text,
+    },
+    // ─ Jobs List ──────────────────────────────────────────────────────────
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: SPACING.md,
+        marginBottom: 12,
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.text,
-    },
-    viewAll: {
+    seeAll: {
         fontSize: 14,
         color: COLORS.primary,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     jobCard: {
-        flexDirection: 'row',
         backgroundColor: COLORS.white,
-        borderRadius: 16,
-        padding: SPACING.md,
-        marginBottom: 10,
-        alignItems: 'center',
+        borderRadius: 20,
+        padding: 16,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
         ...SHADOWS.small,
     },
-    jobInfo: {
-        flex: 1,
+    jobContent: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
     },
-    carName: {
+    jobMain: {
+        flex: 1,
+        marginRight: 10,
+    },
+    carText: {
         fontSize: 16,
-        fontWeight: '700',
+        fontWeight: '800',
         color: COLORS.text,
     },
-    issueText: {
+    jobIssue: {
         fontSize: 13,
         color: COLORS.textLight,
         marginTop: 2,
     },
-    statusRow: {
+    timeRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 6,
         gap: 4,
+        marginTop: 10,
     },
-    timeText: {
+    timeLabel: {
         fontSize: 11,
         color: COLORS.textLight,
+        fontWeight: '500',
     },
-    statusBadge: {
+    statusTag: {
         paddingHorizontal: 10,
-        paddingVertical: 4,
+        paddingVertical: 6,
         borderRadius: 8,
     },
-    statusTabText: {
+    tagText: {
         fontSize: 10,
-        fontWeight: 'bold',
+        fontWeight: '800',
+        textTransform: 'uppercase',
     },
-    emptyCard: {
-        backgroundColor: COLORS.white,
-        borderRadius: 20,
-        padding: SPACING.xl,
+    // ─ Empty State ────────────────────────────────────────────────────────
+    emptyState: {
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: '#F0F0F0',
+        paddingVertical: 40,
+        backgroundColor: '#F9FAFB',
+        borderRadius: 24,
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
         borderStyle: 'dashed',
+    },
+    emptyIconBg: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#F3F4F6',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
     },
     emptyTitle: {
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '700',
         color: COLORS.text,
-        marginTop: 12,
     },
     emptySub: {
         fontSize: 13,
         color: COLORS.textLight,
         textAlign: 'center',
-        marginTop: 4,
-    },
-    performanceCard: {
-        backgroundColor: COLORS.white,
-        borderRadius: 20,
-        padding: SPACING.md,
-        marginTop: SPACING.xl,
-        marginBottom: SPACING.xl,
-        ...SHADOWS.small,
-    },
-    perfTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: COLORS.text,
-        marginBottom: SPACING.md,
-    },
-    chartPlaceholder: {
-        height: 120,
-        backgroundColor: '#F8F9FA',
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: SPACING.xl,
-    },
-    perfMessage: {
-        fontSize: 12,
-        color: COLORS.textLight,
-        textAlign: 'center',
+        marginTop: 6,
+        paddingHorizontal: 40,
         lineHeight: 18,
-    }
+    },
 });
 
 export default GarageDashboardScreen;

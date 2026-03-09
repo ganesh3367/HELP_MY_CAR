@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Navigation } from 'lucide-react-native';
+import { ArrowLeft, Check, LogOut, Navigation } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -36,7 +36,7 @@ const SPECIALTIES = [
 ];
 
 const RegisterGarageScreen = ({ navigation }) => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const { createGarage } = useAppContext();
     const { location: userLoc } = useLocation();
 
@@ -85,14 +85,23 @@ const RegisterGarageScreen = ({ navigation }) => {
         try {
             const success = await createGarage({
                 ownerEmail: user.email,
-                ...form,
+                name: form.name,
+                address: form.address,
+                phone: form.phone,
+                experience: form.experience || "Not Provided",
+                estimatedCost: form.estimatedCost || "TBD",
+                rating: parseFloat(form.rating) || 5,
+                reviewCount: 1, // Initial count
                 specialties: selectedSpecialties,
-                location: location
+                location: {
+                    lat: location.lat,
+                    lng: location.lng
+                }
             });
 
             if (success) {
                 Alert.alert('Success', 'Your garage has been registered successfully!', [
-                    { text: 'OK', onPress: () => navigation.replace('Main', { screen: 'GarageDashboard' }) }
+                    { text: 'OK', onPress: () => console.log('Registration acknowledged') }
                 ]);
             } else {
                 Alert.alert('Error', 'Failed to register garage. Please try again.');
@@ -111,10 +120,30 @@ const RegisterGarageScreen = ({ navigation }) => {
                 style={{ flex: 1 }}
             >
                 <View style={styles.header}>
-                    <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                        <ArrowLeft size={24} color={COLORS.text} />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Register Your Garage</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {navigation.canGoBack() && (
+                            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                                <ArrowLeft size={24} color={COLORS.text} />
+                            </TouchableOpacity>
+                        )}
+                        <View>
+                            <Text style={styles.headerTitle}>Professional Onboarding</Text>
+                            <Text style={styles.headerSub}>Step 2: Business Profile Setup</Text>
+                        </View>
+                    </View>
+
+                    {!navigation.canGoBack() && (
+                        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+                            <LogOut size={22} color={COLORS.danger || '#EF4444'} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* Progress bar */}
+                <View style={styles.progressContainer}>
+                    <View style={styles.progressBar}>
+                        <View style={[styles.progressFill, { width: '100%' }]} />
+                    </View>
                 </View>
 
                 <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
@@ -203,8 +232,20 @@ const RegisterGarageScreen = ({ navigation }) => {
                         ))}
                     </View>
 
-                    <Text style={styles.sectionTitle}>Garage Location (Map) *</Text>
-                    <Text style={styles.hintText}>Long press or drag the marker to pin your exact location</Text>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Garage Location *</Text>
+                    </View>
+
+                    <View style={styles.instructionBanner}>
+                        <View style={styles.instructionRow}>
+                            <View style={styles.stepNum}><Text style={styles.stepNumText}>1</Text></View>
+                            <Text style={styles.instructionText}>Use the <Navigation size={12} color={COLORS.primary} /> button to find your current shop location</Text>
+                        </View>
+                        <View style={styles.instructionRow}>
+                            <View style={styles.stepNum}><Text style={styles.stepNumText}>2</Text></View>
+                            <Text style={styles.instructionText}>Fine-tune by dragging the 📌 marker exactly to your garage entrance</Text>
+                        </View>
+                    </View>
 
                     <View style={styles.mapContainer}>
                         <MapView
@@ -275,6 +316,7 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
         padding: SPACING.lg,
         backgroundColor: COLORS.white,
         ...SHADOWS.small,
@@ -282,20 +324,85 @@ const styles = StyleSheet.create({
     backButton: {
         marginRight: SPACING.lg,
     },
+    logoutButton: {
+        padding: SPACING.sm,
+    },
     headerTitle: {
         fontSize: 20,
-        fontWeight: 'bold',
+        fontWeight: '800',
         color: COLORS.text,
+        letterSpacing: -0.5,
+    },
+    headerSub: {
+        fontSize: 13,
+        color: COLORS.textLight,
+        marginTop: 2,
+        fontWeight: '500',
+    },
+    progressContainer: {
+        paddingHorizontal: SPACING.lg,
+        paddingTop: SPACING.md,
+        paddingBottom: SPACING.sm,
+        backgroundColor: COLORS.white,
+    },
+    progressBar: {
+        height: 6,
+        backgroundColor: '#F3F4F6',
+        borderRadius: 3,
+        overflow: 'hidden',
+    },
+    progressFill: {
+        height: '100%',
+        backgroundColor: COLORS.primary,
+        borderRadius: 3,
     },
     scrollContent: {
         padding: SPACING.lg,
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.text,
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         marginTop: SPACING.lg,
         marginBottom: SPACING.md,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: COLORS.text,
+    },
+    instructionBanner: {
+        backgroundColor: '#F0F7FF',
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#D0E5FF',
+    },
+    instructionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    stepNum: {
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        backgroundColor: COLORS.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 10,
+    },
+    stepNumText: {
+        color: COLORS.white,
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
+    instructionText: {
+        flex: 1,
+        fontSize: 12,
+        color: '#2C5282',
+        lineHeight: 16,
     },
     inputGroup: {
         marginBottom: SPACING.md,

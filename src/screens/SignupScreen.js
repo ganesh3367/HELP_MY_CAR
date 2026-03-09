@@ -1,4 +1,4 @@
-import { ArrowLeft, Car, Wrench } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     Alert,
@@ -15,14 +15,13 @@ import Button from '../components/Button';
 import { COLORS, SHADOWS, SIZES, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
-const SignupScreen = ({ navigation }) => {
+const SignupScreen = ({ navigation, route }) => {
+    const passedRole = route.params?.role || 'user';
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [role, setRole] = useState('user'); // 'user' or 'garage'
-
-    const specialtiesList = ['Engine Repair', 'Electrical', 'Tyre Change', 'AC Service', 'Brakes', 'Towing', 'Battery', 'Suspension'];
+    const [role] = useState(passedRole);
 
     const { signup } = useAuth();
     const [loading, setLoading] = useState(false);
@@ -62,28 +61,12 @@ const SignupScreen = ({ navigation }) => {
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
-                    <Text style={styles.title}>Create Account</Text>
-                    <Text style={styles.subtitle}>Join &quot;Help My Car&quot; community</Text>
-                </View>
-
-                {/* Role Switcher */}
-                <View style={styles.roleContainer}>
-                    <TouchableOpacity
-                        style={[styles.roleButton, role === 'user' && styles.roleButtonActive]}
-                        onPress={() => setRole('user')}
-                        activeOpacity={0.8}
-                    >
-                        <Car size={20} color={role === 'user' ? COLORS.white : COLORS.textLight} style={styles.roleIcon} />
-                        <Text style={[styles.roleText, role === 'user' && styles.roleTextActive]}>Regular User</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.roleButton, role === 'garage' && styles.roleButtonActive]}
-                        onPress={() => setRole('garage')}
-                        activeOpacity={0.8}
-                    >
-                        <Wrench size={20} color={role === 'garage' ? COLORS.white : COLORS.textLight} style={styles.roleIcon} />
-                        <Text style={[styles.roleText, role === 'garage' && styles.roleTextActive]}>Garage Owner</Text>
-                    </TouchableOpacity>
+                    <Text style={styles.title}>{role === 'garage' ? 'Business Account' : 'Create Account'}</Text>
+                    <Text style={styles.subtitle}>
+                        {role === 'garage'
+                            ? 'Step 1: Create your owner login'
+                            : 'Join our community of car owners'}
+                    </Text>
                 </View>
 
                 <View style={styles.form}>
@@ -140,7 +123,7 @@ const SignupScreen = ({ navigation }) => {
                     </View>
 
                     <Button
-                        title="Create Account"
+                        title={role === 'garage' ? 'Continue to Shop Details' : 'Create Account'}
                         onPress={handleSignup}
                         loading={loading}
                         style={styles.signupButton}
@@ -187,37 +170,63 @@ const styles = StyleSheet.create({
         color: COLORS.textLight,
         marginTop: 4,
     },
-    roleContainer: {
-        flexDirection: 'row',
-        backgroundColor: COLORS.surface,
-        borderRadius: SIZES.radius,
-        padding: 4,
-        marginBottom: SPACING.xl,
-        borderWidth: 1,
-        borderColor: '#EEEEEE'
+    sectionHeader: {
+        marginBottom: SPACING.md,
     },
-    roleButton: {
-        flex: 1,
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: COLORS.text,
+    },
+    roleGrid: {
         flexDirection: 'row',
+        gap: 12,
+        marginBottom: SPACING.xl,
+    },
+    roleCard: {
+        flex: 1,
+        backgroundColor: '#F3F4F6',
+        borderRadius: 20,
+        padding: 16,
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        position: 'relative',
+    },
+    roleCardActive: {
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary,
+        ...SHADOWS.medium,
+    },
+    roleIconBg: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        backgroundColor: '#E5E7EB',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 12,
-        borderRadius: SIZES.radius - 2,
+        marginBottom: 12,
     },
-    roleButtonActive: {
-        backgroundColor: COLORS.primary,
-        ...SHADOWS.small,
+    roleCardTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: COLORS.text,
+        marginBottom: 4,
     },
-    roleIcon: {
-        marginRight: 8,
-    },
-    roleText: {
-        fontSize: 15,
-        fontWeight: '600',
+    roleCardSub: {
+        fontSize: 11,
         color: COLORS.textLight,
+        lineHeight: 15,
     },
-    roleTextActive: {
-        color: COLORS.white,
+    activeCheck: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        backgroundColor: COLORS.white,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     garageSection: {
         backgroundColor: '#F8F9FA',

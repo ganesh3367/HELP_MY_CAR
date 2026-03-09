@@ -1,33 +1,63 @@
-import { useEffect, useMemo } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
-import { COLORS } from '../constants/theme';
+import { Car } from 'lucide-react-native';
+import React, { useEffect, useMemo } from 'react';
+import { Animated, ImageBackground, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { COLORS, SHADOWS } from '../constants/theme';
 
 const SplashScreen = ({ navigation }) => {
     const fadeAnim = useMemo(() => new Animated.Value(0), []);
+    const scaleAnim = useMemo(() => new Animated.Value(0.8), []);
 
     useEffect(() => {
-        Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 1500,
-            useNativeDriver: true,
-        }).start();
+        // Synchronized animation
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+            }),
+            Animated.spring(scaleAnim, {
+                toValue: 1,
+                friction: 4,
+                tension: 40,
+                useNativeDriver: true,
+            })
+        ]).start();
 
         const timer = setTimeout(() => {
-            navigation.replace('Login');
-        }, 2500);
+            navigation.replace('RoleSelection');
+        }, 3500);
 
         return () => clearTimeout(timer);
-    }, [fadeAnim, navigation]);
+    }, [fadeAnim, scaleAnim, navigation]);
 
     return (
         <View style={styles.container}>
-            <Animated.View style={{ opacity: fadeAnim, alignItems: 'center' }}>
-                <View style={styles.logoContainer}>
-                    <Text style={styles.logoText}>HMC</Text>
-                </View>
-                <Text style={styles.title}>Help My Car</Text>
-                <Text style={styles.tagline}>“Car Stuck? Help Is One Tap Away.”</Text>
-            </Animated.View>
+            <StatusBar barStyle="light-content" />
+            <ImageBackground
+                source={{ uri: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=2000&auto=format&fit=crop' }}
+                style={styles.background}
+            >
+                <View style={styles.overlay} />
+
+                <Animated.View style={[
+                    styles.content,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ scale: scaleAnim }]
+                    }
+                ]}>
+                    <View style={styles.logoWrapper}>
+                        <View style={styles.logoCircle}>
+                            <Car size={60} color={COLORS.primary} />
+                        </View>
+                        <View style={styles.branding}>
+                            <Text style={styles.brandTitle}>HELP MY CAR</Text>
+                            <View style={styles.divider} />
+                            <Text style={styles.tagline}>ON-DEMAND ROADSIDE RELIEF</Text>
+                        </View>
+                    </View>
+                </Animated.View>
+            </ImageBackground>
         </View>
     );
 };
@@ -35,34 +65,55 @@ const SplashScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.primary,
+        backgroundColor: '#000',
+    },
+    background: {
+        flex: 1,
+        width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
     },
-    logoContainer: {
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.75)', // Deep dark overlay for premium feel
+    },
+    content: {
+        alignItems: 'center',
+    },
+    logoWrapper: {
+        alignItems: 'center',
+    },
+    logoCircle: {
         width: 120,
         height: 120,
-        backgroundColor: COLORS.white,
         borderRadius: 60,
+        backgroundColor: COLORS.white,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 20,
+        ...SHADOWS.large,
+        marginBottom: 30,
     },
-    logoText: {
-        fontSize: 40,
+    branding: {
+        alignItems: 'center',
+    },
+    brandTitle: {
+        fontSize: 32,
         fontWeight: '900',
-        color: COLORS.primary,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
         color: COLORS.white,
-        marginBottom: 10,
+        letterSpacing: 2,
+    },
+    divider: {
+        width: 40,
+        height: 4,
+        backgroundColor: COLORS.primary,
+        marginVertical: 12,
+        borderRadius: 2,
     },
     tagline: {
-        fontSize: 16,
-        color: COLORS.white,
-        opacity: 0.9,
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.6)',
+        fontWeight: '700',
+        letterSpacing: 3,
     },
 });
 

@@ -38,12 +38,17 @@ export const AuthProvider = ({ children }) => {
      */
     const login = async (email, password) => {
         setLoading(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 90000);
+
         try {
             const response = await fetch(`${API_URL}/users/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
 
             const data = await response.json();
 
@@ -59,8 +64,10 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.error || 'Login failed');
             }
         } catch (error) {
-            console.error('Login error:', error);
-            throw error;
+            clearTimeout(timeoutId);
+            const message = error.name === 'AbortError' ? 'Server timeout. Please try again.' : error.message;
+            console.error('Login error:', message);
+            throw new Error(message);
         } finally {
             setLoading(false);
         }
@@ -71,10 +78,12 @@ export const AuthProvider = ({ children }) => {
      */
     const signup = async (name, email, password, role = 'user', garageDetails = null) => {
         setLoading(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 90000);
+
         try {
-            const bodyPayload = { name, email, password, role };
+            const bodyPayload = { name, email, password, role: role.trim().toLowerCase() };
             if (role === 'garage' && garageDetails) {
-                // Merge garage details if role is garage
                 Object.assign(bodyPayload, garageDetails);
             }
 
@@ -82,7 +91,9 @@ export const AuthProvider = ({ children }) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bodyPayload),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
 
             const data = await response.json();
 
@@ -98,8 +109,10 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.error || 'Signup failed');
             }
         } catch (error) {
-            console.error('Signup error:', error);
-            throw error;
+            clearTimeout(timeoutId);
+            const message = error.name === 'AbortError' ? 'Server timeout during signup. Please try again.' : error.message;
+            console.error('Signup error:', message);
+            throw new Error(message);
         } finally {
             setLoading(false);
         }

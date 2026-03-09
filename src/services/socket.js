@@ -9,7 +9,7 @@ const getSocketUrl = () => {
     if (!host) {
         host = Platform.OS === 'android' ? '10.0.2.2' : '127.0.0.1';
     }
-    return `http://${host}:5002`;
+    return `http://${host}:5001`;
 };
 
 const SOCKET_URL = getSocketUrl();
@@ -34,6 +34,10 @@ export const joinOrder = (orderId) => {
     socket.emit('join_order', orderId);
 };
 
+export const joinGarage = (garageId) => {
+    socket.emit('join_garage', garageId);
+};
+
 // Called by mechanic side: stream GPS to users tracking this order
 export const updateMechanicLocation = (orderId, coords) => {
     socket.emit('update_location', { orderId, location: coords });
@@ -55,6 +59,15 @@ export const onOrderStatusUpdate = (callback) => {
 
 export const offOrderStatusUpdate = () => {
     socket.off('order_updated');
+};
+
+export const onNewOrder = (callback) => {
+    socket.off('new_order');
+    socket.on('new_order', callback);
+};
+
+export const offNewOrder = () => {
+    socket.off('new_order');
 };
 
 export default socket;

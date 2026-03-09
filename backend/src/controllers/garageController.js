@@ -288,13 +288,13 @@ const createGarage = async (req, res) => {
             phone: phone || 'Not Provided',
             experience: experience || 'Not Provided',
             estimatedCost: estimatedCost || 'TBD',
-            rating: parseFloat(rating) || 0,
+            rating: parseFloat(rating) || 5.0,
+            reviewCount: 1,
             specialties: specialties || [],
             location: {
                 lat: parseFloat(location.lat),
                 lng: parseFloat(location.lng)
             },
-            isOnline: true, // Default to online
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };

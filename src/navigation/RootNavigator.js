@@ -13,6 +13,7 @@ import OrderTrackingScreen from '../screens/OrderTrackingScreen';
 import PrivacySafetyScreen from '../screens/PrivacySafetyScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import RegisterGarageScreen from '../screens/RegisterGarageScreen';
+import RoleSelectionScreen from '../screens/RoleSelectionScreen';
 import ServiceHistoryScreen from '../screens/ServiceHistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import SignupScreen from '../screens/SignupScreen';
@@ -49,40 +50,55 @@ const RootNavigator = () => {
             }}
         >
             {user ? (
-                <>
-                    <Stack.Screen name="Main" component={TabNavigator} />
-                    <Stack.Screen
-                        name="ServiceHistory"
-                        component={ServiceHistoryScreen}
-                        options={{
-                            headerShown: true,
-                            title: 'Service History',
-                            headerTintColor: COLORS.primary,
-                            headerTitleStyle: { fontWeight: 'bold' }
-                        }}
-                    />
-                    <Stack.Screen name="Settings" component={SettingsScreen} />
-                    <Stack.Screen name="PrivacySafety" component={PrivacySafetyScreen} />
-                    <Stack.Screen name="Feedback" component={FeedbackScreen} />
-                    <Stack.Screen name="EditGarageProfile" component={EditGarageProfileScreen} />
-                    <Stack.Screen name="RegisterGarage" component={RegisterGarageScreen} />
-                    <Stack.Screen name="Profile" component={ProfileScreen} />
-                    <Stack.Screen
-                        name="OrderTracking"
-                        component={OrderTrackingScreen}
-                        options={{ headerShown: false }}
-                    />
-                    <Stack.Screen name="LocationPicker" component={LocationPickerScreen} />
-                    <Stack.Screen name="MechanicProfile" component={MechanicProfileScreen} options={{ headerShown: false }} />
-                    <Stack.Screen
-                        name="CarDiagnostic"
-                        component={CarDiagnosticScreen}
-                        options={{ headerShown: true, title: '🔍 Car Diagnostic', headerTintColor: COLORS.primary, headerTitleStyle: { fontWeight: 'bold' } }}
-                    />
-                </>
+                // Authenticated Flow
+                user.role === 'garage' && !user.hasGarageProfile ? (
+                    // Forced Onboarding for Garage Owners
+                    <>
+                        <Stack.Screen
+                            name="RegisterGarage"
+                            component={RegisterGarageScreen}
+                            options={{ gestureEnabled: false }}
+                        />
+                        <Stack.Screen name="Login" component={LoginScreen} />
+                    </>
+                ) : (
+                    // Full App for Users or Completed Garage Owners
+                    <>
+                        <Stack.Screen name="Main" component={TabNavigator} />
+                        <Stack.Screen
+                            name="ServiceHistory"
+                            component={ServiceHistoryScreen}
+                            options={{
+                                headerShown: true,
+                                title: 'Service History',
+                                headerTintColor: COLORS.primary,
+                                headerTitleStyle: { fontWeight: 'bold' }
+                            }}
+                        />
+                        <Stack.Screen name="Settings" component={SettingsScreen} />
+                        <Stack.Screen name="PrivacySafety" component={PrivacySafetyScreen} />
+                        <Stack.Screen name="Feedback" component={FeedbackScreen} />
+                        <Stack.Screen name="EditGarageProfile" component={EditGarageProfileScreen} />
+                        <Stack.Screen name="Profile" component={ProfileScreen} />
+                        <Stack.Screen
+                            name="OrderTracking"
+                            component={OrderTrackingScreen}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen name="LocationPicker" component={LocationPickerScreen} />
+                        <Stack.Screen name="MechanicProfile" component={MechanicProfileScreen} options={{ headerShown: false }} />
+                        <Stack.Screen
+                            name="CarDiagnostic"
+                            component={CarDiagnosticScreen}
+                            options={{ headerShown: true, title: '🔍 Car Diagnostic', headerTintColor: COLORS.primary, headerTitleStyle: { fontWeight: 'bold' } }}
+                        />
+                    </>
+                )
             ) : (
+                // Unauthenticated Flow
                 <>
                     <Stack.Screen name="Splash" component={SplashScreen} />
+                    <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
                     <Stack.Screen name="Login" component={LoginScreen} />
                     <Stack.Screen name="Signup" component={SignupScreen} />
                 </>

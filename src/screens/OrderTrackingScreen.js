@@ -97,6 +97,47 @@ const MechanicMarker = ({ status }) => {
     );
 };
 
+// ── Searching Radar for PENDING state ────────────────────────────────────────
+const SearchingRadar = () => {
+    const anim = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        Animated.loop(
+            Animated.timing(anim, {
+                toValue: 1,
+                duration: 2000,
+                useNativeDriver: true,
+            })
+        ).start();
+    }, [anim]);
+
+    return (
+        <View style={styles.radarContainer}>
+            {[0, 1, 2].map((i) => {
+                const scale = anim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [1, 1 + i * 0.5],
+                });
+                const opacity = anim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.6, 0],
+                });
+                return (
+                    <Animated.View
+                        key={i}
+                        style={[
+                            styles.radarCircle,
+                            { transform: [{ scale }], opacity }
+                        ]}
+                    />
+                );
+            })}
+            <View style={[styles.radarCircle, { opacity: 1, backgroundColor: COLORS.primary }]}>
+                <Wrench size={24} color={COLORS.white} />
+            </View>
+        </View>
+    );
+};
+
 // ── OrderTrackingScreen ───────────────────────────────────────────────────────
 const OrderTrackingScreen = () => {
     const navigation = useNavigation();
@@ -362,11 +403,16 @@ const OrderTrackingScreen = () => {
                     </View>
                 )}
 
-                {/* ── Action buttons ───────────────────────────────── */}
+                {/* ── Action buttons/Issue ───────────────────────────────── */}
                 {isDone ? (
                     <TouchableOpacity style={styles.rateBtn} onPress={() => setIsRatingVisible(true)}>
                         <Text style={styles.rateBtnText}>⭐ Rate your experience</Text>
                     </TouchableOpacity>
+                ) : status === 'PENDING' ? (
+                    <View style={styles.searchingContainer}>
+                        <SearchingRadar />
+                        <Text style={styles.searchingText}>Finding the nearest expert mechanic for you...</Text>
+                    </View>
                 ) : (
                     <View style={styles.issueRow}>
                         <MapPin size={14} color={COLORS.textLight} />
@@ -515,6 +561,34 @@ const styles = StyleSheet.create({
         alignItems: 'center', borderWidth: 1, borderColor: '#FFD700',
     },
     rateBtnText: { fontSize: 16, fontWeight: '800', color: '#B8860B' },
+
+    // ─ Searching Radar ───────────────────────────────────────────────────────
+    searchingContainer: {
+        alignItems: 'center',
+        paddingVertical: 10,
+    },
+    searchingText: {
+        marginTop: 16,
+        fontSize: 14,
+        color: COLORS.textLight,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    radarContainer: {
+        width: 80,
+        height: 80,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    radarCircle: {
+        position: 'absolute',
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: COLORS.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
 });
 
 export default OrderTrackingScreen;

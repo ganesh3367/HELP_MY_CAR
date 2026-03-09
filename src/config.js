@@ -20,12 +20,15 @@ export const getApiUrl = () => {
     }
 
     // 3. Construct the final URL
-    // For Production, uncomment the line below and add your Render URL:
-    return 'https://help-my-car.onrender.com/api';
+    // Toggle this manually (true for Render, false for local dev)
+    const isProd = true;
 
-    // Default local behavior
-    // const url = `http://${host}:5002/api`;
-    // return url;
+    if (isProd) {
+        return 'https://help-my-car.onrender.com/api';
+    }
+
+    // Default local behavior (using port 5002 as per user's backend setup)
+    return `http://${host}:5002/api`;
 };
 
 export const API_URL = getApiUrl();

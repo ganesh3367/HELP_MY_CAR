@@ -11,6 +11,13 @@ import { useLocation } from './LocationContext';
 const AppContext = createContext();
 
 import { API_URL } from '../config';
+import {
+    connectSocket,
+    disconnectSocket,
+    joinGarage,
+    offNewOrder,
+    onNewOrder
+} from '../services/socket';
 
 const MOCK_MECHANICS = [
     {
@@ -90,6 +97,26 @@ export const AppProvider = ({ children }) => {
         fetchMechanics();
     }, [fetchMechanics]);
 
+    const [userOrders, setUserOrders] = useState([]);
+    const [unreadOrders, setUnreadOrders] = useState([]);
+
+    useEffect(() => {
+        if (user?.role === 'garage' && myGarage?.id) {
+            connectSocket();
+            joinGarage(myGarage.id);
+
+            onNewOrder((newOrder) => {
+                setUnreadOrders(prev => [newOrder, ...prev]);
+                fetchGarageOrders(myGarage.id);
+            });
+
+            return () => {
+                offNewOrder();
+                disconnectSocket();
+            };
+        }
+    }, [user?.role, myGarage?.id, fetchGarageOrders]);
+
     useEffect(() => {
         if (userLocation) {
             if (userLocation?.coords) {
@@ -106,7 +133,7 @@ export const AppProvider = ({ children }) => {
 
             // Add timeout to fail fast and switch to mock data
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout for Render cold start
+            const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout for Render cold start
 
             const response = await fetch(`${API_URL}/garages/nearby?lat=${lat}&lng=${lng}`, {
                 signal: controller.signal
@@ -145,8 +172,8 @@ export const AppProvider = ({ children }) => {
 
                 setTowingServices([...TOWING_SERVICES, ...dynamicTowing]);
             }
-        } catch (_error) {
-            console.warn('Network failed, using mock data');
+        } catch (error) {
+            console.warn(`[fetchMechanics] Network failed for ${API_URL}/garages/nearby:`, error.message);
             setMechanics(MOCK_MECHANICS);
             setTowingServices(TOWING_SERVICES); // Fallback to basic mock
         }
@@ -257,7 +284,6 @@ export const AppProvider = ({ children }) => {
         );
     };
 
-    const [userOrders, setUserOrders] = useState([]);
 
     const fetchUserOrders = async (userId) => {
         try {
@@ -272,12 +298,18 @@ export const AppProvider = ({ children }) => {
     };
 
     const updateGarageProfile = async (garageId, updateData) => {
+        setLoading(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 90000);
+
         try {
             const response = await fetch(`${API_URL}/garages/${garageId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updateData),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
             const data = await response.json();
             if (data.success) {
                 setMyGarage(data.data);
@@ -285,8 +317,11 @@ export const AppProvider = ({ children }) => {
             }
             return false;
         } catch (error) {
-            console.error('Update Garage Profile Error:', error);
+            clearTimeout(timeoutId);
+            console.error('Update Garage Profile Error:', error.message);
             return false;
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -295,23 +330,36 @@ export const AppProvider = ({ children }) => {
     };
 
     const createGarage = async (garageData) => {
+        setLoading(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 90000);
+
         try {
             const response = await fetch(`${API_URL}/garages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(garageData),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
             const data = await response.json();
             if (data.success) {
                 setMyGarage(data.data);
+                // Mark profile as complete in the user object to open the gate
+                if (user) {
+                    user.hasGarageProfile = true;
+                }
                 // Also refresh mechanics list to include the newly created one
                 fetchMechanics();
                 return true;
             }
             return false;
         } catch (error) {
-            console.error('Create Garage Error:', error);
+            clearTimeout(timeoutId);
+            console.error('Create Garage Error:', error.message);
             return false;
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -467,7 +515,9 @@ export const AppProvider = ({ children }) => {
                 updateGarageProfile,
                 toggleGarageStatus,
                 createGarage,
-                submitFeedback
+                submitFeedback,
+                unreadOrders,
+                clearUnreadOrders: () => setUnreadOrders([])
             }}
         >
             {children}
