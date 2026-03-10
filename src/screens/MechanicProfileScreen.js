@@ -2,11 +2,12 @@ import { ArrowLeft, Award, CheckCircle, Clock, MapPin, Star, Wrench } from 'luci
 import React, { useState } from 'react';
 import {
     Alert, Image, KeyboardAvoidingView, Modal,
-    Platform, ScrollView, StyleSheet, Text,
-    TextInput, TouchableOpacity, View,
+    Platform,
+    StyleSheet, Text,
+    TextInput, TouchableOpacity, View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SHADOWS, SPACING } from '../constants/theme';
+import { COLORS, SHADOWS } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 import { useLocation } from '../context/LocationContext';
 
@@ -30,9 +31,12 @@ const MechanicProfileScreen = ({ navigation, route }) => {
     const [selectedService, setSelectedService] = useState(null);
     const [issueDescription, setIssueDescription] = useState('');
 
-    const [userRating, setUserRating] = useState(5);
-    const [reviewComment, setReviewComment] = useState('');
-    const [submittingReview, setSubmittingReview] = useState(false);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const scrollY = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
+    }, []);
 
     // Open service picker modal
     const handleBookNow = () => setShowServiceModal(true);
@@ -69,159 +73,161 @@ const MechanicProfileScreen = ({ navigation, route }) => {
         }
     };
 
-    const handleSubmitReview = async () => {
-        if (!reviewComment.trim()) {
-            Alert.alert('Error', 'Please enter a comment.');
-            return;
-        }
-        setSubmittingReview(true);
-        const success = await addReview(mechanic.id || mechanic._id, {
-            rating: userRating,
-            comment: reviewComment
-        });
-        setSubmittingReview(false);
-        if (success) {
-            Alert.alert('Success', 'Thank you for your review!');
-            setReviewComment('');
-            setUserRating(5);
-        } else {
-            Alert.alert('Error', 'Failed to submit review. Using mock data.');
-        }
-    };
+    const headerTranslate = scrollY.interpolate({
+        inputRange: [0, 250],
+        outputRange: [0, -50],
+        extrapolate: 'clamp',
+    });
+
+    const headerOpacity = scrollY.interpolate({
+        inputRange: [0, 200],
+        outputRange: [1, 0],
+        extrapolate: 'clamp',
+    });
 
     return (
         <View style={styles.container}>
-            <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-                {/* Header Image */}
+            <Animated.ScrollView
+                contentContainerStyle={{ paddingBottom: 120 }}
+                showsVerticalScrollIndicator={false}
+                onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+                scrollEventThrottle={16}
+            >
+                {/* Header Image Section */}
                 <View style={styles.imageContainer}>
                     <Image
                         source={{ uri: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=1000&auto=format&fit=crop' }}
                         style={styles.coverImage}
                     />
-                    <View style={styles.overlay} />
+                    <View style={styles.gradientOverlay} />
                     <SafeAreaView style={styles.headerSafe}>
                         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-                            <ArrowLeft size={24} color={COLORS.white} />
+                            <ArrowLeft size={22} color={COLORS.white} />
                         </TouchableOpacity>
                     </SafeAreaView>
+
+                    <Animated.View style={[styles.titleOverlay, { opacity: headerOpacity, transform: [{ translateY: headerTranslate }] }]}>
+                        <View style={styles.eliteRow}>
+                            <Award size={14} color="#FFD700" />
+                            <Text style={styles.eliteText}>Top Professional</Text>
+                        </View>
+                        <Text style={styles.nameOverlay}>{mechanic.name}</Text>
+                        <View style={styles.headerRating}>
+                            <Star size={14} color="#FFD700" fill="#FFD700" />
+                            <Text style={styles.headerRatingText}>{mechanic.rating} ({mechanic.reviews?.length || 0} reviews)</Text>
+                        </View>
+                    </Animated.View>
                 </View>
 
-                {/* Profile Info */}
-                <View style={styles.content}>
-                    <View style={styles.mainInfo}>
-                        <Text style={styles.name}>{mechanic.name}</Text>
-                        <View style={styles.row}>
-                            <Star size={18} color="#FFD700" fill="#FFD700" />
-                            <Text style={styles.rating}>{mechanic.rating} ({mechanic.reviews?.length || 0} reviews)</Text>
-                        </View>
-                        <View style={styles.addressRow}>
-                            <MapPin size={16} color={COLORS.textLight} />
-                            <Text style={styles.address}>{mechanic.address}</Text>
-                        </View>
-                    </View>
-
-                    {/* Stats Grid */}
+                {/* Main Content Area */}
+                <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+                    {/* Trust Badges */}
                     <View style={styles.statsGrid}>
                         <View style={styles.statItem}>
-                            <Award size={24} color={COLORS.primary} />
-                            <Text style={styles.statValue}>{mechanic.experience || '5 Yrs'}</Text>
+                            <View style={[styles.statIconBox, { backgroundColor: '#F0F4FF' }]}>
+                                <Award size={20} color={COLORS.primary} />
+                            </View>
+                            <Text style={styles.statValue}>{mechanic.experience || '8 Yrs'}</Text>
                             <Text style={styles.statLabel}>Exp</Text>
                         </View>
                         <View style={styles.statItem}>
-                            <CheckCircle size={24} color={COLORS.success} />
-                            <Text style={styles.statValue}>{mechanic.jobsCompleted || '100+'}</Text>
-                            <Text style={styles.statLabel}>Jobs</Text>
+                            <View style={[styles.statIconBox, { backgroundColor: '#EFFFF4' }]}>
+                                <CheckCircle size={20} color={COLORS.success} />
+                            </View>
+                            <Text style={styles.statValue}>{mechanic.jobsCompleted || '450+'}</Text>
+                            <Text style={styles.statLabel}>Jobs Done</Text>
                         </View>
                         <View style={styles.statItem}>
-                            <Clock size={24} color="#FF9500" />
-                            <Text style={styles.statValue}>20 min</Text>
-                            <Text style={styles.statLabel}>Arrival</Text>
+                            <View style={[styles.statIconBox, { backgroundColor: '#FFF9E6' }]}>
+                                <Star size={20} color="#FFB800" />
+                            </View>
+                            <Text style={styles.statValue}>Elite</Text>
+                            <Text style={styles.statLabel}>Status</Text>
                         </View>
                     </View>
 
-                    {/* Specialties */}
-                    <Text style={styles.sectionTitle}>Specialties</Text>
+                    {/* About/Specialties */}
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Expertise</Text>
+                        <View style={styles.line} />
+                    </View>
                     <View style={styles.tagsContainer}>
                         {mechanic.specialties?.map((tag, index) => (
                             <View key={index} style={styles.tag}>
-                                <Wrench size={14} color={COLORS.primary} />
+                                <Wrench size={12} color={COLORS.primary} />
                                 <Text style={styles.tagText}>{tag}</Text>
                             </View>
                         ))}
                     </View>
 
-                    {/* Leave a Review */}
-                    <View style={styles.leaveReviewCard}>
-                        <Text style={styles.reviewTitle}>Rate your experience</Text>
-                        <View style={styles.ratingSelector}>
-                            {[1, 2, 3, 4, 5].map((num) => (
-                                <TouchableOpacity key={num} onPress={() => setUserRating(num)}>
-                                    <Star
-                                        size={32}
-                                        color={num <= userRating ? "#FFD700" : COLORS.gray}
-                                        fill={num <= userRating ? "#FFD700" : "transparent"}
-                                    />
-                                </TouchableOpacity>
-                            ))}
+                    <View style={styles.infoCard}>
+                        <View style={styles.infoRow}>
+                            <View style={styles.infoIcon}>
+                                <MapPin size={20} color={COLORS.primary} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.infoTitle}>Service Location</Text>
+                                <Text style={styles.infoSub}>{mechanic.address}</Text>
+                            </View>
                         </View>
-                        <TextInput
-                            style={styles.reviewInput}
-                            placeholder="Share your feedback..."
-                            placeholderTextColor={COLORS.textLight}
-                            multiline
-                            value={reviewComment}
-                            onChangeText={setReviewComment}
-                        />
-                        <TouchableOpacity
-                            style={[styles.submitReviewBtn, submittingReview && { opacity: 0.7 }]}
-                            onPress={handleSubmitReview}
-                            disabled={submittingReview}
-                        >
-                            <Text style={styles.submitReviewText}>
-                                {submittingReview ? 'Submitting...' : 'Submit Review'}
-                            </Text>
-                        </TouchableOpacity>
+                        <View style={styles.infoRow}>
+                            <View style={styles.infoIcon}>
+                                <Clock size={20} color={COLORS.primary} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.infoTitle}>Estimated Arrival</Text>
+                                <Text style={styles.infoSub}>Mechanic will reach in 15-25 mins</Text>
+                            </View>
+                        </View>
                     </View>
 
-                    {/* Reviews */}
-                    <Text style={styles.sectionTitle}>Customer Reviews</Text>
-                    {mechanic.reviews?.map((review) => (
-                        <View key={review.id} style={styles.reviewCard}>
-                            <View style={styles.reviewHeader}>
-                                <View style={styles.reviewerAvatar}>
-                                    <Text style={styles.reviewerInitials}>{(review.user || 'U').charAt(0)}</Text>
-                                </View>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={styles.reviewerName}>{review.user}</Text>
-                                    <Text style={styles.reviewDate}>{review.date}</Text>
-                                </View>
-                                <View style={styles.miniRating}>
-                                    <Star size={12} color="#FFD700" fill="#FFD700" />
-                                    <Text style={styles.miniRatingText}>{review.rating}</Text>
-                                </View>
+                    {mechanic.reviews && mechanic.reviews.length > 0 && (
+                        <>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>Verifed Reviews</Text>
+                                <View style={styles.line} />
                             </View>
-                            <Text style={styles.reviewText}>{review.comment}</Text>
-                        </View>
-                    ))}
-                </View>
-            </ScrollView>
+                            {mechanic.reviews.map((review) => (
+                                <View key={review.id} style={styles.reviewCard}>
+                                    <View style={styles.reviewHeader}>
+                                        <View style={styles.reviewerAvatar}>
+                                            <Text style={styles.reviewerInitials}>{(review.user || 'G').charAt(0)}</Text>
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={styles.reviewerName}>{review.user}</Text>
+                                            <View style={styles.ratingStars}>
+                                                {[1, 2, 3, 4, 5].map(s => (
+                                                    <Star key={s} size={10} color={s <= review.rating ? "#FFB800" : "#EEE"} fill={s <= review.rating ? "#FFB800" : "transparent"} />
+                                                ))}
+                                            </View>
+                                        </View>
+                                        <Text style={styles.reviewDate}>{review.date}</Text>
+                                    </View>
+                                    <Text style={styles.reviewTextContent}>{review.comment}</Text>
+                                </View>
+                            ))}
+                        </>
+                    )}
+                </Animated.View>
+            </Animated.ScrollView>
 
-            {/* Sticky Bottom Button */}
+            {/* Premium Sticky Bottom Bar */}
             <View style={styles.bottomBar}>
-                <View>
-                    <Text style={styles.costLabel}>Estimated Cost</Text>
-                    <Text style={styles.costValue}>{mechanic.estimatedCost || 'Varies'}</Text>
+                <View style={styles.costInfo}>
+                    <Text style={styles.costLabel}>Base Fee</Text>
+                    <Text style={styles.costValue}>{mechanic.estimatedCost || '₹499'}</Text>
                 </View>
                 <TouchableOpacity
                     style={[styles.bookBtn, bookingLoading && { opacity: 0.6 }]}
                     onPress={handleBookNow}
                     disabled={bookingLoading}
                 >
-                    <Text style={styles.bookBtnText}>{bookingLoading ? '⏳ Booking...' : '🔧 Book Mechanic'}</Text>
+                    <Text style={styles.bookBtnText}>{bookingLoading ? 'Processing...' : 'Book Service'}</Text>
+                    <ArrowLeft size={18} color={COLORS.white} style={{ transform: [{ rotate: '180deg' }] }} />
                 </TouchableOpacity>
             </View>
 
-            {/* ── Service Picker Modal ───────────────────────── */}
+            {/* ── Service Picker Modal (Redesigned) ───────────────────────── */}
             <Modal
                 visible={showServiceModal}
                 animationType="slide"
@@ -233,46 +239,55 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                     style={styles.modalOverlay}
                 >
                     <TouchableOpacity style={styles.modalDismiss} onPress={() => setShowServiceModal(false)} />
-                    <SafeAreaView style={styles.modalSheet}>
+                    <View style={styles.modalSheet}>
                         <View style={styles.modalHandle} />
-                        <Text style={styles.modalTitle}>What do you need?</Text>
-                        <Text style={styles.modalSub}>Select the service type</Text>
+                        <Text style={styles.modalTitle}>Select Service</Text>
+                        <Text style={styles.modalSub}>Pick what you need for {mechanic.name}</Text>
 
-                        <View style={styles.serviceGrid}>
-                            {SERVICES.map(svc => {
-                                const isActive = selectedService?.id === svc.id;
-                                return (
-                                    <TouchableOpacity
-                                        key={svc.id}
-                                        style={[styles.serviceChip, isActive && styles.serviceChipActive]}
-                                        onPress={() => setSelectedService(svc)}
-                                    >
-                                        <Text style={[styles.serviceChipText, isActive && { color: COLORS.white }]}>
-                                            {svc.label}
-                                        </Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
+                        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
+                            <View style={styles.serviceGrid}>
+                                {SERVICES.map(svc => {
+                                    const isActive = selectedService?.id === svc.id;
+                                    return (
+                                        <TouchableOpacity
+                                            key={svc.id}
+                                            style={[styles.serviceOption, isActive && styles.serviceOptionActive]}
+                                            onPress={() => setSelectedService(svc)}
+                                        >
+                                            <Text style={styles.serviceIcon}>{svc.label.split(' ')[0]}</Text>
+                                            <Text style={[styles.serviceText, isActive && { color: COLORS.white }]}>
+                                                {svc.label.split(' ').slice(1).join(' ')}
+                                            </Text>
+                                            {isActive && (
+                                                <View style={styles.checkIcon}>
+                                                    <CheckCircle size={14} color={COLORS.white} />
+                                                </View>
+                                            )}
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
 
-                        <Text style={styles.descLabel}>Describe the issue (optional)</Text>
-                        <TextInput
-                            style={styles.descInput}
-                            placeholder="e.g. Engine makes noise when starting..."
-                            placeholderTextColor={COLORS.textLight}
-                            value={issueDescription}
-                            onChangeText={setIssueDescription}
-                            multiline
-                            numberOfLines={3}
-                        />
+                            <Text style={styles.descLabel}>Additional Details</Text>
+                            <TextInput
+                                style={styles.descInput}
+                                placeholder="Describe any specific issues..."
+                                placeholderTextColor={COLORS.textLight}
+                                value={issueDescription}
+                                onChangeText={setIssueDescription}
+                                multiline
+                                numberOfLines={3}
+                            />
+                        </ScrollView>
 
                         <TouchableOpacity
                             style={[styles.confirmBtn, !selectedService && { opacity: 0.5 }]}
                             onPress={handleConfirmBooking}
+                            disabled={!selectedService}
                         >
-                            <Text style={styles.confirmBtnText}>Confirm Booking 🚀</Text>
+                            <Text style={styles.confirmBtnText}>Confirm Order</Text>
                         </TouchableOpacity>
-                    </SafeAreaView>
+                    </View>
                 </KeyboardAvoidingView>
             </Modal>
         </View>
@@ -280,288 +295,126 @@ const MechanicProfileScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: COLORS.background,
-    },
-    imageContainer: {
-        height: 250,
-        backgroundColor: COLORS.gray,
-    },
-    coverImage: {
-        width: '100%',
-        height: '100%',
-    },
-    overlay: {
+    container: { flex: 1, backgroundColor: '#F8F9FB' },
+    imageContainer: { height: 300, backgroundColor: '#000' },
+    coverImage: { width: '100%', height: '100%', opacity: 0.85 },
+    gradientOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: 'rgba(0,0,0,0.35)',
     },
-    headerSafe: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-    },
+    headerSafe: { position: 'absolute', top: 0, left: 0, zIndex: 10 },
     backBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginLeft: SPACING.md,
-        marginTop: 10,
+        width: 44, height: 44, borderRadius: 22,
+        backgroundColor: 'rgba(255,255,255,0.25)',
+        alignItems: 'center', justifyContent: 'center',
+        marginLeft: 20, marginTop: 10,
     },
+    titleOverlay: {
+        position: 'absolute', bottom: 40, left: 24, right: 24,
+    },
+    eliteRow: {
+        flexDirection: 'row', alignItems: 'center', gap: 6,
+        backgroundColor: 'rgba(255,215,0,0.2)', paddingHorizontal: 10,
+        paddingVertical: 4, borderRadius: 20, alignSelf: 'flex-start',
+        marginBottom: 10, borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)',
+    },
+    eliteText: { fontSize: 11, fontWeight: '900', color: '#FFD700', textTransform: 'uppercase', letterSpacing: 0.5 },
+    nameOverlay: { fontSize: 32, fontWeight: '900', color: COLORS.white, marginBottom: 8, letterSpacing: -0.5 },
+    headerRating: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    headerRatingText: { fontSize: 14, fontWeight: '700', color: 'rgba(255,255,255,0.9)' },
+
     content: {
-        marginTop: -30,
-        backgroundColor: COLORS.background,
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        padding: SPACING.xl,
-    },
-    mainInfo: {
-        marginBottom: SPACING.xl,
-    },
-    name: {
-        fontSize: 26,
-        fontWeight: 'bold',
-        color: COLORS.text,
-        marginBottom: 8,
-    },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-        gap: 6,
-    },
-    rating: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: COLORS.text,
-    },
-    addressRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    address: {
-        fontSize: 14,
-        color: COLORS.textLight,
+        marginTop: -30, backgroundColor: '#F8F9FB', borderTopLeftRadius: 35,
+        borderTopRightRadius: 35, padding: 24, paddingBottom: 100,
     },
     statsGrid: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: SPACING.xl,
-        backgroundColor: COLORS.white,
-        padding: SPACING.lg,
-        borderRadius: 20,
-        ...SHADOWS.small,
+        flexDirection: 'row', justifyContent: 'space-between',
+        backgroundColor: COLORS.white, borderRadius: 24, padding: 20,
+        marginBottom: 30, ...SHADOWS.small,
     },
-    statItem: {
-        alignItems: 'center',
-        flex: 1,
-    },
-    statValue: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.text,
-        marginVertical: 4,
-    },
-    statLabel: {
-        fontSize: 12,
-        color: COLORS.textLight,
-        fontWeight: '600',
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.text,
-        marginBottom: SPACING.md,
-        marginTop: SPACING.md,
-    },
-    tagsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 10,
-    },
+    statItem: { alignItems: 'center', flex: 1 },
+    statIconBox: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+    statValue: { fontSize: 16, fontWeight: '900', color: COLORS.text, marginBottom: 2 },
+    statLabel: { fontSize: 11, fontWeight: '600', color: '#94A3B8' },
+
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16, marginTop: 10 },
+    sectionTitle: { fontSize: 18, fontWeight: '900', color: COLORS.text, letterSpacing: -0.3 },
+    line: { flex: 1, height: 1, backgroundColor: '#E2E8F0' },
+
+    tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 },
     tag: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.primary + '15',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 12,
-        gap: 6,
+        flexDirection: 'row', alignItems: 'center', gap: 6,
+        backgroundColor: COLORS.white, paddingHorizontal: 12, paddingVertical: 8,
+        borderRadius: 12, borderWidth: 1, borderColor: '#F1F5F9', ...SHADOWS.small,
     },
-    tagText: {
-        color: COLORS.primary,
-        fontWeight: '600',
-        fontSize: 13,
+    tagText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+
+    infoCard: {
+        backgroundColor: COLORS.white, borderRadius: 24, padding: 20,
+        marginBottom: 30, ...SHADOWS.small, gap: 20,
     },
+    infoRow: { flexDirection: 'row', gap: 14, alignItems: 'center' },
+    infoIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: COLORS.primary + '10', alignItems: 'center', justifyContent: 'center' },
+    infoTitle: { fontSize: 14, fontWeight: '800', color: COLORS.text, marginBottom: 2 },
+    infoSub: { fontSize: 13, color: '#64748B', fontWeight: '500' },
+
     reviewCard: {
-        backgroundColor: COLORS.white,
-        padding: SPACING.md,
-        borderRadius: 16,
-        marginBottom: SPACING.md,
-        ...SHADOWS.small,
+        backgroundColor: COLORS.white, borderRadius: 20, padding: 18,
+        marginBottom: 16, ...SHADOWS.small,
     },
-    reviewHeader: {
-        flexDirection: 'row',
-        marginBottom: 8,
-        alignItems: 'center',
-        gap: 10,
-    },
-    reviewerAvatar: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#F0F0F0',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    reviewerInitials: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: COLORS.textLight,
-    },
-    reviewerName: {
-        fontWeight: 'bold',
-        color: COLORS.text,
-        fontSize: 14,
-    },
-    reviewDate: {
-        fontSize: 12,
-        color: COLORS.textLight,
-    },
-    miniRating: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        backgroundColor: '#FFF9E6',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
-    },
-    miniRatingText: {
-        fontWeight: 'bold',
-        fontSize: 12,
-        color: '#B38B00',
-    },
-    reviewText: {
-        fontSize: 14,
-        color: COLORS.text,
-        lineHeight: 20,
-    },
+    reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+    reviewerAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
+    reviewerInitials: { fontSize: 15, fontWeight: '900', color: '#64748B' },
+    reviewerName: { fontSize: 15, fontWeight: '800', color: COLORS.text, marginBottom: 2 },
+    ratingStars: { flexDirection: 'row', gap: 2 },
+    reviewDate: { fontSize: 12, fontWeight: '600', color: '#94A3B8' },
+    reviewTextContent: { fontSize: 14, color: '#475569', lineHeight: 22, fontWeight: '500' },
+
     bottomBar: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: COLORS.white,
-        padding: SPACING.lg,
-        paddingBottom: 40,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        ...SHADOWS.large,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        backgroundColor: COLORS.white, padding: 20, paddingBottom: 35,
+        flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#F1F5F9',
+        justifyContent: 'space-between', ...SHADOWS.large,
     },
-    costLabel: {
-        fontSize: 12,
-        color: COLORS.textLight,
-        marginBottom: 2,
-    },
-    costValue: {
-        fontSize: 20,
-        fontWeight: '900',
-        color: COLORS.primary,
-    },
+    costInfo: { flex: 1 },
+    costLabel: { fontSize: 12, fontWeight: '700', color: '#94A3B8', marginBottom: 2 },
+    costValue: { fontSize: 24, fontWeight: '900', color: COLORS.primary },
     bookBtn: {
-        backgroundColor: COLORS.primary,
-        paddingHorizontal: 30,
-        paddingVertical: 16,
-        borderRadius: 16,
-        ...SHADOWS.medium,
+        flex: 1.5, backgroundColor: COLORS.primary, height: 60,
+        borderRadius: 20, flexDirection: 'row', alignItems: 'center',
+        justifyContent: 'center', gap: 10, ...SHADOWS.medium,
     },
-    bookBtnText: {
-        color: COLORS.white,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    leaveReviewCard: {
-        backgroundColor: COLORS.white,
-        borderRadius: 20,
-        padding: SPACING.lg,
-        marginTop: SPACING.xl,
-        ...SHADOWS.medium,
-        borderWidth: 1,
-        borderColor: '#F0F0F0',
-    },
-    reviewTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.text,
-        textAlign: 'center',
-        marginBottom: SPACING.md,
-    },
-    ratingSelector: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 10,
-        marginBottom: SPACING.lg,
-    },
-    reviewInput: {
-        backgroundColor: '#FAFAFA',
-        borderRadius: 12,
-        padding: SPACING.md,
-        height: 100,
-        textAlignVertical: 'top',
-        fontSize: 14,
-        color: COLORS.text,
-        borderWidth: 1,
-        borderColor: '#EEEEEE',
-        marginBottom: SPACING.md,
-    },
-    submitReviewBtn: {
-        backgroundColor: COLORS.primary + '15',
-        paddingVertical: 12,
-        borderRadius: 12,
-        alignItems: 'center',
-    },
-    submitReviewText: {
-        color: COLORS.primary,
-        fontWeight: 'bold',
-        fontSize: 15,
-    },
-    // ── Service Picker Modal ─────────────────────────────────────────────────
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+    bookBtnText: { fontSize: 17, fontWeight: '900', color: COLORS.white },
+
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
     modalDismiss: { flex: 1 },
     modalSheet: {
-        backgroundColor: COLORS.white, borderTopLeftRadius: 32, borderTopRightRadius: 32,
-        padding: SPACING.lg, paddingBottom: SPACING.xl,
-        ...SHADOWS.large,
+        backgroundColor: COLORS.white, borderTopLeftRadius: 35, borderTopRightRadius: 35,
+        padding: 24, paddingBottom: 40,
     },
-    modalHandle: { width: 44, height: 4, borderRadius: 2, backgroundColor: '#DDD', alignSelf: 'center', marginBottom: 20 },
-    modalTitle: { fontSize: 22, fontWeight: '900', color: COLORS.text, textAlign: 'center' },
-    modalSub: { fontSize: 14, color: COLORS.textLight, textAlign: 'center', marginBottom: 20 },
-    serviceGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
-    serviceChip: {
-        paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14,
-        backgroundColor: '#F0F2F5', borderWidth: 1.5, borderColor: 'transparent',
+    modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#E2E8F0', alignSelf: 'center', marginBottom: 24 },
+    modalTitle: { fontSize: 24, fontWeight: '900', color: COLORS.text, textAlign: 'center', marginBottom: 6 },
+    modalSub: { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 24, fontWeight: '500' },
+    serviceGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
+    serviceOption: {
+        width: (width - 60) / 2, backgroundColor: '#F8FAFC', borderRadius: 20,
+        padding: 16, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#F1F5F9',
     },
-    serviceChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-    serviceChipText: { fontSize: 14, fontWeight: '700', color: COLORS.text },
-    descLabel: { fontSize: 14, fontWeight: '700', color: COLORS.text, marginBottom: 10 },
+    serviceOptionActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+    serviceIcon: { fontSize: 24 },
+    serviceText: { fontSize: 13, fontWeight: '800', color: COLORS.text, textAlign: 'center' },
+    checkIcon: { position: 'absolute', top: 10, right: 10 },
+    descLabel: { fontSize: 15, fontWeight: '900', color: COLORS.text, marginBottom: 12 },
     descInput: {
-        backgroundColor: '#F7F8FA', borderRadius: 14, padding: 14,
-        fontSize: 14, color: COLORS.text, borderWidth: 1, borderColor: '#E0E0E0',
-        minHeight: 80, textAlignVertical: 'top', marginBottom: 20,
+        backgroundColor: '#F8FAFC', borderRadius: 20, padding: 16,
+        fontSize: 14, color: COLORS.text, borderWidth: 1, borderColor: '#F1F5F9',
+        minHeight: 100, textAlignVertical: 'top', marginBottom: 24,
     },
     confirmBtn: {
-        backgroundColor: COLORS.primary, borderRadius: 18, paddingVertical: 18,
-        alignItems: 'center', ...SHADOWS.medium,
+        backgroundColor: COLORS.primary, borderRadius: 20, height: 64,
+        alignItems: 'center', justifyContent: 'center', ...SHADOWS.medium,
     },
-    confirmBtnText: { fontSize: 17, fontWeight: '900', color: COLORS.white },
+    confirmBtnText: { fontSize: 18, fontWeight: '900', color: COLORS.white },
 });
 
 export default MechanicProfileScreen;
