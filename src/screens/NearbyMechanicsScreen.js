@@ -199,10 +199,11 @@ const NearbyMechanicsScreen = ({ navigation }) => {
         return null;
     }, [pickedLocation, location?.coords]);
 
-    const fetchMechanics = useCallback(async () => {
+    const fetchMechanics = useCallback(async (signal) => {
         if (!activeCoords) return;
         setLoading(true);
 
+        // 1. Try Google Places
         try {
             const { lat, lng } = activeCoords;
             const url =
@@ -210,7 +211,7 @@ const NearbyMechanicsScreen = ({ navigation }) => {
                 `?location=${lat},${lng}&radius=5000&type=car_repair` +
                 `&key=${GOOGLE_MAPS_API_KEY}`;
 
-            const res = await fetch(url);
+            const res = await fetch(url, { signal });
             const json = await res.json();
 
             if (json.status === 'OK' && json.results?.length > 0) {
@@ -239,25 +240,30 @@ const NearbyMechanicsScreen = ({ navigation }) => {
                 return;
             }
         } catch (err) {
-            console.warn('[Places] Request failed:', err.message);
+            if (err.name !== 'AbortError') {
+                console.warn('[Places] Request failed:', err.message);
+            }
         }
 
+        // 2. Try Backend
         try {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 90000);
-            const url = `${API_URL}/garages/nearby?lat=${activeCoords.lat}&lng=${activeCoords.lng}&radius=5`;
-            const res = await fetch(url, { signal: controller.signal });
-            clearTimeout(timer);
+            // Internal timeout for this specific backend call if it's lagging
+            const backendUrl = `${API_URL}/garages/nearby?lat=${activeCoords.lat}&lng=${activeCoords.lng}&radius=5`;
+            const res = await fetch(backendUrl, { signal });
             const json = await res.json();
+
             if (json.success && json.data.length > 0) {
                 setMechanics(json.data);
                 setLoading(false);
                 return;
             }
-        } catch (_err) {
-            console.warn('[NearbyMechanics] Backend unreachable, using mock data');
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                console.warn('[NearbyMechanics] Backend unreachable, using mock data');
+            }
         }
 
+        // 3. Fallback to Context/Mock
         const withDistance = (contextMechanics || []).map(m => {
             const mLat = m.location?.lat ?? m.lat;
             const mLng = m.location?.lng ?? m.lng;
@@ -266,18 +272,24 @@ const NearbyMechanicsScreen = ({ navigation }) => {
             return { ...m, location: { lat: mLat, lng: mLng }, distance: parseFloat(dist.toFixed(2)) };
         }).filter(Boolean).filter(m => m.distance <= 50)
             .sort((a, b) => a.distance - b.distance);
+
         setMechanics(withDistance);
         setLoading(false);
     }, [activeCoords, contextMechanics]);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         if (!locationLoading && activeCoords) {
-            fetchMechanics();
+            fetchMechanics(controller.signal);
         } else if (!locationLoading && !activeCoords) {
             setLoading(false);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [locationLoading, activeCoords?.lat, activeCoords?.lng]);
+
+        return () => {
+            controller.abort();
+        };
+    }, [locationLoading, activeCoords?.lat, activeCoords?.lng, fetchMechanics]);
 
     const goToUser = () => {
         if (!activeCoords || !mapRef.current) return;

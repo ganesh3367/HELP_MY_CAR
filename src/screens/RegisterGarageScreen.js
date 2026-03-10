@@ -1,7 +1,6 @@
 import { ArrowLeft, Check, LogOut, Navigation } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Dimensions,
     KeyboardAvoidingView,
@@ -11,9 +10,10 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button from '../components/Button';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -35,7 +35,7 @@ const SPECIALTIES = [
 ];
 
 const RegisterGarageScreen = ({ navigation, route }) => {
-    const { user, logout } = useAuth();
+    const { user, logout, updateUser } = useAuth();
     const { createGarage } = useAppContext();
     const { location: userLoc } = useLocation();
 
@@ -105,9 +105,9 @@ const RegisterGarageScreen = ({ navigation, route }) => {
             });
 
             if (success) {
-                Alert.alert('Success', 'Your garage has been registered successfully!', [
-                    { text: 'OK', onPress: () => console.log('Registration acknowledged') }
-                ]);
+                // Update global auth state to trigger redirect to home
+                await updateUser({ ...user, hasGarageProfile: true });
+                Alert.alert('Success', 'Your garage has been registered successfully!');
             } else {
                 Alert.alert('Error', 'Failed to register garage. Please try again.');
             }
@@ -269,20 +269,13 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                         )}
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={[styles.submitButton, loading && { opacity: 0.7 }]}
+                    <Button
+                        title="Complete Registration"
                         onPress={handleRegister}
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <ActivityIndicator color={COLORS.white} />
-                        ) : (
-                            <>
-                                <Check size={20} color={COLORS.white} />
-                                <Text style={styles.submitText}>Complete Registration</Text>
-                            </>
-                        )}
-                    </TouchableOpacity>
+                        loading={loading}
+                        style={styles.submitButton}
+                        variant="primary"
+                    />
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>

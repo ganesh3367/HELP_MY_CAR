@@ -39,10 +39,7 @@ const SignupScreen = ({ navigation, route }) => {
 
         setLoading(true);
         try {
-            const userData = await signup(name, email, password, role);
-            if (role === 'garage') {
-                navigation.navigate('RegisterGarage');
-            }
+            await signup(name, email, password, role);
         } catch (error) {
             Alert.alert('Signup Failed', String(error));
         } finally {
@@ -123,7 +120,7 @@ const SignupScreen = ({ navigation, route }) => {
                     </View>
 
                     <Button
-                        title={role === 'garage' ? 'Continue to Shop Details' : 'Create Account'}
+                        title="Create Account"
                         onPress={handleSignup}
                         loading={loading}
                         style={styles.signupButton}

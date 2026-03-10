@@ -1,5 +1,5 @@
 import { AlertCircle, Truck } from 'lucide-react-native';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ServiceCard from '../components/ServiceCard';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
@@ -154,13 +154,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '800',
         color: '#16A34A',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
-    availabilityText: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: COLORS.success,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },

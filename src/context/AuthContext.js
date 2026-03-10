@@ -118,6 +118,19 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Updates the user state and persists it.
+     * @param {Object} updatedUser The new user object to store
+     */
+    const updateUser = async (updatedUser) => {
+        try {
+            await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+        } catch (error) {
+            console.error('Failed to update user', error);
+        }
+    };
+
     const logout = async () => {
         await AsyncStorage.removeItem('user');
         await AsyncStorage.removeItem('token');
@@ -126,7 +139,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
+        <AuthContext.Provider value={{ user, token, loading, login, signup, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

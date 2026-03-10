@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, MapPin } from 'lucide-react-native';
+import { ArrowLeft, Check, Crosshair, MapPin } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
@@ -11,8 +11,8 @@ const { width, height } = Dimensions.get('window');
 const LocationPickerScreen = ({ navigation, route }) => {
     const { location, setManualLocation } = useLocation();
     const [region, setRegion] = useState({
-        latitude: 37.78825,
-        longitude: -122.4324,
+        latitude: 18.5204,
+        longitude: 73.8567,
         latitudeDelta: 0.005,
         longitudeDelta: 0.005,
     });
@@ -44,6 +44,25 @@ const LocationPickerScreen = ({ navigation, route }) => {
         setRegion(newRegion);
     };
 
+    const handleMapPress = (e) => {
+        const { latitude, longitude } = e.nativeEvent.coordinate;
+        setRegion(prev => ({
+            ...prev,
+            latitude,
+            longitude,
+        }));
+    };
+
+    const handleLocateMe = () => {
+        if (location?.coords) {
+            setRegion(prev => ({
+                ...prev,
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            }));
+        }
+    };
+
     const confirmLocation = () => {
         setManualLocation(region.latitude, region.longitude);
 
@@ -70,6 +89,7 @@ const LocationPickerScreen = ({ navigation, route }) => {
                 style={styles.map}
                 region={region}
                 onRegionChangeComplete={onRegionChangeComplete}
+                onPress={handleMapPress}
             />
 
             {/* Fixed Center Pin */}
@@ -85,8 +105,11 @@ const LocationPickerScreen = ({ navigation, route }) => {
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
                     <Text style={styles.headerTitle}>Pin Your Location</Text>
-                    <Text style={styles.headerSubtitle}>Move map to adjust</Text>
+                    <Text style={styles.headerSubtitle}>Tap map or drag to adjust</Text>
                 </View>
+                <TouchableOpacity style={styles.locateButton} onPress={handleLocateMe}>
+                    <Crosshair size={24} color={COLORS.primary} />
+                </TouchableOpacity>
             </SafeAreaView>
 
             {/* Bottom Panel */}
@@ -142,6 +165,15 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
     },
     backButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: COLORS.white,
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...SHADOWS.medium,
+    },
+    locateButton: {
         width: 44,
         height: 44,
         borderRadius: 22,

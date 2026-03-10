@@ -1,7 +1,6 @@
-import { ArrowLeft, Check, Save } from 'lucide-react-native';
+import { ArrowLeft, Check } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Dimensions,
     KeyboardAvoidingView,
@@ -11,10 +10,11 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button from '../components/Button';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 
@@ -223,20 +223,12 @@ const EditGarageProfileScreen = ({ navigation }) => {
                         </View>
                     </View>
 
-                    <TouchableOpacity
-                        style={[styles.saveButton, loading && { opacity: 0.7 }]}
+                    <Button
+                        title="Update Business Profile"
                         onPress={handleSave}
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <ActivityIndicator color={COLORS.white} />
-                        ) : (
-                            <>
-                                <Save size={20} color={COLORS.white} />
-                                <Text style={styles.saveText}>Update Business Profile</Text>
-                            </>
-                        )}
-                    </TouchableOpacity>
+                        loading={loading}
+                        style={styles.saveButton}
+                    />
 
                     <View style={{ height: 40 }} />
                 </ScrollView>
