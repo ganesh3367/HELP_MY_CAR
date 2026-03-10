@@ -1,6 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 import { BookOpen, ChevronRight, Clock, Flame, MapPin, Phone, Search, ShieldAlert, Siren, Truck, Wrench, X } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Animated,
     Dimensions,
@@ -31,7 +31,7 @@ const HomeScreen = ({ navigation }) => {
     const [isSearchVisible, setIsSearchVisible] = useState(false);
     const [isEmergencyModalVisible, setIsEmergencyModalVisible] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const bannerFade = new Animated.Value(0);
+    const bannerFade = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         if (currentOrder && currentOrder.status !== 'COMPLETED') {

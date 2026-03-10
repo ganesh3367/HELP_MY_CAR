@@ -1,15 +1,16 @@
 import { ArrowLeft, Award, CheckCircle, Clock, MapPin, Star, Wrench } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-    Alert, Image, KeyboardAvoidingView, Modal,
-    Platform,
-    StyleSheet, Text,
-    TextInput, TouchableOpacity, View
+    Alert, Animated, Dimensions, Image, KeyboardAvoidingView, Modal,
+    Platform, ScrollView, StyleSheet, Text,
+    TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 import { useLocation } from '../context/LocationContext';
+
+const { width } = Dimensions.get('window');
 
 const SERVICES = [
     { id: 'oil', label: '🛢  Oil Change', type: 'General Service' },
