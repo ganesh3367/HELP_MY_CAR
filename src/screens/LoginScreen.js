@@ -15,24 +15,45 @@ import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
 const LoginScreen = ({ navigation }) => {
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const { login } = useAuth();
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [generalError, setGeneralError] = useState('');
 
     const handleLogin = async () => {
-        setError('');
-        if (!email || !password) {
-            setError('Please enter both email and password');
-            return;
+        setEmailError('');
+        setPasswordError('');
+        setGeneralError('');
+
+        let hasError = false;
+        if (!email) {
+            setEmailError('Email is required');
+            hasError = true;
         }
+        if (!password) {
+            setPasswordError('Password is required');
+            hasError = true;
+        }
+
+        if (hasError) return;
+
         setLoading(true);
         try {
             await login(email, password);
         } catch (err) {
-            setError(String(err).replace('Error: ', ''));
+            const msg = String(err).replace('Error: ', '');
+            if (msg.toLowerCase().includes('email') || msg.toLowerCase().includes('user not found')) {
+                setEmailError(msg);
+            } else if (msg.toLowerCase().includes('password')) {
+                setPasswordError(msg);
+            } else {
+                setGeneralError(msg);
+            }
         } finally {
             setLoading(false);
         }
@@ -53,32 +74,34 @@ const LoginScreen = ({ navigation }) => {
                 </View>
 
                 <View style={styles.form}>
-                    {!!error && (
+                    {!!generalError && (
                         <View style={styles.errorContainer}>
-                            <Text style={styles.errorText}>{error}</Text>
+                            <Text style={styles.errorText}>{generalError}</Text>
                         </View>
                     )}
+
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Email Address</Text>
                         <TextInput
-                            style={[styles.input, !!error && email === '' && styles.inputError]}
+                            style={[styles.input, !!emailError && styles.inputError]}
                             placeholder="Enter your email"
                             autoCapitalize="none"
                             keyboardType="email-address"
                             value={email}
-                            onChangeText={(val) => { setEmail(val); setError(''); }}
+                            onChangeText={(val) => { setEmail(val); setEmailError(''); setGeneralError(''); }}
                         />
+                        {!!emailError && <Text style={styles.inlineErrorText}>{emailError}</Text>}
                     </View>
 
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Password</Text>
                         <View style={styles.passwordInputWrapper}>
                             <TextInput
-                                style={[styles.input, styles.passwordInput, !!error && password === '' && styles.inputError]}
+                                style={[styles.input, styles.passwordInput, !!passwordError && styles.inputError]}
                                 placeholder="Enter your password"
                                 secureTextEntry={!showPassword}
                                 value={password}
-                                onChangeText={(val) => { setPassword(val); setError(''); }}
+                                onChangeText={(val) => { setPassword(val); setPasswordError(''); setGeneralError(''); }}
                             />
                             <TouchableOpacity
                                 onPress={() => setShowPassword(!showPassword)}
@@ -91,6 +114,7 @@ const LoginScreen = ({ navigation }) => {
                                 )}
                             </TouchableOpacity>
                         </View>
+                        {!!passwordError && <Text style={styles.inlineErrorText}>{passwordError}</Text>}
                     </View>
 
                     <TouchableOpacity style={styles.forgotPassword}>
@@ -227,7 +251,15 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     inputError: {
-        borderColor: COLORS.error + '50',
+        borderColor: COLORS.error + '80',
+        backgroundColor: COLORS.error + '05',
+    },
+    inlineErrorText: {
+        color: COLORS.error,
+        fontSize: 12,
+        fontWeight: '600',
+        marginTop: 6,
+        marginLeft: 4,
     },
 });
 

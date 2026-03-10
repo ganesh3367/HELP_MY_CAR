@@ -199,7 +199,7 @@ const NearbyMechanicsScreen = ({ navigation }) => {
         return null;
     }, [pickedLocation, location?.coords]);
 
-    const fetchMechanics = useCallback(async (signal) => {
+    const fetchMechanics = useCallback(async () => {
         if (!activeCoords) return;
         setLoading(true);
 
@@ -211,7 +211,7 @@ const NearbyMechanicsScreen = ({ navigation }) => {
                 `?location=${lat},${lng}&radius=5000&type=car_repair` +
                 `&key=${GOOGLE_MAPS_API_KEY}`;
 
-            const res = await fetch(url, { signal });
+            const res = await fetch(url);
             const json = await res.json();
 
             if (json.status === 'OK' && json.results?.length > 0) {
@@ -249,7 +249,7 @@ const NearbyMechanicsScreen = ({ navigation }) => {
         try {
             // Internal timeout for this specific backend call if it's lagging
             const backendUrl = `${API_URL}/garages/nearby?lat=${activeCoords.lat}&lng=${activeCoords.lng}&radius=5`;
-            const res = await fetch(backendUrl, { signal });
+            const res = await fetch(backendUrl);
             const json = await res.json();
 
             if (json.success && json.data.length > 0) {
@@ -278,17 +278,11 @@ const NearbyMechanicsScreen = ({ navigation }) => {
     }, [activeCoords, contextMechanics]);
 
     useEffect(() => {
-        const controller = new AbortController();
-
         if (!locationLoading && activeCoords) {
-            fetchMechanics(controller.signal);
+            fetchMechanics();
         } else if (!locationLoading && !activeCoords) {
             setLoading(false);
         }
-
-        return () => {
-            controller.abort();
-        };
     }, [locationLoading, activeCoords?.lat, activeCoords?.lng, fetchMechanics]);
 
     const goToUser = () => {

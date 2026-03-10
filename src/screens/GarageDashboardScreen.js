@@ -12,6 +12,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Animated,
     Dimensions,
     RefreshControl,
     ScrollView,
@@ -40,6 +41,33 @@ const GarageDashboardScreen = ({ navigation }) => {
     } = useAppContext();
     const [refreshing, setRefreshing] = useState(false);
     const [toggling, setToggling] = useState(false);
+    const bannerFade = React.useRef(new Animated.Value(0)).current;
+    const pulseAnim = React.useRef(new Animated.Value(1)).current;
+
+    const activeJobs = garageOrders.filter(o =>
+        ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(o.status)
+    );
+
+    useEffect(() => {
+        if (activeJobs[0]?.status === 'PENDING') {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(pulseAnim, { toValue: 1.05, duration: 800, useNativeDriver: true }),
+                    Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+                ])
+            ).start();
+        } else {
+            pulseAnim.setValue(1);
+        }
+    }, [activeJobs[0]?.status]);
+
+    useEffect(() => {
+        if (activeJobs.length > 0) {
+            Animated.timing(bannerFade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+        } else {
+            Animated.timing(bannerFade, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+        }
+    }, [activeJobs.length]);
 
     useEffect(() => {
         if (user?.email) {
@@ -66,10 +94,6 @@ const GarageDashboardScreen = ({ navigation }) => {
         await toggleGarageStatus(myGarage.id, !myGarage.isOnline);
         setToggling(false);
     };
-
-    const activeJobs = garageOrders.filter(o =>
-        ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(o.status)
-    );
 
     const totalRevenue = garageOrders
         .filter(o => o.status === 'COMPLETED')
@@ -177,6 +201,64 @@ const GarageDashboardScreen = ({ navigation }) => {
                         </View>
                     ))}
                 </View>
+
+                {/* ── Active Job Banner (Premium Redesign) ────────────────────────── */}
+                {activeJobs.length > 0 && (
+                    <Animated.View style={[
+                        styles.activeBanner,
+                        { opacity: bannerFade, transform: [{ scale: pulseAnim }] },
+                        activeJobs[0].status === 'PENDING' && styles.pendingBannerGlow
+                    ]}>
+                        <TouchableOpacity
+                            activeOpacity={0.9}
+                            style={[
+                                styles.bannerContent,
+                                activeJobs[0].status === 'PENDING' && styles.pendingBannerContent
+                            ]}
+                            onPress={() => navigation.navigate('Orders')}
+                        >
+                            {/* Left part: Icon & Info */}
+                            <View style={styles.bannerMain}>
+                                <View style={[
+                                    styles.bannerIconBg,
+                                    activeJobs[0].status === 'PENDING' ? styles.pendingIconBg : styles.activeIconBg
+                                ]}>
+                                    <Clock size={22} color={COLORS.white} />
+                                </View>
+                                <View style={styles.bannerInfo}>
+                                    <Text style={[
+                                        styles.bannerTitle,
+                                        activeJobs[0]?.status === 'PENDING' && styles.pendingTitleText
+                                    ]}>
+                                        {activeJobs[0]?.status === 'PENDING' ? 'URGENT: New Request!' : 'Ongoing Service'}
+                                    </Text>
+                                    <View style={styles.bannerDetails}>
+                                        <Text style={styles.bannerCustomerName}>
+                                            {activeJobs[0]?.userName || 'Guest User'}
+                                        </Text>
+                                        <Text style={styles.bannerVehicleInfo} numberOfLines={1}>
+                                            {activeJobs[0]?.vehicleDetails?.make} {activeJobs[0]?.vehicleDetails?.model}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            {/* Right part: Action Button */}
+                            <TouchableOpacity
+                                style={[
+                                    styles.bannerActionBtn,
+                                    activeJobs[0].status === 'PENDING' ? styles.pendingActionBtn : styles.activeActionBtn
+                                ]}
+                                onPress={() => navigation.navigate('Orders')}
+                            >
+                                <Text style={styles.bannerActionText}>
+                                    {activeJobs[0].status === 'PENDING' ? 'View Request' : 'Manage'}
+                                </Text>
+                                <ChevronRight size={16} color={COLORS.white} />
+                            </TouchableOpacity>
+                        </TouchableOpacity>
+                    </Animated.View>
+                )}
 
                 {/* ── Quick Actions ─────────────────────────────────────────── */}
                 <Text style={styles.sectionTitle}>Quick Management</Text>
@@ -550,6 +632,101 @@ const styles = StyleSheet.create({
         marginTop: 6,
         paddingHorizontal: 40,
         lineHeight: 18,
+    },
+    // ─ Active Banner (Premium) ──────────────────────────────────────────
+    activeBanner: {
+        borderRadius: 24,
+        marginBottom: SPACING.xl,
+        ...SHADOWS.large,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        backgroundColor: COLORS.white,
+    },
+    pendingBannerGlow: {
+        shadowColor: '#F59E0B',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 15,
+        elevation: 8,
+        borderColor: '#FDE68A',
+    },
+    bannerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        gap: 12,
+        justifyContent: 'space-between',
+    },
+    pendingBannerContent: {
+        backgroundColor: '#FFFBEB',
+    },
+    bannerMain: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        gap: 12,
+    },
+    bannerIconBg: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...SHADOWS.small,
+    },
+    activeIconBg: {
+        backgroundColor: COLORS.primary,
+    },
+    pendingIconBg: {
+        backgroundColor: '#F59E0B', // Rich Amber
+    },
+    bannerInfo: {
+        flex: 1,
+    },
+    bannerTitle: {
+        fontSize: 12,
+        fontWeight: '800',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        color: COLORS.textLight,
+        marginBottom: 2,
+    },
+    pendingTitleText: {
+        color: '#D97706',
+    },
+    bannerDetails: {
+        gap: 1,
+    },
+    bannerCustomerName: {
+        fontSize: 17,
+        fontWeight: '900',
+        color: COLORS.text,
+    },
+    bannerVehicleInfo: {
+        fontSize: 13,
+        color: COLORS.textLight,
+        fontWeight: '500',
+    },
+    bannerActionBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 14,
+        gap: 6,
+        ...SHADOWS.small,
+    },
+    activeActionBtn: {
+        backgroundColor: COLORS.primary,
+    },
+    pendingActionBtn: {
+        backgroundColor: '#F59E0B',
+    },
+    bannerActionText: {
+        color: COLORS.white,
+        fontSize: 13,
+        fontWeight: '800',
     },
 });
 

@@ -10,21 +10,23 @@ import { COLORS, SHADOWS } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 import { useLocation } from '../context/LocationContext';
 
+import { BlurView } from 'expo-blur';
+
 const { width } = Dimensions.get('window');
 
 const SERVICES = [
-    { id: 'oil', label: '🛢  Oil Change', type: 'General Service' },
-    { id: 'battery', label: '🔋 Battery Repair', type: 'Electrical' },
-    { id: 'tyre', label: '🔄 Tyre Change', type: 'Tyre Change' },
-    { id: 'engine', label: '⚙️  Engine Issue', type: 'Engine Repair' },
-    { id: 'brake', label: '🛑 Brake Repair', type: 'Brakes' },
-    { id: 'ac', label: '❄️  AC Service', type: 'AC Service' },
-    { id: 'other', label: '🔧 Other', type: 'General Repair' },
+    { id: 'oil', label: '🛢  Oil Change', type: 'General Service', price: '₹799' },
+    { id: 'battery', label: '🔋 Battery Repair', type: 'Electrical', price: '₹499' },
+    { id: 'tyre', label: '🔄 Tyre Change', type: 'Tyre Change', price: '₹299' },
+    { id: 'engine', label: '⚙️  Engine Issue', type: 'Engine Repair', price: '₹1499' },
+    { id: 'brake', label: '🛑 Brake Repair', type: 'Brakes', price: '₹899' },
+    { id: 'ac', label: '❄️  AC Service', type: 'AC Service', price: '₹1299' },
+    { id: 'other', label: '🔧 Other', type: 'General Repair', price: '₹500' },
 ];
 
 const MechanicProfileScreen = ({ navigation, route }) => {
     const { mechanic } = route.params;
-    const { placeOrder, addReview } = useAppContext();
+    const { placeOrder } = useAppContext();
     const { location } = useLocation();
 
     const [bookingLoading, setBookingLoading] = useState(false);
@@ -89,7 +91,7 @@ const MechanicProfileScreen = ({ navigation, route }) => {
     return (
         <View style={styles.container}>
             <Animated.ScrollView
-                contentContainerStyle={{ paddingBottom: 120 }}
+                contentContainerStyle={{ paddingBottom: 150 }}
                 showsVerticalScrollIndicator={false}
                 onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
                 scrollEventThrottle={16}
@@ -101,21 +103,26 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                         style={styles.coverImage}
                     />
                     <View style={styles.gradientOverlay} />
+
                     <SafeAreaView style={styles.headerSafe}>
                         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-                            <ArrowLeft size={22} color={COLORS.white} />
+                            <BlurView intensity={30} style={styles.blurBack}>
+                                <ArrowLeft size={22} color={COLORS.white} />
+                            </BlurView>
                         </TouchableOpacity>
                     </SafeAreaView>
 
                     <Animated.View style={[styles.titleOverlay, { opacity: headerOpacity, transform: [{ translateY: headerTranslate }] }]}>
                         <View style={styles.eliteRow}>
                             <Award size={14} color="#FFD700" />
-                            <Text style={styles.eliteText}>Top Professional</Text>
+                            <Text style={styles.eliteText}>Verified Expert</Text>
                         </View>
                         <Text style={styles.nameOverlay}>{mechanic.name}</Text>
                         <View style={styles.headerRating}>
-                            <Star size={14} color="#FFD700" fill="#FFD700" />
-                            <Text style={styles.headerRatingText}>{mechanic.rating} ({mechanic.reviews?.length || 0} reviews)</Text>
+                            <Star size={16} color="#FFD700" fill="#FFD700" />
+                            <Text style={styles.headerRatingText}>{mechanic.rating || 4.8} / 5.0</Text>
+                            <View style={styles.dot} />
+                            <Text style={styles.headerRatingText}>{mechanic.reviewCount || 120}+ Jobs</Text>
                         </View>
                     </Animated.View>
                 </View>
@@ -128,32 +135,41 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                             <View style={[styles.statIconBox, { backgroundColor: '#F0F4FF' }]}>
                                 <Award size={20} color={COLORS.primary} />
                             </View>
-                            <Text style={styles.statValue}>{mechanic.experience || '8 Yrs'}</Text>
+                            <Text style={styles.statValue}>{mechanic.experience || '8+ Yrs'}</Text>
                             <Text style={styles.statLabel}>Exp</Text>
                         </View>
                         <View style={styles.statItem}>
                             <View style={[styles.statIconBox, { backgroundColor: '#EFFFF4' }]}>
                                 <CheckCircle size={20} color={COLORS.success} />
                             </View>
-                            <Text style={styles.statValue}>{mechanic.jobsCompleted || '450+'}</Text>
-                            <Text style={styles.statLabel}>Jobs Done</Text>
+                            <Text style={styles.statValue}>{mechanic.jobsCompleted || '450'}</Text>
+                            <Text style={styles.statLabel}>Success</Text>
                         </View>
                         <View style={styles.statItem}>
                             <View style={[styles.statIconBox, { backgroundColor: '#FFF9E6' }]}>
-                                <Star size={20} color="#FFB800" />
+                                <Clock size={20} color="#FFB800" />
                             </View>
-                            <Text style={styles.statValue}>Elite</Text>
-                            <Text style={styles.statLabel}>Status</Text>
+                            <Text style={styles.statValue}>~15m</Text>
+                            <Text style={styles.statLabel}>Arrival</Text>
                         </View>
                     </View>
 
+                    {/* Description Section */}
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>About Mechanic</Text>
+                        <View style={styles.line} />
+                    </View>
+                    <Text style={styles.descriptionText}>
+                        Expert diagnostic and repair services delivered at your location. Specialized in modern vehicle systems with high-quality parts and guaranteed satisfaction.
+                    </Text>
+
                     {/* About/Specialties */}
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Expertise</Text>
+                        <Text style={styles.sectionTitle}>Specialties</Text>
                         <View style={styles.line} />
                     </View>
                     <View style={styles.tagsContainer}>
-                        {mechanic.specialties?.map((tag, index) => (
+                        {(mechanic.specialties || ['Engine', 'Electrical', 'Brakes']).map((tag, index) => (
                             <View key={index} style={styles.tag}>
                                 <Wrench size={12} color={COLORS.primary} />
                                 <Text style={styles.tagText}>{tag}</Text>
@@ -168,7 +184,7 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text style={styles.infoTitle}>Service Location</Text>
-                                <Text style={styles.infoSub}>{mechanic.address}</Text>
+                                <Text style={styles.infoSub} numberOfLines={2}>{mechanic.address}</Text>
                             </View>
                         </View>
                         <View style={styles.infoRow}>
@@ -176,39 +192,11 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                                 <Clock size={20} color={COLORS.primary} />
                             </View>
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.infoTitle}>Estimated Arrival</Text>
-                                <Text style={styles.infoSub}>Mechanic will reach in 15-25 mins</Text>
+                                <Text style={styles.infoTitle}>Operational Status</Text>
+                                <Text style={styles.infoSub}>Available 24/7 for Emergency Support</Text>
                             </View>
                         </View>
                     </View>
-
-                    {mechanic.reviews && mechanic.reviews.length > 0 && (
-                        <>
-                            <View style={styles.sectionHeader}>
-                                <Text style={styles.sectionTitle}>Verifed Reviews</Text>
-                                <View style={styles.line} />
-                            </View>
-                            {mechanic.reviews.map((review) => (
-                                <View key={review.id} style={styles.reviewCard}>
-                                    <View style={styles.reviewHeader}>
-                                        <View style={styles.reviewerAvatar}>
-                                            <Text style={styles.reviewerInitials}>{(review.user || 'G').charAt(0)}</Text>
-                                        </View>
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={styles.reviewerName}>{review.user}</Text>
-                                            <View style={styles.ratingStars}>
-                                                {[1, 2, 3, 4, 5].map(s => (
-                                                    <Star key={s} size={10} color={s <= review.rating ? "#FFB800" : "#EEE"} fill={s <= review.rating ? "#FFB800" : "transparent"} />
-                                                ))}
-                                            </View>
-                                        </View>
-                                        <Text style={styles.reviewDate}>{review.date}</Text>
-                                    </View>
-                                    <Text style={styles.reviewTextContent}>{review.comment}</Text>
-                                </View>
-                            ))}
-                        </>
-                    )}
                 </Animated.View>
             </Animated.ScrollView>
 
@@ -304,29 +292,24 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.35)',
     },
     headerSafe: { position: 'absolute', top: 0, left: 0, zIndex: 10 },
-    backBtn: {
-        width: 44, height: 44, borderRadius: 22,
-        backgroundColor: 'rgba(255,255,255,0.25)',
-        alignItems: 'center', justifyContent: 'center',
-        marginLeft: 20, marginTop: 10,
-    },
-    titleOverlay: {
-        position: 'absolute', bottom: 40, left: 24, right: 24,
-    },
+    blurBack: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+    backBtn: { marginLeft: 20, marginTop: Platform.OS === 'ios' ? 0 : 10 },
+    titleOverlay: { position: 'absolute', bottom: 40, left: 24, right: 24 },
     eliteRow: {
         flexDirection: 'row', alignItems: 'center', gap: 6,
-        backgroundColor: 'rgba(255,215,0,0.2)', paddingHorizontal: 10,
+        backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10,
         paddingVertical: 4, borderRadius: 20, alignSelf: 'flex-start',
-        marginBottom: 10, borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)',
+        marginBottom: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
     },
-    eliteText: { fontSize: 11, fontWeight: '900', color: '#FFD700', textTransform: 'uppercase', letterSpacing: 0.5 },
+    eliteText: { fontSize: 11, fontWeight: '900', color: COLORS.white, textTransform: 'uppercase', letterSpacing: 0.5 },
     nameOverlay: { fontSize: 32, fontWeight: '900', color: COLORS.white, marginBottom: 8, letterSpacing: -0.5 },
-    headerRating: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    headerRating: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     headerRatingText: { fontSize: 14, fontWeight: '700', color: 'rgba(255,255,255,0.9)' },
+    dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.5)' },
 
     content: {
         marginTop: -30, backgroundColor: '#F8F9FB', borderTopLeftRadius: 35,
-        borderTopRightRadius: 35, padding: 24, paddingBottom: 100,
+        borderTopRightRadius: 35, padding: 24,
     },
     statsGrid: {
         flexDirection: 'row', justifyContent: 'space-between',
@@ -341,6 +324,8 @@ const styles = StyleSheet.create({
     sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16, marginTop: 10 },
     sectionTitle: { fontSize: 18, fontWeight: '900', color: COLORS.text, letterSpacing: -0.3 },
     line: { flex: 1, height: 1, backgroundColor: '#E2E8F0' },
+
+    descriptionText: { fontSize: 14, color: '#64748B', lineHeight: 22, fontWeight: '500', marginBottom: 20 },
 
     tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 },
     tag: {
@@ -358,18 +343,6 @@ const styles = StyleSheet.create({
     infoIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: COLORS.primary + '10', alignItems: 'center', justifyContent: 'center' },
     infoTitle: { fontSize: 14, fontWeight: '800', color: COLORS.text, marginBottom: 2 },
     infoSub: { fontSize: 13, color: '#64748B', fontWeight: '500' },
-
-    reviewCard: {
-        backgroundColor: COLORS.white, borderRadius: 20, padding: 18,
-        marginBottom: 16, ...SHADOWS.small,
-    },
-    reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-    reviewerAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
-    reviewerInitials: { fontSize: 15, fontWeight: '900', color: '#64748B' },
-    reviewerName: { fontSize: 15, fontWeight: '800', color: COLORS.text, marginBottom: 2 },
-    ratingStars: { flexDirection: 'row', gap: 2 },
-    reviewDate: { fontSize: 12, fontWeight: '600', color: '#94A3B8' },
-    reviewTextContent: { fontSize: 14, color: '#475569', lineHeight: 22, fontWeight: '500' },
 
     bottomBar: {
         position: 'absolute', bottom: 0, left: 0, right: 0,

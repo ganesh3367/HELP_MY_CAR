@@ -142,7 +142,7 @@ const SearchingRadar = () => {
 const OrderTrackingScreen = () => {
     const navigation = useNavigation();
     const { params } = useRoute();
-    const { trackOrderStatus } = useAppContext();
+    const { trackOrderStatus, cancelOrder } = useAppContext();
 
     const [order, setOrder] = useState(params?.order || null);
     const [mechanicCoords, setMechanicCoords] = useState(
@@ -231,6 +231,28 @@ const OrderTrackingScreen = () => {
         const delta = Math.max(Math.abs(uLat - mLat), Math.abs(uLng - mLng)) * 2.2 + 0.01;
         mapRef.current.animateToRegion({ latitude: midLat, longitude: midLng, latitudeDelta: delta, longitudeDelta: delta }, 500);
     }, [order?.userLocation]);
+
+    const handleCancelOrder = () => {
+        Alert.alert(
+            'Cancel Order',
+            'Are you sure you want to cancel this service request?',
+            [
+                { text: 'No, Keep it', style: 'cancel' },
+                {
+                    text: 'Yes, Cancel',
+                    style: 'destructive',
+                    onPress: async () => {
+                        const success = await cancelOrder(order.id || order._id);
+                        if (success) {
+                            navigation.replace('Main');
+                        } else {
+                            Alert.alert('Error', 'Failed to cancel order. Please try again.');
+                        }
+                    }
+                },
+            ]
+        );
+    };
 
     const status = order?.status || 'PENDING';
     const currentStep = stepIndex(status);
@@ -430,13 +452,23 @@ const OrderTrackingScreen = () => {
                     <View style={styles.searchingContainer}>
                         <SearchingRadar />
                         <Text style={styles.searchingText}>Finding the nearest expert mechanic for you...</Text>
+                        <TouchableOpacity style={styles.cancelRequestBtn} onPress={handleCancelOrder}>
+                            <Text style={styles.cancelRequestText}>Cancel Request</Text>
+                        </TouchableOpacity>
                     </View>
                 ) : (
-                    <View style={styles.issueRow}>
-                        <MapPin size={14} color={COLORS.textLight} />
-                        <Text style={styles.issueText} numberOfLines={2}>
-                            {order.vehicleDetails?.issue || 'General service request'}
-                        </Text>
+                    <View style={styles.actionRow}>
+                        <View style={styles.issueRow}>
+                            <MapPin size={14} color={COLORS.textLight} />
+                            <Text style={styles.issueText} numberOfLines={1}>
+                                {order.vehicleDetails?.issue || 'General service request'}
+                            </Text>
+                        </View>
+                        {['ACCEPTED', 'ON_THE_WAY'].includes(status) && (
+                            <TouchableOpacity style={styles.smallCancelBtn} onPress={handleCancelOrder}>
+                                <Text style={styles.smallCancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 )}
             </Animated.View>
@@ -606,6 +638,34 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    cancelRequestBtn: {
+        marginTop: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 12,
+        backgroundColor: '#FEE2E2',
+    },
+    cancelRequestText: {
+        color: '#DC2626',
+        fontWeight: '700',
+        fontSize: 14,
+    },
+    actionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+    },
+    smallCancelBtn: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 10,
+        backgroundColor: '#FEE2E2',
+    },
+    smallCancelText: {
+        color: '#DC2626',
+        fontWeight: '700',
+        fontSize: 12,
     },
 });
 

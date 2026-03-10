@@ -1,7 +1,6 @@
 import { ArrowLeft } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    Alert,
     Platform,
     ScrollView,
     StyleSheet,
@@ -16,32 +15,63 @@ import { COLORS, SHADOWS, SIZES, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
 const SignupScreen = ({ navigation, route }) => {
-    const passedRole = route.params?.role || 'user';
+    const { signup } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [role] = useState(passedRole);
-
-    const { signup } = useAuth();
+    const [role, setRole] = useState(route.params?.role || 'user');
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        if (route.params?.role) {
+            setRole(route.params.role);
+        }
+    }, [route.params?.role]);
+
+    const [nameError, setNameError] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [confirmPasswordError, setConfirmPasswordError] = useState('');
+    const [generalError, setGeneralError] = useState('');
+
     const handleSignup = async () => {
-        if (!name || !email || !password || !confirmPassword) {
-            Alert.alert('Error', 'Please fill all basic fields');
-            return;
+        setNameError('');
+        setEmailError('');
+        setPasswordError('');
+        setConfirmPasswordError('');
+        setGeneralError('');
+
+        let hasError = false;
+        if (!name) {
+            setNameError('Name is required');
+            hasError = true;
+        }
+        if (!email) {
+            setEmailError('Email is required');
+            hasError = true;
+        }
+        if (!password) {
+            setPasswordError('Password is required');
+            hasError = true;
+        }
+        if (password !== confirmPassword) {
+            setConfirmPasswordError('Passwords do not match');
+            hasError = true;
         }
 
-        if (password !== confirmPassword) {
-            Alert.alert('Error', 'Passwords do not match');
-            return;
-        }
+        if (hasError) return;
 
         setLoading(true);
         try {
             await signup(name, email, password, role);
         } catch (error) {
-            Alert.alert('Signup Failed', String(error));
+            const msg = String(error).replace('Error: ', '');
+            if (msg.toLowerCase().includes('email')) {
+                setEmailError(msg);
+            } else {
+                setGeneralError(msg);
+            }
         } finally {
             setLoading(false);
         }
@@ -67,48 +97,58 @@ const SignupScreen = ({ navigation, route }) => {
                 </View>
 
                 <View style={styles.form}>
+                    {!!generalError && (
+                        <View style={styles.errorContainer}>
+                            <Text style={styles.errorText}>{generalError}</Text>
+                        </View>
+                    )}
+
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Full Name</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, !!nameError && styles.inputError]}
                             placeholder="John Doe"
                             value={name}
-                            onChangeText={setName}
+                            onChangeText={(val) => { setName(val); setNameError(''); setGeneralError(''); }}
                         />
+                        {!!nameError && <Text style={styles.inlineErrorText}>{nameError}</Text>}
                     </View>
 
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Email Address</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, !!emailError && styles.inputError]}
                             placeholder="john@example.com"
                             autoCapitalize="none"
                             keyboardType="email-address"
                             value={email}
-                            onChangeText={setEmail}
+                            onChangeText={(val) => { setEmail(val); setEmailError(''); setGeneralError(''); }}
                         />
+                        {!!emailError && <Text style={styles.inlineErrorText}>{emailError}</Text>}
                     </View>
 
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Password</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, !!passwordError && styles.inputError]}
                             placeholder="Create a password"
                             secureTextEntry
                             value={password}
-                            onChangeText={setPassword}
+                            onChangeText={(val) => { setPassword(val); setPasswordError(''); setGeneralError(''); }}
                         />
+                        {!!passwordError && <Text style={styles.inlineErrorText}>{passwordError}</Text>}
                     </View>
 
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Confirm Password</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, !!confirmPasswordError && styles.inputError]}
                             placeholder="Repeat password"
                             secureTextEntry
                             value={confirmPassword}
-                            onChangeText={setConfirmPassword}
+                            onChangeText={(val) => { setConfirmPassword(val); setConfirmPasswordError(''); setGeneralError(''); }}
                         />
+                        {!!confirmPasswordError && <Text style={styles.inlineErrorText}>{confirmPasswordError}</Text>}
                     </View>
 
                     <View style={styles.termsContainer}>
@@ -319,6 +359,31 @@ const styles = StyleSheet.create({
     },
     loginLink: {
         textDecorationLine: 'underline',
+    },
+    errorContainer: {
+        backgroundColor: COLORS.error + '10',
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: COLORS.error + '20',
+    },
+    errorText: {
+        color: COLORS.error,
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    inputError: {
+        borderColor: COLORS.error + '80',
+        backgroundColor: COLORS.error + '05',
+    },
+    inlineErrorText: {
+        color: COLORS.error,
+        fontSize: 12,
+        fontWeight: '600',
+        marginTop: 6,
+        marginLeft: 4,
     },
 });
 

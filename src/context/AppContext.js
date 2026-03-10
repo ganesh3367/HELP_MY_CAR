@@ -3,14 +3,11 @@
  * Manages global application state including mechanics list, orders, and favorites.
  * Handles API calls for fetching mechanics and order management with fallback mock data.
  */
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { TOWING_SERVICES } from '../constants/mockData';
-import { useAuth } from './AuthContext';
-import { useLocation } from './LocationContext';
-
-const AppContext = createContext();
-
 import { API_URL } from '../config';
+import { TOWING_SERVICES } from '../constants/mockData';
+import { fetchWithRetry } from '../services/api';
 import {
     connectSocket,
     disconnectSocket,
@@ -18,6 +15,11 @@ import {
     offNewOrder,
     onNewOrder
 } from '../services/socket';
+import { useAuth } from './AuthContext';
+import { useLocation } from './LocationContext';
+
+const AppContext = createContext();
+
 
 const MOCK_MECHANICS = [
     {
@@ -100,6 +102,58 @@ export const AppProvider = ({ children }) => {
     const [userOrders, setUserOrders] = useState([]);
     const [unreadOrders, setUnreadOrders] = useState([]);
 
+    // Persistence: Load on mount
+    useEffect(() => {
+        const loadPersistedData = async () => {
+            try {
+                const storedOrder = await AsyncStorage.getItem('currentOrder');
+                if (storedOrder) {
+                    try {
+                        const parsed = JSON.parse(storedOrder);
+                        // Only load if it's an active status
+                        if (parsed && ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(parsed.status)) {
+                            setCurrentOrder(parsed);
+                        } else {
+                            await AsyncStorage.removeItem('currentOrder');
+                        }
+                    } catch (e) {
+                        console.warn('Failed to parse stored order', e);
+                        await AsyncStorage.removeItem('currentOrder');
+                    }
+                }
+
+                const storedGarage = await AsyncStorage.getItem('myGarage');
+                if (storedGarage) {
+                    try {
+                        setMyGarage(JSON.parse(storedGarage));
+                    } catch (e) {
+                        console.warn('Failed to parse stored garage', e);
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to load persisted app data', e);
+            }
+        };
+        loadPersistedData();
+    }, []);
+
+    // Persistence: Save on change
+    useEffect(() => {
+        if (currentOrder) {
+            AsyncStorage.setItem('currentOrder', JSON.stringify(currentOrder));
+        } else {
+            AsyncStorage.removeItem('currentOrder');
+        }
+    }, [currentOrder]);
+
+    useEffect(() => {
+        if (myGarage) {
+            AsyncStorage.setItem('myGarage', JSON.stringify(myGarage));
+        } else {
+            AsyncStorage.removeItem('myGarage');
+        }
+    }, [myGarage]);
+
     useEffect(() => {
         if (user?.role === 'garage' && myGarage?.id) {
             connectSocket();
@@ -125,20 +179,14 @@ export const AppProvider = ({ children }) => {
         }
     }, [userLocation?.coords, fetchMechanics]);
 
+
     const fetchMechanics = useCallback(async (locParam = null) => {
         try {
             const loc = locParam || userLocationRef.current;
             const lat = loc?.coords?.latitude || 18.5204;
             const lng = loc?.coords?.longitude || 73.8567;
 
-            // Add timeout to fail fast and switch to mock data
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout for Render cold start
-
-            const response = await fetch(`${API_URL}/garages/nearby?lat=${lat}&lng=${lng}`, {
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
+            const response = await fetchWithRetry(`${API_URL}/garages/nearby?lat=${lat}&lng=${lng}`);
 
             if (!response.ok) {
                 throw new Error(`HTTP Error! status: ${response.status}`);
@@ -173,7 +221,7 @@ export const AppProvider = ({ children }) => {
                 setTowingServices([...TOWING_SERVICES, ...dynamicTowing]);
             }
         } catch (error) {
-            console.warn(`[fetchMechanics] Network failed for ${API_URL}/garages/nearby:`, error.message);
+            console.warn(`[fetchMechanics] All retries failed for ${API_URL}/garages/nearby:`, error.message);
             setMechanics(MOCK_MECHANICS);
             setTowingServices(TOWING_SERVICES); // Fallback to basic mock
         }
@@ -186,18 +234,22 @@ export const AppProvider = ({ children }) => {
      * @returns {Promise<Object>} The created order object.
      */
     const placeOrder = async (garageId, vehicleDetails, userLocation) => {
+        // Enforce single active order constraint
+        if (currentOrder && ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(currentOrder.status)) {
+            throw new Error('You already have an active order. Please complete or cancel it first.');
+        }
+
         setLoading(true);
-        // Default location if not provided (Pune, India)
-        const loc = userLocation || { lat: 18.5204, lng: 73.8567 };
 
         try {
-            const response = await fetch(`${API_URL}/orders`, {
+            const response = await fetchWithRetry(`${API_URL}/orders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     userId: user?.id || 'guest',
+                    userName: user?.name || 'Guest User',
                     garageId,
                     vehicleDetails,
                     userLocation: loc
@@ -245,7 +297,7 @@ export const AppProvider = ({ children }) => {
 
     const trackOrderStatus = async (orderId) => {
         try {
-            const response = await fetch(`${API_URL}/orders/${orderId}/track`);
+            const response = await fetchWithRetry(`${API_URL}/orders/${orderId}/track`);
             if (!response.ok) {
                 throw new Error(`HTTP Error! status: ${response.status}`);
             }
@@ -287,7 +339,7 @@ export const AppProvider = ({ children }) => {
 
     const fetchUserOrders = async (userId) => {
         try {
-            const response = await fetch(`${API_URL}/orders/user/${userId}`);
+            const response = await fetchWithRetry(`${API_URL}/orders/user/${userId}`);
             const data = await response.json();
             if (data.success) {
                 setUserOrders(data.data);
@@ -299,17 +351,12 @@ export const AppProvider = ({ children }) => {
 
     const updateGarageProfile = async (garageId, updateData) => {
         setLoading(true);
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 90000);
-
         try {
-            const response = await fetch(`${API_URL}/garages/${garageId}`, {
+            const response = await fetchWithRetry(`${API_URL}/garages/${garageId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updateData),
-                signal: controller.signal
             });
-            clearTimeout(timeoutId);
             const data = await response.json();
             if (data.success) {
                 setMyGarage(data.data);
@@ -331,17 +378,12 @@ export const AppProvider = ({ children }) => {
 
     const createGarage = async (garageData) => {
         setLoading(true);
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 90000);
-
         try {
-            const response = await fetch(`${API_URL}/garages`, {
+            const response = await fetchWithRetry(`${API_URL}/garages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(garageData),
-                signal: controller.signal
             });
-            clearTimeout(timeoutId);
             const data = await response.json();
             if (data.success) {
                 setMyGarage(data.data);
@@ -365,15 +407,10 @@ export const AppProvider = ({ children }) => {
 
     const deleteGarage = async (garageId) => {
         setLoading(true);
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
-
         try {
-            const response = await fetch(`${API_URL}/garages/${garageId}`, {
+            const response = await fetchWithRetry(`${API_URL}/garages/${garageId}`, {
                 method: 'DELETE',
-                signal: controller.signal
             });
-            clearTimeout(timeoutId);
             const data = await response.json();
             if (data.success) {
                 setMyGarage(null);
@@ -392,7 +429,7 @@ export const AppProvider = ({ children }) => {
 
     const submitFeedback = async (feedbackData) => {
         try {
-            const response = await fetch(`${API_URL}/feedback`, {
+            const response = await fetchWithRetry(`${API_URL}/feedback`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -415,7 +452,7 @@ export const AppProvider = ({ children }) => {
 
     const fetchGarageByOwner = useCallback(async (email) => {
         try {
-            const response = await fetch(`${API_URL}/garages/owner/${email}`);
+            const response = await fetchWithRetry(`${API_URL}/garages/owner/${email}`);
             const data = await response.json();
             if (data.success) {
                 setMyGarage(data.data);
@@ -432,7 +469,7 @@ export const AppProvider = ({ children }) => {
 
     const fetchGarageOrders = useCallback(async (garageId) => {
         try {
-            const response = await fetch(`${API_URL}/orders/garage/${garageId}`);
+            const response = await fetchWithRetry(`${API_URL}/orders/garage/${garageId}`);
             const data = await response.json();
             if (data.success) {
                 setGarageOrders(data.data);
@@ -446,7 +483,7 @@ export const AppProvider = ({ children }) => {
 
     const updateOrderStatus = async (orderId, status) => {
         try {
-            const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+            const response = await fetchWithRetry(`${API_URL}/orders/${orderId}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status })
@@ -454,8 +491,8 @@ export const AppProvider = ({ children }) => {
             const data = await response.json();
             if (data.success) {
                 // Update local status if in the list
-                setGarageOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
-                if (currentOrder && currentOrder.id === orderId) {
+                setGarageOrders(prev => prev.map(o => (o.id === orderId || o._id === orderId) ? { ...o, status } : o));
+                if (currentOrder && (currentOrder.id === orderId || currentOrder._id === orderId)) {
                     setCurrentOrder(prev => ({ ...prev, status }));
                 }
                 return true;
@@ -465,6 +502,15 @@ export const AppProvider = ({ children }) => {
             console.error('Update Order Status Error:', error);
             return false;
         }
+    };
+
+    const cancelOrder = async (orderId) => {
+        const success = await updateOrderStatus(orderId, 'CANCELLED');
+        if (success) {
+            setCurrentOrder(null);
+            await AsyncStorage.removeItem('currentOrder');
+        }
+        return success;
     };
 
     const addReview = async (garageId, reviewData) => {
@@ -495,7 +541,7 @@ export const AppProvider = ({ children }) => {
 
         // ── Try syncing to backend in the background ─────────────────────────
         try {
-            const response = await fetch(`${API_URL}/garages/${garageId}/reviews`, {
+            const response = await fetchWithRetry(`${API_URL}/garages/${garageId}/reviews`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user: newReview.user, ...reviewData }),
@@ -536,6 +582,7 @@ export const AppProvider = ({ children }) => {
                 fetchGarageByOwner,
                 fetchGarageOrders,
                 updateOrderStatus,
+                cancelOrder,
                 addReview,
                 userOrders,
                 fetchUserOrders,

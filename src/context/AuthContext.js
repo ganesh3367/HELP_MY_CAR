@@ -9,11 +9,13 @@ import { createContext, useContext, useEffect, useState } from 'react';
 const AuthContext = createContext();
 
 import { API_URL } from '../config';
+import { fetchWithRetry } from '../services/api';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [isInitializing, setIsInitializing] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const checkUser = async () => {
@@ -27,7 +29,7 @@ export const AuthProvider = ({ children }) => {
             } catch (error) {
                 console.error('Failed to load user', error);
             } finally {
-                setLoading(false);
+                setIsInitializing(false);
             }
         };
         checkUser();
@@ -38,17 +40,12 @@ export const AuthProvider = ({ children }) => {
      */
     const login = async (email, password) => {
         setLoading(true);
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 90000);
-
         try {
-            const response = await fetch(`${API_URL}/users/login`, {
+            const response = await fetchWithRetry(`${API_URL}/users/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
-                signal: controller.signal
             });
-            clearTimeout(timeoutId);
 
             const data = await response.json();
 
@@ -64,7 +61,6 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.error || 'Login failed');
             }
         } catch (error) {
-            clearTimeout(timeoutId);
             const message = error.name === 'AbortError' ? 'Server timeout. Please try again.' : error.message;
             console.error('Login error:', message);
             throw new Error(message);
@@ -78,22 +74,17 @@ export const AuthProvider = ({ children }) => {
      */
     const signup = async (name, email, password, role = 'user', garageDetails = null) => {
         setLoading(true);
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 90000);
-
         try {
             const bodyPayload = { name, email, password, role: role.trim().toLowerCase() };
             if (role === 'garage' && garageDetails) {
                 Object.assign(bodyPayload, garageDetails);
             }
 
-            const response = await fetch(`${API_URL}/users/signup`, {
+            const response = await fetchWithRetry(`${API_URL}/users/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bodyPayload),
-                signal: controller.signal
             });
-            clearTimeout(timeoutId);
 
             const data = await response.json();
 
@@ -109,7 +100,6 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.error || 'Signup failed');
             }
         } catch (error) {
-            clearTimeout(timeoutId);
             const message = error.name === 'AbortError' ? 'Server timeout during signup. Please try again.' : error.message;
             console.error('Signup error:', message);
             throw new Error(message);
@@ -139,7 +129,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, signup, logout, updateUser }}>
+        <AuthContext.Provider value={{ user, token, loading, isInitializing, login, signup, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

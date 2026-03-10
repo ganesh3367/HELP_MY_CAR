@@ -5,7 +5,7 @@ const { db } = require('../config/firebase');
 // @access  Public
 const createOrder = async (req, res) => {
     try {
-        const { userId, garageId, vehicleDetails, userLocation } = req.body;
+        const { userId, userName, garageId, vehicleDetails, userLocation } = req.body;
 
         if (!userId || !garageId || !vehicleDetails || !userLocation) {
             return res.status(400).json({ success: false, message: 'Missing required order fields.' });
@@ -28,6 +28,7 @@ const createOrder = async (req, res) => {
 
         const newOrder = {
             userId,
+            userName: userName || 'Guest User',
             garageId,
             garageName,
             vehicleDetails,

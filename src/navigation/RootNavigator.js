@@ -28,11 +28,9 @@ const Stack = createNativeStackNavigator();
  * @returns {JSX.Element} Navigation stack based on auth state.
  */
 const RootNavigator = () => {
-    const auth = useAuth();
-    const user = auth?.user;
-    const loading = auth?.loading;
+    const { isInitializing, user } = useAuth();
 
-    if (loading) {
+    if (isInitializing) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white }}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
@@ -60,6 +58,7 @@ const RootNavigator = () => {
                             component={RegisterGarageScreen}
                             options={{ gestureEnabled: false }}
                         />
+                        <Stack.Screen name="LocationPicker" component={LocationPickerScreen} />
                         <Stack.Screen name="Login" component={LoginScreen} />
                     </>
                 ) : (
