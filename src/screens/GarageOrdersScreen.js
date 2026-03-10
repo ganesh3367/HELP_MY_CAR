@@ -1,5 +1,6 @@
+import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
-import { AlertCircle, CheckCircle, Clock, MapPin, Phone, XCircle } from 'lucide-react-native';
+import { AlertCircle, CheckCircle, ChevronRight, Clock, MapPin, Phone, XCircle } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -17,6 +18,7 @@ import { useAppContext } from '../context/AppContext';
 import socket, { connectSocket, joinOrder } from '../services/socket';
 
 const GarageOrdersScreen = () => {
+    const navigation = useNavigation();
     const { myGarage, garageOrders, fetchGarageOrders, updateOrderStatus } = useAppContext();
     const [loading, setLoading] = useState(false);
     const locationSubscription = useRef(null);
@@ -80,15 +82,20 @@ const GarageOrdersScreen = () => {
         }
     };
 
-    const handleStatusUpdate = async (orderId, newStatus) => {
-        const success = await updateOrderStatus(orderId, newStatus);
+    const handleStatusUpdate = async (order, newStatus) => {
+        const success = await updateOrderStatus(order.id || order._id, newStatus);
         if (success) {
             if (newStatus === 'ON_THE_WAY') {
-                startLocationTracking(orderId);
+                startLocationTracking(order.id || order._id);
             } else if (newStatus === 'ARRIVED' || newStatus === 'COMPLETED') {
                 stopLocationTracking();
             }
-            Alert.alert('Success', `Order status updated to ${newStatus}`);
+
+            if (newStatus === 'ACCEPTED') {
+                navigation.navigate('GarageOrderTracking', { order: { ...order, status: newStatus } });
+            } else {
+                Alert.alert('Success', `Order status updated to ${newStatus}`);
+            }
         } else {
             Alert.alert('Error', 'Failed to update status. Please try again.');
         }
@@ -126,21 +133,27 @@ const GarageOrdersScreen = () => {
                         <>
                             <TouchableOpacity
                                 style={[styles.actionButton, styles.rejectButton]}
-                                onPress={() => handleStatusUpdate(item.id, 'REJECTED')}
+                                onPress={() => handleStatusUpdate(item, 'REJECTED')}
                             >
                                 <XCircle size={18} color={COLORS.error} />
                                 <Text style={styles.rejectText}>Reject</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.actionButton, styles.acceptButton]}
-                                onPress={() => handleStatusUpdate(item.id, 'ACCEPTED')}
+                                onPress={() => handleStatusUpdate(item, 'ACCEPTED')}
                             >
                                 <CheckCircle size={18} color={COLORS.white} />
                                 <Text style={styles.acceptText}>Accept</Text>
                             </TouchableOpacity>
                         </>
                     ) : (
-                        renderNextStatusAction(item)
+                        <TouchableOpacity
+                            style={styles.trackingHint}
+                            onPress={() => navigation.navigate('GarageOrderTracking', { order: item })}
+                        >
+                            <Text style={styles.trackingHintText}>Tap to view tracking & details</Text>
+                            <ChevronRight size={16} color={COLORS.primary} />
+                        </TouchableOpacity>
                     )}
                 </View>
 
@@ -379,6 +392,21 @@ const styles = StyleSheet.create({
         color: COLORS.textLight,
         marginTop: 15,
         textAlign: 'center',
+    },
+    trackingHint: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 12,
+        backgroundColor: COLORS.primary + '10',
+        borderRadius: 12,
+    },
+    trackingHintText: {
+        color: COLORS.primary,
+        fontWeight: 'bold',
+        fontSize: 14,
     }
 });
 

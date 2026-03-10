@@ -1,4 +1,4 @@
-import { ArrowLeft, Check } from 'lucide-react-native';
+import { ArrowLeft, Check, Trash2 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
     Alert,
@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../components/Button';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -34,7 +35,8 @@ const SPECIALTIES_LIST = [
 ];
 
 const EditGarageProfileScreen = ({ navigation }) => {
-    const { myGarage, updateGarageProfile } = useAppContext();
+    const { myGarage, updateGarageProfile, deleteGarage } = useAppContext();
+    const { user, updateUser } = useAuth();
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -79,6 +81,31 @@ const EditGarageProfileScreen = ({ navigation }) => {
         } else {
             Alert.alert('Error', 'Failed to update profile. Please try again.');
         }
+    };
+
+    const handleDelete = () => {
+        Alert.alert(
+            'Delete Business Bio',
+            'Are you sure you want to delete your garage profile? This action cannot be undone and your business will no longer be visible to customers.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setLoading(true);
+                        const success = await deleteGarage(myGarage.id);
+                        if (success) {
+                            await updateUser({ ...user, hasGarageProfile: false });
+                            Alert.alert('Deleted', 'Your garage profile has been removed.');
+                        } else {
+                            Alert.alert('Error', 'Could not delete profile. Please try again.');
+                            setLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     return (
@@ -230,6 +257,15 @@ const EditGarageProfileScreen = ({ navigation }) => {
                         style={styles.saveButton}
                     />
 
+                    <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={handleDelete}
+                        disabled={loading}
+                    >
+                        <Trash2 size={20} color={COLORS.error || '#FF3B30'} />
+                        <Text style={styles.deleteText}>Delete Garage Bio</Text>
+                    </TouchableOpacity>
+
                     <View style={{ height: 40 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -364,6 +400,19 @@ const styles = StyleSheet.create({
         color: COLORS.white,
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    deleteButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginTop: 24,
+        padding: 12,
+    },
+    deleteText: {
+        color: COLORS.error || '#FF3B30',
+        fontSize: 15,
+        fontWeight: '600',
     },
 });
 

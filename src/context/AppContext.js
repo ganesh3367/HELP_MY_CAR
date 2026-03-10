@@ -363,6 +363,33 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    const deleteGarage = async (garageId) => {
+        setLoading(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+            const response = await fetch(`${API_URL}/garages/${garageId}`, {
+                method: 'DELETE',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            const data = await response.json();
+            if (data.success) {
+                setMyGarage(null);
+                fetchMechanics();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            console.error('Delete Garage Error:', error.message);
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const submitFeedback = async (feedbackData) => {
         try {
             const response = await fetch(`${API_URL}/feedback`, {
@@ -515,6 +542,7 @@ export const AppProvider = ({ children }) => {
                 updateGarageProfile,
                 toggleGarageStatus,
                 createGarage,
+                deleteGarage,
                 submitFeedback,
                 unreadOrders,
                 clearUnreadOrders: () => setUnreadOrders([])
