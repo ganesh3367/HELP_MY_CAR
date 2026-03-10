@@ -1,14 +1,13 @@
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-    Alert,
     KeyboardAvoidingView,
     Platform,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../components/Button';
@@ -21,17 +20,19 @@ const LoginScreen = ({ navigation }) => {
     const [showPassword, setShowPassword] = useState(false);
     const { login } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const handleLogin = async () => {
+        setError('');
         if (!email || !password) {
-            Alert.alert('Error', 'Please enter email and password');
+            setError('Please enter both email and password');
             return;
         }
         setLoading(true);
         try {
             await login(email, password);
-        } catch (error) {
-            Alert.alert('Login Failed', String(error));
+        } catch (err) {
+            setError(String(err).replace('Error: ', ''));
         } finally {
             setLoading(false);
         }
@@ -52,15 +53,20 @@ const LoginScreen = ({ navigation }) => {
                 </View>
 
                 <View style={styles.form}>
+                    {!!error && (
+                        <View style={styles.errorContainer}>
+                            <Text style={styles.errorText}>{error}</Text>
+                        </View>
+                    )}
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Email Address</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, !!error && email === '' && styles.inputError]}
                             placeholder="Enter your email"
                             autoCapitalize="none"
                             keyboardType="email-address"
                             value={email}
-                            onChangeText={setEmail}
+                            onChangeText={(val) => { setEmail(val); setError(''); }}
                         />
                     </View>
 
@@ -68,11 +74,11 @@ const LoginScreen = ({ navigation }) => {
                         <Text style={styles.label}>Password</Text>
                         <View style={styles.passwordInputWrapper}>
                             <TextInput
-                                style={[styles.input, styles.passwordInput]}
+                                style={[styles.input, styles.passwordInput, !!error && password === '' && styles.inputError]}
                                 placeholder="Enter your password"
                                 secureTextEntry={!showPassword}
                                 value={password}
-                                onChangeText={setPassword}
+                                onChangeText={(val) => { setPassword(val); setError(''); }}
                             />
                             <TouchableOpacity
                                 onPress={() => setShowPassword(!showPassword)}
@@ -205,6 +211,23 @@ const styles = StyleSheet.create({
     },
     signUpLink: {
         textDecorationLine: 'underline',
+    },
+    errorContainer: {
+        backgroundColor: COLORS.error + '10',
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: COLORS.error + '20',
+    },
+    errorText: {
+        color: COLORS.error,
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    inputError: {
+        borderColor: COLORS.error + '50',
     },
 });
 

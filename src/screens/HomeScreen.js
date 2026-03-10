@@ -1,7 +1,8 @@
 import NetInfo from '@react-native-community/netinfo';
-import { BookOpen, Flame, MapPin, Phone, Search, ShieldAlert, Siren, Truck, Wrench, X } from 'lucide-react-native';
+import { BookOpen, ChevronRight, Clock, Flame, MapPin, Phone, Search, ShieldAlert, Siren, Truck, Wrench, X } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
+    Animated,
     Dimensions,
     Linking,
     Modal,
@@ -23,13 +24,22 @@ const { width } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
     const { location } = useLocation();
-    const { mechanics } = useAppContext();
+    const { mechanics, currentOrder } = useAppContext();
     const { user } = useAuth();
     const [mapError, setMapError] = useState(false);
     const [isConnected, setIsConnected] = useState(true);
     const [isSearchVisible, setIsSearchVisible] = useState(false);
     const [isEmergencyModalVisible, setIsEmergencyModalVisible] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const bannerFade = new Animated.Value(0);
+
+    useEffect(() => {
+        if (currentOrder && currentOrder.status !== 'COMPLETED') {
+            Animated.timing(bannerFade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+        } else {
+            Animated.timing(bannerFade, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+        }
+    }, [currentOrder]);
 
     const filteredMechanics = searchQuery.trim()
         ? mechanics.filter(m =>
@@ -167,6 +177,26 @@ const HomeScreen = ({ navigation }) => {
                 )}
 
                 <View style={styles.bottomContent}>
+                    {currentOrder && currentOrder.status !== 'COMPLETED' && (
+                        <Animated.View style={[styles.activeOrderBanner, { opacity: bannerFade, transform: [{ translateY: bannerFade.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
+                            <TouchableOpacity
+                                style={styles.bannerContent}
+                                onPress={() => navigation.navigate('OrderTracking', { order: currentOrder })}
+                            >
+                                <View style={styles.bannerIcon}>
+                                    <Clock size={20} color={COLORS.white} />
+                                </View>
+                                <View style={styles.bannerInfo}>
+                                    <Text style={styles.bannerTitle}>Active Service Request</Text>
+                                    <Text style={styles.bannerStatus}>Status: {currentOrder.status?.replace('_', ' ')}</Text>
+                                </View>
+                                <View style={styles.bannerAction}>
+                                    <Text style={styles.bannerTrackText}>Track</Text>
+                                    <ChevronRight size={16} color={COLORS.primary} />
+                                </View>
+                            </TouchableOpacity>
+                        </Animated.View>
+                    )}
 
 
                     <View style={styles.glassCard}>
@@ -683,6 +713,57 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: 'rgba(255,255,255,0.9)',
         fontWeight: '500',
+    },
+    activeOrderBanner: {
+        backgroundColor: COLORS.white,
+        borderRadius: 20,
+        marginBottom: 15,
+        ...SHADOWS.medium,
+        borderWidth: 1,
+        borderColor: COLORS.primary + '20',
+        overflow: 'hidden',
+    },
+    bannerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        gap: 12,
+    },
+    bannerIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: COLORS.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    bannerInfo: {
+        flex: 1,
+    },
+    bannerTitle: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: COLORS.text,
+    },
+    bannerStatus: {
+        fontSize: 12,
+        color: COLORS.primary,
+        fontWeight: '600',
+        marginTop: 1,
+    },
+    bannerAction: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.primary + '10',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
+        gap: 4,
+    },
+    bannerTrackText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: COLORS.primary,
     },
 });
 
