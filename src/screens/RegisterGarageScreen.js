@@ -248,7 +248,7 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                         </View>
                         <View style={styles.instructionRow}>
                             <View style={styles.stepNum}><Text style={styles.stepNumText}>2</Text></View>
-                            <Text style={styles.instructionText}>Drag the 📌 marker exactly to your repair shop's exact location to ensure perfect mechanic-to-customer routing.</Text>
+                            <Text style={styles.instructionText}>Drag the 📌 marker exactly to your repair shop location to ensure perfect mechanic-to-customer routing.</Text>
                         </View>
                     </View>
 

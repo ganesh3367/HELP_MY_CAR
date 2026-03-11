@@ -98,7 +98,8 @@ const GarageDashboardScreen = ({ navigation }) => {
     const totalRevenue = garageOrders
         .filter(o => o.status === 'COMPLETED')
         .reduce((sum, o) => {
-            const cost = parseInt(o.cost?.replace(/[^0-9]/g, '') || '0');
+            const costStr = String(o.cost || '0').replace(/[^0-9]/g, '');
+            const cost = parseInt(costStr || '0', 10);
             return sum + cost;
         }, 0);
 
@@ -203,17 +204,17 @@ const GarageDashboardScreen = ({ navigation }) => {
                 </View>
 
                 {/* ── Active Job Banner (Premium Redesign) ────────────────────────── */}
-                {activeJobs.length > 0 && (
+                {activeJobs.length > 0 && activeJobs[0] && (
                     <Animated.View style={[
                         styles.activeBanner,
                         { opacity: bannerFade, transform: [{ scale: pulseAnim }] },
-                        activeJobs[0].status === 'PENDING' && styles.pendingBannerGlow
+                        activeJobs[0]?.status === 'PENDING' && styles.pendingBannerGlow
                     ]}>
                         <TouchableOpacity
                             activeOpacity={0.9}
                             style={[
                                 styles.bannerContent,
-                                activeJobs[0].status === 'PENDING' && styles.pendingBannerContent
+                                activeJobs[0]?.status === 'PENDING' && styles.pendingBannerContent
                             ]}
                             onPress={() => navigation.navigate('Orders')}
                         >
@@ -221,7 +222,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                             <View style={styles.bannerMain}>
                                 <View style={[
                                     styles.bannerIconBg,
-                                    activeJobs[0].status === 'PENDING' ? styles.pendingIconBg : styles.activeIconBg
+                                    activeJobs[0]?.status === 'PENDING' ? styles.pendingIconBg : styles.activeIconBg
                                 ]}>
                                     <Clock size={22} color={COLORS.white} />
                                 </View>

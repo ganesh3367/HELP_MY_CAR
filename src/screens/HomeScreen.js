@@ -79,10 +79,10 @@ const HomeScreen = ({ navigation }) => {
                     showsMyLocationButton={false}
                     onError={() => setMapError(true)}
                 >
-                    {filteredMechanics.map((mechanic, index) => (
+                    {filteredMechanics.filter(m => m.lat && m.lng).map((mechanic, index) => (
                         <Marker
                             key={mechanic._id || mechanic.id || index}
-                            coordinate={{ latitude: mechanic.lat, longitude: mechanic.lng }}
+                            coordinate={{ latitude: Number(mechanic.lat), longitude: Number(mechanic.lng) }}
                             title={mechanic.name}
                         >
                             <View style={styles.markerContainer}>
@@ -177,7 +177,7 @@ const HomeScreen = ({ navigation }) => {
                 )}
 
                 <View style={styles.bottomContent}>
-                    {currentOrder && currentOrder.status !== 'COMPLETED' && (
+                    {currentOrder && ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(currentOrder.status) && (
                         <Animated.View style={[styles.activeOrderBanner, { opacity: bannerFade, transform: [{ translateY: bannerFade.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
                             <TouchableOpacity
                                 style={styles.bannerContent}
@@ -188,7 +188,7 @@ const HomeScreen = ({ navigation }) => {
                                 </View>
                                 <View style={styles.bannerInfo}>
                                     <Text style={styles.bannerTitle}>Active Service Request</Text>
-                                    <Text style={styles.bannerStatus}>Status: {currentOrder.status?.replace('_', ' ')}</Text>
+                                    <Text style={styles.bannerStatus}>Status: {currentOrder.status ? currentOrder.status.replace('_', ' ') : 'Processing...'}</Text>
                                 </View>
                                 <View style={styles.bannerAction}>
                                     <Text style={styles.bannerTrackText}>Track</Text>

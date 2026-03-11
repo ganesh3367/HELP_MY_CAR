@@ -14,9 +14,10 @@ import {
 } from 'react-native';
 import MapView, { Circle, Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SHADOWS, SPACING } from '../constants/theme';
+import { COLORS, SPACING } from '../constants/theme';
 import { useAppContext } from '../context/AppContext';
 import { useLocation } from '../context/LocationContext';
+import { API_URL } from '../config';
 
 // Replace this with your own key from console.cloud.google.com
 const GOOGLE_MAPS_API_KEY = 'AIzaSyA3oFvnPMBJWcPLvqSHHvLcMfgbxLNq7oo';
@@ -34,8 +35,6 @@ const haversine = (lat1, lon1, lat2, lon2) => {
 
 const { width, height } = Dimensions.get('window');
 const MAP_HEIGHT = height * 0.52;
-
-import { API_URL } from '../config';
 
 const MechanicMarker = ({ selected }) => (
     <View style={[styles.marker, selected && styles.markerSelected]}>
@@ -215,25 +214,27 @@ const NearbyMechanicsScreen = ({ navigation }) => {
             const json = await res.json();
 
             if (json.status === 'OK' && json.results?.length > 0) {
-                const places = json.results.map(p => {
-                    const pLat = p.geometry.location.lat;
-                    const pLng = p.geometry.location.lng;
-                    return {
-                        id: p.place_id,
-                        _id: p.place_id,
-                        name: p.name,
-                        address: p.vicinity,
-                        location: { lat: pLat, lng: pLng },
-                        rating: p.rating || 4.0,
-                        reviewCount: p.user_ratings_total || 0,
-                        estimatedCost: '₹300 – ₹3000',
-                        specialties: ['General Repair', 'Car Service'],
-                        phone: '',
-                        distance: parseFloat(haversine(lat, lng, pLat, pLng).toFixed(2)),
-                        source: 'google',
-                        openNow: p.opening_hours?.open_now,
-                    };
-                }).sort((a, b) => a.distance - b.distance);
+                const places = json.results
+                    .filter(p => p.geometry?.location?.lat && p.geometry?.location?.lng)
+                    .map(p => {
+                        const pLat = p.geometry.location.lat;
+                        const pLng = p.geometry.location.lng;
+                        return {
+                            id: p.place_id,
+                            _id: p.place_id,
+                            name: p.name,
+                            address: p.vicinity,
+                            location: { lat: pLat, lng: pLng },
+                            rating: p.rating || 4.0,
+                            reviewCount: p.user_ratings_total || 0,
+                            estimatedCost: '₹300 – ₹3000',
+                            specialties: ['General Repair', 'Car Service'],
+                            phone: '',
+                            distance: parseFloat(haversine(lat, lng, pLat, pLng).toFixed(2)),
+                            source: 'google',
+                            openNow: p.opening_hours?.open_now,
+                        };
+                    }).sort((a, b) => a.distance - b.distance);
 
                 setMechanics(places);
                 setLoading(false);
@@ -462,150 +463,116 @@ const NearbyMechanicsScreen = ({ navigation }) => {
     );
 };
 
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
     },
-
-    // ─ Map ────────────────────────────────────────────────────────────────────
+    // Map area
     mapWrapper: {
         height: MAP_HEIGHT,
-        overflow: 'hidden',
+        backgroundColor: '#F5F5F5',
     },
     map: {
-        ...StyleSheet.absoluteFillObject,
+        flex: 1,
     },
     mapLoading: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#EEF2F8',
-        gap: 12,
     },
     mapLoadingText: {
+        marginTop: 8,
         color: COLORS.textLight,
-        fontWeight: '600',
     },
-
-    // ─ Map overlay ────────────────────────────────────────────────────────────
     mapHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        paddingHorizontal: SPACING.md,
-        paddingTop: SPACING.md,
+        alignItems: 'center',
+        paddingHorizontal: SPACING?.md || 16,
+        paddingTop: SPACING?.md || 16,
     },
     headerPill: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.white,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: 20,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        gap: 6,
-        maxWidth: width * 0.55,
-        ...SHADOWS.medium,
+        backgroundColor: 'rgba(255,255,255,0.95)',
     },
     headerPillText: {
-        fontSize: 13,
-        fontWeight: '700',
+        marginLeft: 6,
+        fontSize: 12,
         color: COLORS.text,
     },
     mapActions: {
-        gap: 10,
+        flexDirection: 'row',
+        gap: 8,
     },
     mapBtn: {
-        width: 42,
-        height: 42,
-        borderRadius: 21,
-        backgroundColor: COLORS.white,
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+        backgroundColor: 'rgba(255,255,255,0.95)',
         alignItems: 'center',
         justifyContent: 'center',
-        ...SHADOWS.medium,
     },
-
-    // ─ User dot ───────────────────────────────────────────────────────────────
+    // User + mechanic markers
+    marker: {
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.primary + '40',
+    },
+    markerSelected: {
+        backgroundColor: COLORS.primary,
+    },
     userDotOuter: {
         width: 22,
         height: 22,
         borderRadius: 11,
-        backgroundColor: 'rgba(0, 122, 255, 0.25)',
+        backgroundColor: COLORS.primary + '25',
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: 2.5,
-        borderColor: '#007AFF',
     },
     userDotInner: {
         width: 10,
         height: 10,
         borderRadius: 5,
-        backgroundColor: '#007AFF',
-    },
-
-    // ─ Mechanic marker ────────────────────────────────────────────────────────
-    marker: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
-        backgroundColor: COLORS.white,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: COLORS.primary,
-        ...SHADOWS.medium,
-    },
-    markerSelected: {
         backgroundColor: COLORS.primary,
-        width: 44,
-        height: 44,
-        borderRadius: 22,
     },
-
-    // ─ ETA badge ──────────────────────────────────────────────────────────────
-    etaBadge: {
-        position: 'absolute',
-        bottom: -24,
-        backgroundColor: COLORS.primary,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 8,
-        alignSelf: 'center',
-        ...SHADOWS.small,
-    },
-    etaText: {
-        color: COLORS.white,
-        fontSize: 10,
-        fontWeight: '700',
-    },
-
-    // ─ Sheet ──────────────────────────────────────────────────────────────────
+    // Cards sheet
     sheet: {
         flex: 1,
-        backgroundColor: COLORS.white,
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        paddingTop: 10,
-        ...SHADOWS.large,
+        backgroundColor: COLORS.surface || '#FFFFFF',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingTop: 8,
+        paddingBottom: 24,
     },
     sheetHandle: {
-        width: 44,
+        alignSelf: 'center',
+        width: 40,
         height: 4,
         borderRadius: 2,
-        backgroundColor: '#DDDDE3',
-        alignSelf: 'center',
-        marginBottom: 14,
+        backgroundColor: '#E5E7EB',
+        marginBottom: 8,
     },
     sheetHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: SPACING.lg,
-        marginBottom: 14,
+        paddingHorizontal: 16,
+        marginBottom: 8,
     },
     sheetTitle: {
-        fontSize: 17,
-        fontWeight: '800',
+        fontSize: 16,
+        fontWeight: '700',
         color: COLORS.text,
     },
     changeLocation: {
@@ -613,201 +580,208 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
         fontWeight: '600',
     },
-
-    // ─ Loading / empty ────────────────────────────────────────────────────────
     loadingContainer: {
-        flex: 1,
+        paddingVertical: 24,
         alignItems: 'center',
         justifyContent: 'center',
-        flexDirection: 'row',
-        gap: 12,
-        paddingBottom: 40,
     },
     loadingText: {
+        marginTop: 8,
+        fontSize: 13,
         color: COLORS.textLight,
-        fontWeight: '600',
     },
     emptyContainer: {
-        flex: 1,
+        paddingVertical: 32,
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 10,
-        paddingBottom: 40,
     },
     emptyTitle: {
-        fontSize: 15,
-        color: COLORS.textLight,
+        marginTop: 8,
+        fontSize: 14,
         fontWeight: '600',
+        color: COLORS.text,
+        textAlign: 'center',
     },
     retryBtn: {
-        marginTop: 6,
-        paddingHorizontal: 24,
-        paddingVertical: 10,
-        backgroundColor: COLORS.primary + '15',
-        borderRadius: 20,
+        marginTop: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: COLORS.primary + '30',
+        borderColor: COLORS.primary,
     },
     retryText: {
+        fontSize: 13,
         color: COLORS.primary,
-        fontWeight: '700',
+        fontWeight: '600',
     },
-
-    // ─ Horizontal card list ────────────────────────────────────────────────────
     horizontalList: {
-        paddingHorizontal: SPACING.lg,
-        paddingVertical: 6,
-        gap: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        gap: 12,
     },
+    // Mechanic card
     card: {
-        width: width * 0.86,
-        backgroundColor: COLORS.white,
-        borderRadius: 24,
-        padding: 22,
-        borderWidth: 1,
-        borderColor: '#F2F2F2',
-        ...SHADOWS.medium,
+        width: width * 0.8,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        padding: 16,
+        marginRight: 12,
+        shadowColor: '#000',
+        shadowOpacity: 0.08,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 10,
+        elevation: 3,
     },
     cardSelected: {
+        borderWidth: 1.5,
         borderColor: COLORS.primary,
-        borderWidth: 2,
     },
     cardContent: {
-        gap: 14,
+        gap: 10,
     },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        marginBottom: 6,
     },
     cardName: {
-        fontSize: 19,
-        fontWeight: '700',
+        fontSize: 16,
+        fontWeight: '800',
         color: COLORS.text,
-        letterSpacing: -0.3,
     },
     eliteBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFF9E6',
         paddingHorizontal: 6,
         paddingVertical: 2,
-        borderRadius: 6,
-        gap: 2,
-        borderWidth: 1,
-        borderColor: '#D4AF3740',
+        borderRadius: 10,
+        backgroundColor: '#FFF7E6',
+        marginLeft: 4,
     },
     eliteText: {
         fontSize: 10,
-        fontWeight: '800',
-        color: '#B8860B',
-        textTransform: 'uppercase',
+        fontWeight: '700',
+        color: '#D97706',
+        marginLeft: 3,
     },
     addressRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        marginTop: 4,
+        marginTop: 2,
+        gap: 4,
     },
     cardAddress: {
-        fontSize: 13,
+        fontSize: 12,
         color: COLORS.textLight,
         flex: 1,
-        fontWeight: '500',
     },
     ratingRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 5,
-        backgroundColor: '#FFF9E6',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 10,
+        gap: 4,
     },
     ratingText: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: '700',
-        color: '#A88000',
+        color: COLORS.text,
     },
     trustRow: {
         flexDirection: 'row',
+        alignItems: 'center',
         gap: 8,
+        marginTop: 8,
     },
     experienceTag: {
-        backgroundColor: '#F0F4FF',
-        paddingHorizontal: 10,
+        paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 8,
+        backgroundColor: '#EEF2FF',
     },
     experienceText: {
         fontSize: 11,
-        color: COLORS.primary,
-        fontWeight: '700',
+        fontWeight: '600',
+        color: '#4F46E5',
     },
     specialtyTag: {
-        backgroundColor: '#F7F8FA',
-        paddingHorizontal: 10,
+        paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 8,
+        backgroundColor: '#ECFEFF',
     },
     specialtyText: {
         fontSize: 11,
-        color: COLORS.textLight,
         fontWeight: '600',
+        color: '#0F766E',
     },
     statRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 6,
+        marginTop: 10,
     },
     statItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-    },
-    statText: {
-        fontSize: 14,
-        color: COLORS.text,
-        fontWeight: '600',
+        gap: 4,
     },
     statDot: {
-        width: 5,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: '#E0E0E0',
+        width: 3,
+        height: 3,
+        borderRadius: 2,
+        backgroundColor: '#D1D5DB',
+    },
+    statText: {
+        fontSize: 12,
+        color: COLORS.textLight,
     },
     statusText: {
-        fontSize: 13,
+        fontSize: 11,
         fontWeight: '600',
     },
     actionRow: {
         flexDirection: 'row',
-        gap: 12,
         alignItems: 'center',
-        marginTop: 4,
+        justifyContent: 'space-between',
+        marginTop: 12,
     },
     navBtn: {
-        width: 48,
-        height: 48,
+        width: 40,
+        height: 40,
         borderRadius: 14,
-        backgroundColor: COLORS.primary + '10',
+        borderWidth: 1,
+        borderColor: COLORS.primary + '40',
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: 1.5,
-        borderColor: COLORS.primary + '20',
     },
     bookBtn: {
         flex: 1,
-        backgroundColor: COLORS.primary,
+        marginLeft: 10,
         borderRadius: 14,
-        paddingVertical: 14,
+        backgroundColor: COLORS.primary,
+        paddingVertical: 10,
         alignItems: 'center',
-        ...SHADOWS.small,
+        justifyContent: 'center',
     },
     bookBtnText: {
-        color: COLORS.white,
-        fontSize: 15,
+        color: '#FFFFFF',
+        fontSize: 13,
         fontWeight: '700',
+    },
+    etaBadge: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 10,
+        backgroundColor: COLORS.primary + '15',
+    },
+    etaText: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: COLORS.primary,
     },
 });
 

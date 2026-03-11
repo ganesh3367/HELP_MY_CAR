@@ -89,6 +89,10 @@ export const AppProvider = ({ children }) => {
     const [favorites, setFavorites] = useState([]);
     const [currentOrder, setCurrentOrder] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [userOrders, setUserOrders] = useState([]);
+    const [unreadOrders, setUnreadOrders] = useState([]);
+    const [garageOrders, setGarageOrders] = useState([]);
+    const [myGarage, setMyGarage] = useState(null);
     const userLocationRef = useRef(userLocation);
 
     useEffect(() => {
@@ -98,9 +102,6 @@ export const AppProvider = ({ children }) => {
     useEffect(() => {
         fetchMechanics();
     }, [fetchMechanics]);
-
-    const [userOrders, setUserOrders] = useState([]);
-    const [unreadOrders, setUnreadOrders] = useState([]);
 
     // Persistence: Load on mount
     useEffect(() => {
@@ -233,7 +234,7 @@ export const AppProvider = ({ children }) => {
      * @param {Object} vehicleDetails - Details of the user's vehicle.
      * @returns {Promise<Object>} The created order object.
      */
-    const placeOrder = async (garageId, vehicleDetails, userLocation) => {
+    const placeOrder = async (garageId, vehicleDetails, userLocationOverride = null) => {
         // Enforce single active order constraint
         if (currentOrder && ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(currentOrder.status)) {
             throw new Error('You already have an active order. Please complete or cancel it first.');
@@ -241,7 +242,20 @@ export const AppProvider = ({ children }) => {
 
         setLoading(true);
 
+        const resolvedLocation =
+            userLocationOverride ||
+            (userLocationRef.current?.coords
+                ? {
+                    lat: userLocationRef.current.coords.latitude,
+                    lng: userLocationRef.current.coords.longitude
+                }
+                : {
+                    lat: 18.5204,
+                    lng: 73.8567
+                });
+
         try {
+
             const response = await fetchWithRetry(`${API_URL}/orders`, {
                 method: 'POST',
                 headers: {
@@ -252,7 +266,7 @@ export const AppProvider = ({ children }) => {
                     userName: user?.name || 'Guest User',
                     garageId,
                     vehicleDetails,
-                    userLocation: loc
+                    userLocation: resolvedLocation
                 }),
             });
             const data = await response.json();
@@ -261,7 +275,7 @@ export const AppProvider = ({ children }) => {
                 return data.data;
             }
         } catch (_error) {
-            console.warn('Order API failed, using mock order');
+            console.warn('Order API failed, using mock order:', _error.message);
             // Client-side mock order
             const garage = MOCK_MECHANICS.find(m => m.id === garageId) || MOCK_MECHANICS[0];
             const mockOrder = {
@@ -273,10 +287,10 @@ export const AppProvider = ({ children }) => {
                 mechanic: { name: garage?.name, rating: garage?.rating || 4.8, phone: '+911234567890' },
                 vehicleDetails,
                 mechanicLocation: {
-                    lat: loc.lat + (Math.random() - 0.5) * 0.05,
-                    lng: loc.lng + (Math.random() - 0.5) * 0.05
+                    lat: resolvedLocation.lat + (Math.random() - 0.5) * 0.05,
+                    lng: resolvedLocation.lng + (Math.random() - 0.5) * 0.05
                 },
-                userLocation: loc,
+                userLocation: resolvedLocation,
                 etaMinutes: 12,
             };
 
@@ -364,7 +378,6 @@ export const AppProvider = ({ children }) => {
             }
             return false;
         } catch (error) {
-            clearTimeout(timeoutId);
             console.error('Update Garage Profile Error:', error.message);
             return false;
         } finally {
@@ -397,7 +410,6 @@ export const AppProvider = ({ children }) => {
             }
             return false;
         } catch (error) {
-            clearTimeout(timeoutId);
             console.error('Create Garage Error:', error.message);
             return false;
         } finally {
@@ -419,7 +431,6 @@ export const AppProvider = ({ children }) => {
             }
             return false;
         } catch (error) {
-            clearTimeout(timeoutId);
             console.error('Delete Garage Error:', error.message);
             return false;
         } finally {
@@ -446,9 +457,6 @@ export const AppProvider = ({ children }) => {
             return false;
         }
     };
-
-    const [garageOrders, setGarageOrders] = useState([]);
-    const [myGarage, setMyGarage] = useState(null);
 
     const fetchGarageByOwner = useCallback(async (email) => {
         try {

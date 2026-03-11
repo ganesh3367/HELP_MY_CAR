@@ -210,11 +210,6 @@ const styles = StyleSheet.create({
     sectionHeader: {
         marginBottom: SPACING.md,
     },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: COLORS.text,
-    },
     roleGrid: {
         flexDirection: 'row',
         gap: 12,
@@ -272,12 +267,6 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.md,
         borderWidth: 1,
         borderColor: '#E9ECEF',
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: COLORS.text,
-        marginBottom: SPACING.md,
     },
     specialtiesContainer: {
         flexDirection: 'row',
