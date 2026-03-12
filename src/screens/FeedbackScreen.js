@@ -71,7 +71,7 @@ const FeedbackScreen = ({ navigation }) => {
                     <Text style={styles.label}>Tell us more</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="What can we improve? What do you like about the app?"
+                        placeholder=""
                         placeholderTextColor={COLORS.textLight}
                         multiline
                         numberOfLines={6}

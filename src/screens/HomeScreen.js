@@ -109,7 +109,7 @@ const HomeScreen = ({ navigation }) => {
                                 <Search size={20} color={COLORS.textLight} />
                                 <TextInput
                                     style={styles.searchInput}
-                                    placeholder="Search mechanics, towing..."
+                                    placeholder=""
                                     placeholderTextColor={COLORS.textLight}
                                     value={searchQuery}
                                     onChangeText={setSearchQuery}
@@ -240,12 +240,12 @@ const HomeScreen = ({ navigation }) => {
 
                             <TouchableOpacity
                                 style={[styles.actionCard, { backgroundColor: '#FFFDE6' }]}
-                                onPress={() => navigation.navigate('Main', { screen: 'CostEstimator' })}
+                                onPress={() => navigation.navigate('CarDiagnostic')}
                             >
                                 <View style={[styles.actionIconPill, { backgroundColor: '#B8860B' }]}>
-                                    <Flame size={20} color={COLORS.white} />
+                                    <Wrench size={20} color={COLORS.white} />
                                 </View>
-                                <Text style={styles.actionLabel}>Cost Calc</Text>
+                                <Text style={styles.actionLabel}>Diagnostic</Text>
                             </TouchableOpacity>
 
                         </View>

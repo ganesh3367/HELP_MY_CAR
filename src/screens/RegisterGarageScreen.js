@@ -44,7 +44,6 @@ const RegisterGarageScreen = ({ navigation, route }) => {
         address: '',
         phone: '',
         experience: '',
-        estimatedCost: '',
         rating: '4.5',
     });
 
@@ -94,7 +93,6 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                 address: form.address,
                 phone: form.phone,
                 experience: form.experience || "Not Provided",
-                estimatedCost: form.estimatedCost || "TBD",
                 rating: parseFloat(form.rating) || 5,
                 reviewCount: 1, // Initial count
                 specialties: selectedSpecialties,
@@ -158,7 +156,7 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                         <Text style={styles.label}>Garage Name *</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="e.g. Hadapsar Royal Mechanics"
+                            placeholder=""
                             value={form.name}
                             onChangeText={(text) => setForm({ ...form, name: text })}
                         />
@@ -168,7 +166,7 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                         <Text style={styles.label}>Business Address *</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="Street, Area, City"
+                            placeholder=""
                             value={form.address}
                             onChangeText={(text) => setForm({ ...form, address: text })}
                         />
@@ -179,7 +177,7 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                             <Text style={styles.label}>Phone Number *</Text>
                             <TextInput
                                 style={styles.input}
-                                placeholder="+91 20 2689 9999"
+                                placeholder=""
                                 keyboardType="phone-pad"
                                 value={form.phone}
                                 onChangeText={(text) => setForm({ ...form, phone: text })}
@@ -189,7 +187,7 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                             <Text style={styles.label}>Experience</Text>
                             <TextInput
                                 style={styles.input}
-                                placeholder="e.g. 15 Years"
+                                placeholder=""
                                 value={form.experience}
                                 onChangeText={(text) => setForm({ ...form, experience: text })}
                             />
@@ -197,20 +195,11 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                     </View>
 
                     <View style={styles.row}>
-                        <View style={[styles.inputGroup, { flex: 1, marginRight: SPACING.md }]}>
-                            <Text style={styles.label}>Cost Range</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="₹1000 - ₹7000"
-                                value={form.estimatedCost}
-                                onChangeText={(text) => setForm({ ...form, estimatedCost: text })}
-                            />
-                        </View>
                         <View style={[styles.inputGroup, { flex: 1 }]}>
                             <Text style={styles.label}>Initial Rating</Text>
                             <TextInput
                                 style={styles.input}
-                                placeholder="4.5"
+                                placeholder=""
                                 keyboardType="decimal-pad"
                                 value={form.rating}
                                 onChangeText={(text) => setForm({ ...form, rating: text })}

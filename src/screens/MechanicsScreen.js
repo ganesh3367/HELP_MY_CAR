@@ -28,7 +28,6 @@ const { width } = Dimensions.get('window');
 const SORT_OPTIONS = [
     { key: 'rating', label: '★ Top Rated' },
     { key: 'distance', label: '📍 Nearest' },
-    { key: 'price', label: '💸 Lowest Price' },
     { key: 'name', label: '🔤 A–Z' },
 ];
 
@@ -132,10 +131,6 @@ const MechanicCard = ({ item, dist, index, onBook, onProfile }) => {
                         <MapPin size={14} color={COLORS.textLight} />
                         <Text style={styles.infoText}>{dist < 50 ? `${dist.toFixed(1)} km` : 'Near'}</Text>
                     </View>
-                    <View style={styles.infoDivider} />
-                    <View style={styles.infoItem}>
-                        <Text style={styles.infoPrice}>{item.estimatedCost || '₹300+'}</Text>
-                    </View>
                 </View>
 
                 <View style={styles.cardActions}>
@@ -229,11 +224,6 @@ const MechanicsScreen = () => {
         list.sort((a, b) => {
             if (sortKey === 'rating') return (b.rating || 0) - (a.rating || 0);
             if (sortKey === 'distance') return a._dist - b._dist;
-            if (sortKey === 'price') {
-                const pa = parseInt(String(a.estimatedCost || '9999').replace(/[^\d]/g, '')) || 9999;
-                const pb = parseInt(String(b.estimatedCost || '9999').replace(/[^\d]/g, '')) || 9999;
-                return pa - pb;
-            }
             if (sortKey === 'name') return (a.name || '').localeCompare(b.name || '');
             return 0;
         });
@@ -257,7 +247,7 @@ const MechanicsScreen = () => {
                         <Search size={18} color={COLORS.textLight} />
                         <TextInput
                             style={styles.input}
-                            placeholder="Search by name, specialty, area..."
+                            placeholder=""
                             placeholderTextColor={COLORS.textLight}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
@@ -556,11 +546,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: COLORS.text,
         fontWeight: '600',
-    },
-    infoPrice: {
-        fontSize: 15,
-        color: COLORS.primary,
-        fontWeight: '700',
     },
     infoDivider: {
         width: 1,

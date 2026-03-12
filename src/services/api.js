@@ -17,13 +17,21 @@ export const fetchWithRetry = async (url, options = {}, retries = 3) => {
 
             if (response.ok) return response;
 
-            // Log non-ok responses
-            const errorText = await response.text().catch(() => 'No error body');
-            console.warn(`[API Error] ${url} status ${response.status}: ${errorText}`);
+            // Log non-ok responses without consuming the original body
+            try {
+                const cloned = response.clone();
+                const errorText = await cloned.text().catch(() => 'No error body');
+                console.warn(`[API Error] ${url} status ${response.status}: ${errorText}`);
+            } catch (_e) {
+                console.warn(`[API Error] ${url} status ${response.status} (could not read body)`);
+            }
 
-            // If server error (5xx), retry
-            if (response.status >= 500 && i < retries - 1) {
-                console.log(`[API Retry ${i + 1}] Retrying ${url} due to server error ${response.status}`);
+            // If server error (5xx) or Render sleep HTML page, retry
+            const contentType = response.headers.get('content-type') || '';
+            const isHtml = contentType.includes('text/html');
+
+            if ((response.status >= 500 || (response.status === 404 && isHtml)) && i < retries - 1) {
+                console.log(`[API Retry ${i + 1}] Retrying ${url} due to server error or dormant backend (${response.status})`);
                 await new Promise(r => setTimeout(r, 2000 * (i + 1))); // Increased delay
                 continue;
             }

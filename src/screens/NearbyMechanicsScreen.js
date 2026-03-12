@@ -36,12 +36,6 @@ const haversine = (lat1, lon1, lat2, lon2) => {
 const { width, height } = Dimensions.get('window');
 const MAP_HEIGHT = height * 0.52;
 
-const MechanicMarker = ({ selected }) => (
-    <View style={[styles.marker, selected && styles.markerSelected]}>
-        <Wrench size={16} color={selected ? COLORS.white : COLORS.primary} />
-    </View>
-);
-
 const UserMarker = () => (
     <View style={styles.userDotOuter}>
         <View style={styles.userDotInner} />
@@ -162,15 +156,9 @@ const MechanicCard = ({ item, index, isSelected, onSelect, navigation }) => {
     );
 };
 
-const EtaBadge = ({ minutes }) => (
-    <View style={styles.etaBadge}>
-        <Text style={styles.etaText}>{minutes ? `${minutes} min` : '~5 min'}</Text>
-    </View>
-);
-
 const NearbyMechanicsScreen = ({ navigation }) => {
     const { params } = useRoute();
-    const { location, loading: locationLoading, requestLocation } = useLocation();
+    const { location, loading: locationLoading } = useLocation();
     const { mechanics: contextMechanics } = useAppContext();
     const pickedLocation = params?.pickedLocation;
 

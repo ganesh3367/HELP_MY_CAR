@@ -115,6 +115,46 @@ exports.login = async (req, res) => {
     }
 };
 
+// @desc    Delete user account (and related garage if owner)
+// @route   DELETE /api/users/:email
+// @access  Public (Should be private in production)
+exports.deleteAccount = async (req, res) => {
+    try {
+        const { email } = req.params;
+        if (!email) {
+            return res.status(400).json({ success: false, error: 'Email is required' });
+        }
+
+        if (!db) {
+            // Mock mode: treat as success
+            return res.status(200).json({ success: true, message: 'Account deleted (mock mode)' });
+        }
+
+        // Delete from users or owners collection
+        const userRef = db.collection('users').doc(email);
+        const ownerRef = db.collection('owners').doc(email);
+        const [userDoc, ownerDoc] = await Promise.all([userRef.get(), ownerRef.get()]);
+
+        const batch = db.batch();
+
+        if (userDoc.exists) batch.delete(userRef);
+        if (ownerDoc.exists) batch.delete(ownerRef);
+
+        // If owner, also delete their garages
+        if (ownerDoc.exists) {
+            const garagesSnap = await db.collection('garages').where('ownerEmail', '==', email).get();
+            garagesSnap.forEach((d) => batch.delete(d.ref));
+        }
+
+        await batch.commit();
+
+        return res.status(200).json({ success: true, message: 'Account deleted successfully' });
+    } catch (err) {
+        console.error('Delete Account Error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
 const sendTokenResponse = (user, statusCode, res) => {
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
         expiresIn: '30d'

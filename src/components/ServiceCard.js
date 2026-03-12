@@ -68,9 +68,9 @@ const ServiceCard = ({
                     </View>
 
                     <View style={styles.priceRow}>
-                        <Text style={styles.priceLabel}>{type === 'mechanic' ? 'Est. Service' : 'Rate/km'}</Text>
+                        <Text style={styles.priceLabel}>{type === 'mechanic' ? 'Service' : 'Availability'}</Text>
                         <Text style={styles.priceValue}>
-                            {cost ? (cost.toString().includes('₹') ? cost : `₹${cost}`) : '₹N/A'}
+                            {type === 'mechanic' ? 'On-demand' : '24/7'}
                         </Text>
                     </View>
                 </View>

@@ -1,11 +1,11 @@
-import { ArrowLeft, ChevronRight, History, Info, LogOut, MessageSquare, Phone, Settings, Shield } from 'lucide-react-native';
-import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ArrowLeft, ChevronRight, History, Info, LogOut, MessageSquare, Phone, Settings, Shield, Trash2 } from 'lucide-react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
 const ProfileScreen = ({ navigation }) => {
-    const { logout, user } = useAuth();
+    const { logout, user, deleteAccount } = useAuth();
 
     const MenuItem = ({ icon: Icon, title, subtitle, onPress, color = COLORS.primary, destructive = false }) => (
         <TouchableOpacity style={styles.menuItem} onPress={onPress}>
@@ -73,6 +73,32 @@ const ProfileScreen = ({ navigation }) => {
 
                 <View style={styles.section}>
                     <MenuItem icon={LogOut} title="Sign Out" onPress={logout} destructive />
+                    <MenuItem
+                        icon={Trash2}
+                        title="Delete Account"
+                        subtitle="Permanently remove your account"
+                        destructive
+                        onPress={() => {
+                            Alert.alert(
+                                'Delete Account',
+                                'This will permanently delete your account. This action cannot be undone.',
+                                [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    {
+                                        text: 'Delete',
+                                        style: 'destructive',
+                                        onPress: async () => {
+                                            try {
+                                                await deleteAccount();
+                                            } catch (e) {
+                                                Alert.alert('Error', e.message || 'Could not delete account.');
+                                            }
+                                        }
+                                    }
+                                ]
+                            );
+                        }}
+                    />
                 </View>
             </ScrollView>
         </SafeAreaView>

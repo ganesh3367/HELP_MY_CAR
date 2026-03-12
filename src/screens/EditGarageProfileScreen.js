@@ -44,7 +44,6 @@ const EditGarageProfileScreen = ({ navigation }) => {
         address: myGarage?.address || '',
         phone: myGarage?.phone || '',
         experience: myGarage?.experience || '',
-        estimatedCost: myGarage?.estimatedCost || '',
         rating: myGarage?.rating?.toString() || '4.5',
         specialties: myGarage?.specialties || [],
         location: myGarage?.location || { lat: 18.5204, lng: 73.8567 },
@@ -131,7 +130,7 @@ const EditGarageProfileScreen = ({ navigation }) => {
                                 style={styles.input}
                                 value={formData.name}
                                 onChangeText={(text) => setFormData({ ...formData, name: text })}
-                                placeholder="e.g. Hadapsar Royal Mechanics"
+                                placeholder=""
                             />
                         </View>
 
@@ -141,7 +140,7 @@ const EditGarageProfileScreen = ({ navigation }) => {
                                 style={styles.input}
                                 value={formData.address}
                                 onChangeText={(text) => setFormData({ ...formData, address: text })}
-                                placeholder="Street, Area, City"
+                                placeholder=""
                                 multiline
                             />
                         </View>
@@ -154,7 +153,7 @@ const EditGarageProfileScreen = ({ navigation }) => {
                                     value={formData.phone}
                                     onChangeText={(text) => setFormData({ ...formData, phone: text })}
                                     keyboardType="phone-pad"
-                                    placeholder="+91..."
+                                    placeholder=""
                                 />
                             </View>
                             <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -163,21 +162,12 @@ const EditGarageProfileScreen = ({ navigation }) => {
                                     style={styles.input}
                                     value={formData.experience}
                                     onChangeText={(text) => setFormData({ ...formData, experience: text })}
-                                    placeholder="e.g. 10 Years"
+                                    placeholder=""
                                 />
                             </View>
                         </View>
 
                         <View style={styles.row}>
-                            <View style={[styles.inputGroup, { flex: 1, marginRight: SPACING.md }]}>
-                                <Text style={styles.label}>Cost Range</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    value={formData.estimatedCost}
-                                    onChangeText={(text) => setFormData({ ...formData, estimatedCost: text })}
-                                    placeholder="₹500 - ₹5000"
-                                />
-                            </View>
                             <View style={[styles.inputGroup, { flex: 1 }]}>
                                 <Text style={styles.label}>Display Rating</Text>
                                 <TextInput
@@ -185,7 +175,7 @@ const EditGarageProfileScreen = ({ navigation }) => {
                                     value={formData.rating}
                                     onChangeText={(text) => setFormData({ ...formData, rating: text })}
                                     keyboardType="decimal-pad"
-                                    placeholder="4.5"
+                                    placeholder=""
                                 />
                             </View>
                         </View>

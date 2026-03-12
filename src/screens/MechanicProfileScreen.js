@@ -15,13 +15,13 @@ import { BlurView } from 'expo-blur';
 const { width } = Dimensions.get('window');
 
 const SERVICES = [
-    { id: 'oil', label: '🛢  Oil Change', type: 'General Service', price: '₹799' },
-    { id: 'battery', label: '🔋 Battery Repair', type: 'Electrical', price: '₹499' },
-    { id: 'tyre', label: '🔄 Tyre Change', type: 'Tyre Change', price: '₹299' },
-    { id: 'engine', label: '⚙️  Engine Issue', type: 'Engine Repair', price: '₹1499' },
-    { id: 'brake', label: '🛑 Brake Repair', type: 'Brakes', price: '₹899' },
-    { id: 'ac', label: '❄️  AC Service', type: 'AC Service', price: '₹1299' },
-    { id: 'other', label: '🔧 Other', type: 'General Repair', price: '₹500' },
+    { id: 'oil', label: '🛢  Oil Change', type: 'General Service' },
+    { id: 'battery', label: '🔋 Battery Repair', type: 'Electrical' },
+    { id: 'tyre', label: '🔄 Tyre Change', type: 'Tyre Change' },
+    { id: 'engine', label: '⚙️  Engine Issue', type: 'Engine Repair' },
+    { id: 'brake', label: '🛑 Brake Repair', type: 'Brakes' },
+    { id: 'ac', label: '❄️  AC Service', type: 'AC Service' },
+    { id: 'other', label: '🔧 Other', type: 'General Repair' },
 ];
 
 const MechanicProfileScreen = ({ navigation, route }) => {
@@ -202,10 +202,6 @@ const MechanicProfileScreen = ({ navigation, route }) => {
 
             {/* Premium Sticky Bottom Bar */}
             <View style={styles.bottomBar}>
-                <View style={styles.costInfo}>
-                    <Text style={styles.costLabel}>Base Fee</Text>
-                    <Text style={styles.costValue}>{mechanic.estimatedCost || '₹499'}</Text>
-                </View>
                 <TouchableOpacity
                     style={[styles.bookBtn, bookingLoading && { opacity: 0.6 }]}
                     onPress={handleBookNow}
@@ -260,7 +256,7 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                             <Text style={styles.descLabel}>Additional Details</Text>
                             <TextInput
                                 style={styles.descInput}
-                                placeholder="Describe any specific issues..."
+                                placeholder=""
                                 placeholderTextColor={COLORS.textLight}
                                 value={issueDescription}
                                 onChangeText={setIssueDescription}
@@ -350,11 +346,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#F1F5F9',
         justifyContent: 'space-between', ...SHADOWS.large,
     },
-    costInfo: { flex: 1 },
-    costLabel: { fontSize: 12, fontWeight: '700', color: '#94A3B8', marginBottom: 2 },
-    costValue: { fontSize: 24, fontWeight: '900', color: COLORS.primary },
     bookBtn: {
-        flex: 1.5, backgroundColor: COLORS.primary, height: 60,
+        flex: 1, backgroundColor: COLORS.primary, height: 60,
         borderRadius: 20, flexDirection: 'row', alignItems: 'center',
         justifyContent: 'center', gap: 10, ...SHADOWS.medium,
     },

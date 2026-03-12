@@ -84,7 +84,7 @@ const RatingModal = ({ visible, onClose, onSave, mechanicName }) => {
                     {/* Comment input */}
                     <TextInput
                         style={styles.input}
-                        placeholder="Share more about your experience (optional)"
+                        placeholder=""
                         placeholderTextColor={COLORS.textLight}
                         multiline
                         numberOfLines={3}

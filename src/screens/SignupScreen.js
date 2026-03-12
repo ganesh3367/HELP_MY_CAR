@@ -107,7 +107,7 @@ const SignupScreen = ({ navigation, route }) => {
                         <Text style={styles.label}>Full Name</Text>
                         <TextInput
                             style={[styles.input, !!nameError && styles.inputError]}
-                            placeholder="John Doe"
+                            placeholder=""
                             value={name}
                             onChangeText={(val) => { setName(val); setNameError(''); setGeneralError(''); }}
                         />
@@ -118,7 +118,7 @@ const SignupScreen = ({ navigation, route }) => {
                         <Text style={styles.label}>Email Address</Text>
                         <TextInput
                             style={[styles.input, !!emailError && styles.inputError]}
-                            placeholder="john@example.com"
+                            placeholder=""
                             autoCapitalize="none"
                             keyboardType="email-address"
                             value={email}
@@ -131,7 +131,7 @@ const SignupScreen = ({ navigation, route }) => {
                         <Text style={styles.label}>Password</Text>
                         <TextInput
                             style={[styles.input, !!passwordError && styles.inputError]}
-                            placeholder="Create a password"
+                            placeholder=""
                             secureTextEntry
                             value={password}
                             onChangeText={(val) => { setPassword(val); setPasswordError(''); setGeneralError(''); }}
@@ -143,7 +143,7 @@ const SignupScreen = ({ navigation, route }) => {
                         <Text style={styles.label}>Confirm Password</Text>
                         <TextInput
                             style={[styles.input, !!confirmPasswordError && styles.inputError]}
-                            placeholder="Repeat password"
+                            placeholder=""
                             secureTextEntry
                             value={confirmPassword}
                             onChangeText={(val) => { setConfirmPassword(val); setConfirmPasswordError(''); setGeneralError(''); }}

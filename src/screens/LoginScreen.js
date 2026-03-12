@@ -84,7 +84,7 @@ const LoginScreen = ({ navigation }) => {
                         <Text style={styles.label}>Email Address</Text>
                         <TextInput
                             style={[styles.input, !!emailError && styles.inputError]}
-                            placeholder="Enter your email"
+                            placeholder=""
                             autoCapitalize="none"
                             keyboardType="email-address"
                             value={email}
@@ -98,7 +98,7 @@ const LoginScreen = ({ navigation }) => {
                         <View style={styles.passwordInputWrapper}>
                             <TextInput
                                 style={[styles.input, styles.passwordInput, !!passwordError && styles.inputError]}
-                                placeholder="Enter your password"
+                                placeholder=""
                                 secureTextEntry={!showPassword}
                                 value={password}
                                 onChangeText={(val) => { setPassword(val); setPasswordError(''); setGeneralError(''); }}

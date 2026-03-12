@@ -46,7 +46,14 @@ export const AuthProvider = ({ children }) => {
                 body: JSON.stringify({ email, password }),
             });
 
-            const data = await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            let data;
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const errorText = await response.text();
+                throw new Error(`Server returned non-JSON response (Status: ${response.status}). Backend might be waking up or offline.`);
+            }
 
             if (data.success) {
                 const userData = data.data;
@@ -85,7 +92,14 @@ export const AuthProvider = ({ children }) => {
                 body: JSON.stringify(bodyPayload),
             });
 
-            const data = await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            let data;
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const errorText = await response.text();
+                throw new Error(`Server returned non-JSON response (Status: ${response.status}). Backend might be waking up or offline.`);
+            }
 
             if (data.success) {
                 const userData = data.data;
@@ -127,8 +141,30 @@ export const AuthProvider = ({ children }) => {
         setToken(null);
     };
 
+    const deleteAccount = async () => {
+        if (!user?.email) throw new Error('No user to delete');
+        setLoading(true);
+        try {
+            const response = await fetchWithRetry(`${API_URL}/users/${encodeURIComponent(user.email)}`, {
+                method: 'DELETE',
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) {
+                throw new Error(data.error || data.message || 'Failed to delete account');
+            }
+            await logout();
+            return true;
+        } catch (error) {
+            const message = error.name === 'AbortError' ? 'Server timeout. Please try again.' : error.message;
+            console.error('Delete account error:', message);
+            throw new Error(message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, loading, isInitializing, login, signup, logout, updateUser }}>
+        <AuthContext.Provider value={{ user, token, loading, isInitializing, login, signup, logout, updateUser, deleteAccount }}>
             {children}
         </AuthContext.Provider>
     );
