@@ -5,6 +5,7 @@ import {
     Clock,
     MapPin,
     Phone,
+    User,
     Wrench,
     X,
 } from 'lucide-react-native';
@@ -92,7 +93,7 @@ const MechanicMarker = ({ status }) => {
     }, [status, bounce]);
     return (
         <Animated.View style={[styles.mechanicMarker, { transform: [{ translateY: bounce }] }]}>
-            <Text style={{ fontSize: 24 }}>🔧</Text>
+            <Wrench size={22} color={COLORS.primary} />
         </Animated.View>
     );
 };
@@ -142,7 +143,7 @@ const SearchingRadar = () => {
 const OrderTrackingScreen = () => {
     const navigation = useNavigation();
     const { params } = useRoute();
-    const { trackOrderStatus, cancelOrder } = useAppContext();
+    const { trackOrderStatus, cancelOrder, addReview } = useAppContext();
 
     const [order, setOrder] = useState(params?.order || null);
     const [mechanicCoords, setMechanicCoords] = useState(
@@ -281,12 +282,12 @@ const OrderTrackingScreen = () => {
     }[status] || COLORS.primary;
 
     const statusLabel = {
-        PENDING: '🔍 Finding a mechanic…',
-        ACCEPTED: '✅ Mechanic Assigned!',
-        ON_THE_WAY: '🏍 Mechanic is on the way',
-        ARRIVED: '📍 Mechanic has arrived!',
-        IN_PROGRESS: '🔧 Working on your car',
-        COMPLETED: '✅ Service Complete!',
+        PENDING: 'Finding a mechanic…',
+        ACCEPTED: 'Mechanic Assigned',
+        ON_THE_WAY: 'Mechanic is on the way',
+        ARRIVED: 'Mechanic has arrived',
+        IN_PROGRESS: 'Working on your car',
+        COMPLETED: 'Service Complete',
     }[status] || status;
 
     const initialRegion = hasUserLoc
@@ -339,6 +340,20 @@ const OrderTrackingScreen = () => {
                     </Marker.Animated>
                 )}
 
+                {/* Uber-style route line between user and mechanic once accepted/on the way */}
+                {hasUserLoc && hasMechLoc && ['ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(status) && (
+                    <Polyline
+                        coordinates={[
+                            { latitude: userLat, longitude: userLng },
+                            { latitude: mechLat, longitude: mechLng },
+                        ]}
+                        strokeColor={COLORS.primary}
+                        strokeWidth={5}
+                        lineCap="round"
+                        lineJoin="round"
+                    />
+                )}
+
                 {/* Breadcrumb route trail */}
                 {locationPath.length > 1 && (
                     <Polyline
@@ -377,7 +392,7 @@ const OrderTrackingScreen = () => {
                 {/* Mechanic info row */}
                 <View style={styles.mechanicRow}>
                     <View style={styles.avatarCircle}>
-                        <Text style={{ fontSize: 28 }}>🧑‍🔧</Text>
+                        <User size={26} color={COLORS.primary} />
                     </View>
                     <View style={{ flex: 1, marginLeft: 14 }}>
                         <Text style={styles.mechanicLabel}>Your Mechanic</Text>
@@ -438,15 +453,15 @@ const OrderTrackingScreen = () => {
 
                 {isArrived && !isDone && (
                     <View style={[styles.liveInfoRow, { backgroundColor: '#F0FFF4' }]}>
-                        <Text style={{ fontSize: 20 }}>📍</Text>
-                        <Text style={[styles.liveText, { color: '#1a8a3c' }]}>Mechanic has arrived at your location!</Text>
+                        <MapPin size={18} color="#1a8a3c" />
+                        <Text style={[styles.liveText, { color: '#1a8a3c' }]}>Mechanic has arrived at your location.</Text>
                     </View>
                 )}
 
                 {/* ── Action buttons/Issue ───────────────────────────────── */}
                 {isDone ? (
                     <TouchableOpacity style={styles.rateBtn} onPress={() => setIsRatingVisible(true)}>
-                        <Text style={styles.rateBtnText}>⭐ Rate your experience</Text>
+                        <Text style={styles.rateBtnText}>Rate your experience</Text>
                     </TouchableOpacity>
                 ) : status === 'PENDING' ? (
                     <View style={styles.searchingContainer}>
@@ -476,9 +491,18 @@ const OrderTrackingScreen = () => {
             <RatingModal
                 visible={isRatingVisible}
                 onClose={() => setIsRatingVisible(false)}
-                onSave={(data) => {
-                    Alert.alert('Thank you!', 'Your feedback helps us improve.');
-                    navigation.replace('Main');
+                onSave={async (data) => {
+                    try {
+                        const garageId = order.garageId;
+                        if (garageId) {
+                            await addReview(garageId, data);
+                        }
+                    } catch (e) {
+                        console.warn('Failed to submit review from tracking screen:', e?.message || String(e));
+                    } finally {
+                        Alert.alert('Thank you!', 'Your feedback helps this garage improve.');
+                        navigation.replace('Main');
+                    }
                 }}
                 mechanicName={order.garageName || 'Mechanic'}
             />

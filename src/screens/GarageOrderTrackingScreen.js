@@ -188,6 +188,19 @@ const GarageOrderTrackingScreen = () => {
                 <Marker coordinate={{ latitude: mechLat, longitude: mechLng }} title="You">
                     <View style={styles.garageMarker}><Wrench size={18} color={COLORS.white} /></View>
                 </Marker>
+                {/* Uber-style route line between you and customer once on the way/arrived */}
+                {userLat && userLng && mechLat && mechLng && ['ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(order.status) && (
+                    <Polyline
+                        coordinates={[
+                            { latitude: userLat, longitude: userLng },
+                            { latitude: mechLat, longitude: mechLng }
+                        ]}
+                        strokeColor={COLORS.primary}
+                        strokeWidth={5}
+                        lineCap="round"
+                        lineJoin="round"
+                    />
+                )}
                 {locationPath.length > 1 && (
                     <Polyline coordinates={locationPath} strokeColor={COLORS.primary} strokeWidth={4} lineDashPattern={[5, 2]} />
                 )}

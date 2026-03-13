@@ -1,6 +1,7 @@
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import {
+    ImageBackground,
     KeyboardAvoidingView,
     Platform,
     StyleSheet,
@@ -61,81 +62,89 @@ const LoginScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardView}
+            <ImageBackground
+                source={{ uri: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?q=80&w=2000&auto=format&fit=crop' }}
+                style={styles.background}
             >
-                <View style={styles.header}>
-                    <View style={styles.logoCircle}>
-                        <Text style={styles.logoText}>HMC</Text>
-                    </View>
-                    <Text style={styles.title}>Welcome Back</Text>
-                    <Text style={styles.subtitle}>Sign in to your account</Text>
-                </View>
-
-                <View style={styles.form}>
-                    {!!generalError && (
-                        <View style={styles.errorContainer}>
-                            <Text style={styles.errorText}>{generalError}</Text>
+                <View style={styles.overlay} />
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.keyboardView}
+                >
+                    <View style={styles.header}>
+                        <View style={styles.logoCircle}>
+                            <Text style={styles.logoText}>HMC</Text>
                         </View>
-                    )}
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Email Address</Text>
-                        <TextInput
-                            style={[styles.input, !!emailError && styles.inputError]}
-                            placeholder=""
-                            autoCapitalize="none"
-                            keyboardType="email-address"
-                            value={email}
-                            onChangeText={(val) => { setEmail(val); setEmailError(''); setGeneralError(''); }}
-                        />
-                        {!!emailError && <Text style={styles.inlineErrorText}>{emailError}</Text>}
+                        <Text style={styles.title}>Welcome Back</Text>
+                        <Text style={styles.subtitle}>Sign in to your account</Text>
                     </View>
 
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Password</Text>
-                        <View style={styles.passwordInputWrapper}>
-                            <TextInput
-                                style={[styles.input, styles.passwordInput, !!passwordError && styles.inputError]}
-                                placeholder=""
-                                secureTextEntry={!showPassword}
-                                value={password}
-                                onChangeText={(val) => { setPassword(val); setPasswordError(''); setGeneralError(''); }}
-                            />
-                            <TouchableOpacity
-                                onPress={() => setShowPassword(!showPassword)}
-                                style={styles.eyeIcon}
-                            >
-                                {showPassword ? (
-                                    <EyeOff size={20} color={COLORS.textLight} />
-                                ) : (
-                                    <Eye size={20} color={COLORS.textLight} />
-                                )}
+                    <View style={styles.formCard}>
+                        <View style={styles.form}>
+                            {!!generalError && (
+                                <View style={styles.errorContainer}>
+                                    <Text style={styles.errorText}>{generalError}</Text>
+                                </View>
+                            )}
+
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Email Address</Text>
+                                <TextInput
+                                    style={[styles.input, !!emailError && styles.inputError]}
+                                    placeholder=""
+                                    autoCapitalize="none"
+                                    keyboardType="email-address"
+                                    value={email}
+                                    onChangeText={(val) => { setEmail(val); setEmailError(''); setGeneralError(''); }}
+                                />
+                                {!!emailError && <Text style={styles.inlineErrorText}>{emailError}</Text>}
+                            </View>
+
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Password</Text>
+                                <View style={styles.passwordInputWrapper}>
+                                    <TextInput
+                                        style={[styles.input, styles.passwordInput, !!passwordError && styles.inputError]}
+                                        placeholder=""
+                                        secureTextEntry={!showPassword}
+                                        value={password}
+                                        onChangeText={(val) => { setPassword(val); setPasswordError(''); setGeneralError(''); }}
+                                    />
+                                    <TouchableOpacity
+                                        onPress={() => setShowPassword(!showPassword)}
+                                        style={styles.eyeIcon}
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff size={20} color={COLORS.textLight} />
+                                        ) : (
+                                            <Eye size={20} color={COLORS.textLight} />
+                                        )}
+                                    </TouchableOpacity>
+                                </View>
+                                {!!passwordError && <Text style={styles.inlineErrorText}>{passwordError}</Text>}
+                            </View>
+
+                            <TouchableOpacity style={styles.forgotPassword}>
+                                <Text style={styles.linkText}>Forgot Password?</Text>
                             </TouchableOpacity>
+
+                            <Button
+                                title="Sign In"
+                                onPress={handleLogin}
+                                loading={loading}
+                                style={styles.loginButton}
+                            />
+
+                            <View style={styles.footer}>
+                                <Text style={styles.footerText}>Don{"'"}t have an account? </Text>
+                                <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                                    <Text style={[styles.linkText, styles.signUpLink]}>Sign Up</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                        {!!passwordError && <Text style={styles.inlineErrorText}>{passwordError}</Text>}
                     </View>
-
-                    <TouchableOpacity style={styles.forgotPassword}>
-                        <Text style={styles.linkText}>Forgot Password?</Text>
-                    </TouchableOpacity>
-
-                    <Button
-                        title="Sign In"
-                        onPress={handleLogin}
-                        loading={loading}
-                        style={styles.loginButton}
-                    />
-
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>Don{"'"}t have an account? </Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                            <Text style={[styles.linkText, styles.signUpLink]}>Sign Up</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </KeyboardAvoidingView>
+                </KeyboardAvoidingView>
+            </ImageBackground>
         </SafeAreaView>
     );
 };
@@ -145,14 +154,25 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.white,
     },
+    background: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(255,255,255,0.9)',
+    },
     keyboardView: {
         flex: 1,
-        padding: SPACING.xl,
-        justifyContent: 'center',
+        paddingHorizontal: SPACING.xl,
+        paddingVertical: SPACING.lg,
+        justifyContent: 'space-between',
     },
     header: {
         alignItems: 'center',
-        marginBottom: SPACING.xl * 2,
+        marginTop: SPACING.lg,
+        marginBottom: SPACING.xl,
     },
     logoCircle: {
         width: 80,
@@ -181,6 +201,14 @@ const styles = StyleSheet.create({
     },
     form: {
         width: '100%',
+    },
+    formCard: {
+        width: '100%',
+        backgroundColor: COLORS.white,
+        borderRadius: 24,
+        padding: SPACING.lg,
+        marginBottom: SPACING.xl,
+        ...SHADOWS.medium,
     },
     inputContainer: {
         marginBottom: SPACING.md,

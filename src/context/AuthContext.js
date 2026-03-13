@@ -86,6 +86,7 @@ export const AuthProvider = ({ children }) => {
                 Object.assign(bodyPayload, garageDetails);
             }
 
+            console.log('[Auth] signup request', { url: `${API_URL}/users/signup`, role: bodyPayload.role });
             const response = await fetchWithRetry(`${API_URL}/users/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

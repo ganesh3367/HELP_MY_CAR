@@ -526,7 +526,6 @@ export const AppProvider = ({ children }) => {
         const newReview = {
             id: Date.now(),
             user: user?.name || user?.email?.split('@')[0] || 'You',
-            avatar: '👤',
             rating: reviewData.rating,
             comment: reviewData.comment || '',
             date: 'Just now',

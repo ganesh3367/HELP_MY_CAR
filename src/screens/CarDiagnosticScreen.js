@@ -4,7 +4,7 @@
  * urgency level, estimated cost range, and Book Mechanic CTA
  */
 import { useNavigation } from '@react-navigation/native';
-import { CheckCircle, ChevronRight, RefreshCw } from 'lucide-react-native';
+import { AlertTriangle, CheckCircle, ChevronRight, HelpCircle, RefreshCw } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     ScrollView, StyleSheet, Text, TouchableOpacity, View
@@ -14,22 +14,22 @@ import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 
 // ── Symptom database ──────────────────────────────────────────────────────────
 const SYMPTOMS = [
-    { id: 'no_start', label: "🔑 Car won't start", group: 'General' },
-    { id: 'engine_noise', label: '📢 Knocking/noise from engine', group: 'Engine' },
-    { id: 'overheating', label: '🌡 Engine overheating', group: 'Engine' },
-    { id: 'smoke_white', label: '💨 White smoke from exhaust', group: 'Engine' },
-    { id: 'smoke_black', label: '🖤 Black smoke from exhaust', group: 'Engine' },
-    { id: 'battery_warn', label: '🔋 Battery warning light', group: 'Electrical' },
-    { id: 'check_engine', label: '⚙️ Check Engine light on', group: 'Electrical' },
-    { id: 'ac_not_cool', label: '❄️ AC not cooling', group: 'AC' },
-    { id: 'brake_squeal', label: '🛑 Brakes squeaking/grinding', group: 'Brakes' },
-    { id: 'vibration', label: '🌀 Steering wheel vibrates', group: 'Suspension' },
-    { id: 'tyre_flat', label: '🔄 Flat / punctured tyre', group: 'Tyres' },
-    { id: 'power_loss', label: '📉 Loss of power', group: 'Engine' },
-    { id: 'stall', label: '⛔ Engine stalls/dies', group: 'Engine' },
-    { id: 'rough_idle', label: '🔁 Rough idle / shaking', group: 'Engine' },
-    { id: 'leak_oil', label: '🛢 Oil leak under car', group: 'Engine' },
-    { id: 'leak_coolant', label: '💧 Coolant/water leak', group: 'Engine' },
+    { id: 'no_start', label: "Car won't start", group: 'General' },
+    { id: 'engine_noise', label: 'Knocking / noise from engine', group: 'Engine' },
+    { id: 'overheating', label: 'Engine overheating', group: 'Engine' },
+    { id: 'smoke_white', label: 'White smoke from exhaust', group: 'Engine' },
+    { id: 'smoke_black', label: 'Black smoke from exhaust', group: 'Engine' },
+    { id: 'battery_warn', label: 'Battery warning light', group: 'Electrical' },
+    { id: 'check_engine', label: 'Check Engine light on', group: 'Electrical' },
+    { id: 'ac_not_cool', label: 'AC not cooling', group: 'AC' },
+    { id: 'brake_squeal', label: 'Brakes squeaking / grinding', group: 'Brakes' },
+    { id: 'vibration', label: 'Steering wheel vibrates', group: 'Suspension' },
+    { id: 'tyre_flat', label: 'Flat / punctured tyre', group: 'Tyres' },
+    { id: 'power_loss', label: 'Loss of power', group: 'Engine' },
+    { id: 'stall', label: 'Engine stalls / dies', group: 'Engine' },
+    { id: 'rough_idle', label: 'Rough idle / shaking', group: 'Engine' },
+    { id: 'leak_oil', label: 'Oil leak under car', group: 'Engine' },
+    { id: 'leak_coolant', label: 'Coolant / water leak', group: 'Engine' },
 ];
 
 // ── Diagnosis rules ───────────────────────────────────────────────────────────
@@ -37,7 +37,6 @@ const DIAGNOSES = [
     {
         id: 'battery',
         label: 'Weak or Dead Battery',
-        emoji: '🔋',
         urgency: 'HIGH',
         match: ['no_start', 'battery_warn'],
         desc: 'Battery voltage is likely too low to start the engine. Could also be a faulty alternator.',
@@ -47,7 +46,6 @@ const DIAGNOSES = [
     {
         id: 'overheating',
         label: 'Engine Overheating',
-        emoji: '🌡',
         urgency: 'CRITICAL',
         match: ['overheating', 'smoke_white', 'leak_coolant'],
         desc: 'Coolant loss, a failed thermostat, or radiator blockage can all cause overheating. Stop driving immediately.',
@@ -57,7 +55,6 @@ const DIAGNOSES = [
     {
         id: 'brake_wear',
         label: 'Worn Brake Pads',
-        emoji: '🛑',
         urgency: 'HIGH',
         match: ['brake_squeal', 'vibration'],
         desc: 'Squealing indicates brake pads have reached their wear indicator. Grinding means metal-on-metal.',
@@ -67,7 +64,6 @@ const DIAGNOSES = [
     {
         id: 'engine_tune',
         label: 'Engine Needs Tune-Up',
-        emoji: '⚙️',
         urgency: 'MEDIUM',
         match: ['rough_idle', 'stall', 'check_engine', 'power_loss'],
         desc: 'Faulty spark plugs, dirty air filter, or clogged fuel injectors can cause rough running.',
@@ -77,7 +73,6 @@ const DIAGNOSES = [
     {
         id: 'oil_leak',
         label: 'Engine Oil Leak',
-        emoji: '🛢',
         urgency: 'MEDIUM',
         match: ['leak_oil', 'engine_noise'],
         desc: 'Oil leaks from gaskets, seals, or drain plug indicate loss of lubrication. Long-term can cause engine damage.',
@@ -87,7 +82,6 @@ const DIAGNOSES = [
     {
         id: 'ac_fault',
         label: 'AC System Issue',
-        emoji: '❄️',
         urgency: 'LOW',
         match: ['ac_not_cool'],
         desc: 'Low refrigerant gas or a failed compressor are the most common causes.',
@@ -97,7 +91,6 @@ const DIAGNOSES = [
     {
         id: 'tyre',
         label: 'Tyre Issue',
-        emoji: '🔄',
         urgency: 'HIGH',
         match: ['tyre_flat'],
         desc: 'A flat tyre needs immediate replacement or repair. Continuing to drive damages the rim.',
@@ -107,7 +100,6 @@ const DIAGNOSES = [
     {
         id: 'exhaust',
         label: 'Fuel / Exhaust Issue',
-        emoji: '🖤',
         urgency: 'MEDIUM',
         match: ['smoke_black', 'power_loss'],
         desc: 'Black smoke means the engine is running rich (too much fuel). Could be injectors or air filter.',
@@ -117,10 +109,10 @@ const DIAGNOSES = [
 ];
 
 const URGENCY_CONFIG = {
-    CRITICAL: { color: '#FF3B30', bg: '#FFF0F0', label: '🚨 CRITICAL — Stop driving now!' },
-    HIGH: { color: '#FF9500', bg: '#FFF8E6', label: '⚠️ HIGH — Book a mechanic today' },
-    MEDIUM: { color: '#5856D6', bg: '#F3F2FF', label: '🔵 MEDIUM — Fix within a week' },
-    LOW: { color: '#34C759', bg: '#F0FFF7', label: '✅ LOW — Schedule when convenient' },
+    CRITICAL: { color: '#FF3B30', bg: '#FFF0F0', label: 'CRITICAL — Stop driving now!' },
+    HIGH: { color: '#FF9500', bg: '#FFF8E6', label: 'HIGH — Book a mechanic today' },
+    MEDIUM: { color: '#5856D6', bg: '#F3F2FF', label: 'MEDIUM — Fix within a week' },
+    LOW: { color: '#34C759', bg: '#F0FFF7', label: 'LOW — Schedule when convenient' },
 };
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
@@ -167,7 +159,7 @@ const CarDiagnosticScreen = () => {
             <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Text style={styles.title}>🔍 Car Diagnostic</Text>
+                    <Text style={styles.title}>Car Diagnostic</Text>
                     <Text style={styles.subtitle}>Select symptoms your car is showing</Text>
                 </View>
 
@@ -203,7 +195,7 @@ const CarDiagnosticScreen = () => {
                         disabled={selected.size === 0}
                     >
                         <Text style={styles.diagnoseBtnText}>
-                            🔍 Diagnose ({selected.size} symptom{selected.size !== 1 ? 's' : ''})
+                            Diagnose ({selected.size} symptom{selected.size !== 1 ? 's' : ''})
                         </Text>
                     </TouchableOpacity>
                 )}
@@ -223,7 +215,7 @@ const CarDiagnosticScreen = () => {
 
                         {results.length === 0 && (
                             <View style={styles.noMatchCard}>
-                                <Text style={{ fontSize: 40, textAlign: 'center' }}>🤔</Text>
+                                <HelpCircle size={40} color={COLORS.textLight} />
                                 <Text style={styles.noMatchText}>
                                     Couldn{"'"}t identify the issue from these symptoms. A professional inspection is recommended.
                                 </Text>
@@ -236,7 +228,7 @@ const CarDiagnosticScreen = () => {
                                 <View key={r.id} style={[styles.resultCard, { borderLeftColor: urg.color }]}>
                                     {/* Issue header */}
                                     <View style={styles.resultCardHeader}>
-                                        <Text style={{ fontSize: 32 }}>{r.emoji}</Text>
+                                        <AlertTriangle size={28} color={urg.color} />
                                         <View style={{ flex: 1, marginLeft: 12 }}>
                                             <Text style={styles.issueLabel}>{r.label}</Text>
                                             <View style={[styles.urgBadge, { backgroundColor: urg.bg }]}>

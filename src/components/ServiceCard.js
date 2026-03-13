@@ -1,4 +1,4 @@
-import { MapPin, Navigation2, Phone, ShieldCheck, Star } from 'lucide-react-native';
+import { MapPin, Navigation2, Phone, ShieldCheck, Star, Truck, Wrench } from 'lucide-react-native';
 import { Image, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, SHADOWS } from '../constants/theme';
 
@@ -38,7 +38,11 @@ const ServiceCard = ({
                         <Image source={{ uri: image }} style={styles.image} />
                     ) : (
                         <View style={[styles.imagePlaceholder, { backgroundColor: type === 'mechanic' ? '#EBF5FF' : '#F5EFFF' }]}>
-                            <Text style={{ fontSize: 24 }}>{type === 'mechanic' ? '🔧' : '🚛'}</Text>
+                            {type === 'mechanic' ? (
+                                <Wrench size={26} color={COLORS.primary} />
+                            ) : (
+                                <Truck size={26} color={COLORS.primary} />
+                            )}
                         </View>
                     )}
                     {rating && (

@@ -91,7 +91,7 @@ const RootNavigator = () => {
                         <Stack.Screen
                             name="CarDiagnostic"
                             component={CarDiagnosticScreen}
-                            options={{ headerShown: true, title: '🔍 Car Diagnostic', headerTintColor: COLORS.primary, headerTitleStyle: { fontWeight: 'bold' } }}
+                            options={{ headerShown: true, title: 'Car Diagnostic', headerTintColor: COLORS.primary, headerTitleStyle: { fontWeight: 'bold' } }}
                         />
                     </>
                 )

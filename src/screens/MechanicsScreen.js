@@ -26,9 +26,9 @@ import { useLocation } from '../context/LocationContext';
 const { width } = Dimensions.get('window');
 
 const SORT_OPTIONS = [
-    { key: 'rating', label: '★ Top Rated' },
-    { key: 'distance', label: '📍 Nearest' },
-    { key: 'name', label: '🔤 A–Z' },
+    { key: 'rating', label: 'Top Rated' },
+    { key: 'distance', label: 'Nearest' },
+    { key: 'name', label: 'A–Z' },
 ];
 
 const SPECIALTY_FILTERS = [
@@ -324,7 +324,7 @@ const MechanicsScreen = () => {
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
                         <View style={styles.emptyBox}>
-                            <Text style={{ fontSize: 48, textAlign: 'center' }}>🔍</Text>
+                            <Search size={48} color={COLORS.textLight} />
                             <Text style={styles.emptyTitle}>No mechanics found</Text>
                             <Text style={styles.emptyText}>Try adjusting your filters</Text>
                         </View>

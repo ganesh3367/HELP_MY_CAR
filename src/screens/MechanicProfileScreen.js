@@ -15,13 +15,13 @@ import { BlurView } from 'expo-blur';
 const { width } = Dimensions.get('window');
 
 const SERVICES = [
-    { id: 'oil', label: '🛢  Oil Change', type: 'General Service' },
-    { id: 'battery', label: '🔋 Battery Repair', type: 'Electrical' },
-    { id: 'tyre', label: '🔄 Tyre Change', type: 'Tyre Change' },
-    { id: 'engine', label: '⚙️  Engine Issue', type: 'Engine Repair' },
-    { id: 'brake', label: '🛑 Brake Repair', type: 'Brakes' },
-    { id: 'ac', label: '❄️  AC Service', type: 'AC Service' },
-    { id: 'other', label: '🔧 Other', type: 'General Repair' },
+    { id: 'oil', label: 'Oil Change', type: 'General Service' },
+    { id: 'battery', label: 'Battery Repair', type: 'Electrical' },
+    { id: 'tyre', label: 'Tyre Change', type: 'Tyre Change' },
+    { id: 'engine', label: 'Engine Issue', type: 'Engine Repair' },
+    { id: 'brake', label: 'Brake Repair', type: 'Brakes' },
+    { id: 'ac', label: 'AC Service', type: 'AC Service' },
+    { id: 'other', label: 'Other', type: 'General Repair' },
 ];
 
 const MechanicProfileScreen = ({ navigation, route }) => {
@@ -239,9 +239,8 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                                             style={[styles.serviceOption, isActive && styles.serviceOptionActive]}
                                             onPress={() => setSelectedService(svc)}
                                         >
-                                            <Text style={styles.serviceIcon}>{svc.label.split(' ')[0]}</Text>
                                             <Text style={[styles.serviceText, isActive && { color: COLORS.white }]}>
-                                                {svc.label.split(' ').slice(1).join(' ')}
+                                                {svc.label}
                                             </Text>
                                             {isActive && (
                                                 <View style={styles.checkIcon}>

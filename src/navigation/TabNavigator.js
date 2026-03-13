@@ -117,6 +117,7 @@ const TabNavigator = () => {
             tabBar={(props) => <CustomTabBar {...props} />}
             screenOptions={{
                 headerShown: false,
+                lazy: true,
             }}
         >
             {isGarage ? (

@@ -8,9 +8,16 @@
     "scheme": "helpmycar",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ganeesh.HELP-MY-CAR"
     },
     "android": {
+      "package": "com.ganeesh.HELP_MY_CAR",
+      "permissions": [
+        "INTERNET",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -18,11 +25,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.ganeesh.HELP_MY_CAR",
-      "permissions": [
-        "INTERNET"
-      ]
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
@@ -44,14 +47,14 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     },
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "d4b21d9a-6590-4f83-a930-b2f5642ade98"
+        "projectId": "1046bc50-f5b7-45f1-a26c-c7647204137b"
       }
-    }
+    },
+    "owner": "ganeshgg"
   }
 }

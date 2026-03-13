@@ -8,7 +8,7 @@ import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 
 const { height } = Dimensions.get('window');
 
-const RATING_LABELS = ['', 'Poor 😕', 'Fair 😐', 'Good 🙂', 'Great 😊', 'Excellent 🌟'];
+const RATING_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
 
 const RatingModal = ({ visible, onClose, onSave, mechanicName }) => {
     const [rating, setRating] = useState(0);
@@ -57,8 +57,7 @@ const RatingModal = ({ visible, onClose, onSave, mechanicName }) => {
                         <X size={22} color={COLORS.textLight} />
                     </TouchableOpacity>
 
-                    {/* Emoji + Title */}
-                    <Text style={styles.emoji}>⭐</Text>
+                    {/* Icon + Title */}
                     <Text style={styles.title}>Rate your service</Text>
                     <Text style={styles.subtitle}>How was your experience with</Text>
                     <Text style={styles.mechanicName}>{mechanicName || 'Mechanic'}?</Text>
@@ -100,7 +99,7 @@ const RatingModal = ({ visible, onClose, onSave, mechanicName }) => {
                         disabled={rating === 0}
                     >
                         <Text style={styles.submitText}>
-                            {rating === 0 ? 'Select a rating first' : 'Submit Feedback ✓'}
+                            {rating === 0 ? 'Select a rating first' : 'Submit Feedback'}
                         </Text>
                     </TouchableOpacity>
                 </Animated.View>

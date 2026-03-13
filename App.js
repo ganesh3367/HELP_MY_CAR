@@ -4,6 +4,7 @@
  */
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import OfflineFallback from './src/components/OfflineFallback';
 import { AppProvider } from './src/context/AppContext';
 import { AuthProvider } from './src/context/AuthContext';
@@ -17,16 +18,18 @@ import RootNavigator from './src/navigation/RootNavigator';
  */
 export default function App() {
     return (
-        <AuthProvider>
-            <AppProvider>
-                <LocationProvider>
-                    <NavigationContainer>
-                        <RootNavigator />
-                        <OfflineFallback />
-                        <StatusBar style="auto" />
-                    </NavigationContainer>
-                </LocationProvider>
-            </AppProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+            <AuthProvider>
+                <AppProvider>
+                    <LocationProvider>
+                        <NavigationContainer>
+                            <RootNavigator />
+                            <OfflineFallback />
+                            <StatusBar style="auto" />
+                        </NavigationContainer>
+                    </LocationProvider>
+                </AppProvider>
+            </AuthProvider>
+        </ErrorBoundary>
     );
 }

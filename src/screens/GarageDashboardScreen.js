@@ -37,7 +37,8 @@ const GarageDashboardScreen = ({ navigation }) => {
         fetchGarageOrders,
         toggleGarageStatus,
         unreadOrders,
-        clearUnreadOrders
+        clearUnreadOrders,
+        mechanics,
     } = useAppContext();
     const [refreshing, setRefreshing] = useState(false);
     const [toggling, setToggling] = useState(false);
@@ -109,6 +110,9 @@ const GarageDashboardScreen = ({ navigation }) => {
         { label: 'Revenue', value: `₹${totalRevenue}`, icon: DollarSign, color: '#10B981' },
         { label: 'Active', value: activeJobs.length || '0', icon: Clock, color: '#6366F1' },
     ];
+
+    const linkedGarage = mechanics.find(m => m.id === myGarage?.id || m._id === myGarage?.id);
+    const recentReviews = linkedGarage?.reviews || [];
 
     const quickActions = [
         { title: 'Orders', icon: LayoutDashboard, color: '#3B82F6', route: 'Orders' },
@@ -202,6 +206,41 @@ const GarageDashboardScreen = ({ navigation }) => {
                         </View>
                     ))}
                 </View>
+
+                {/* ── Recent Feedback ─────────────────────────────────────────── */}
+                {recentReviews.length > 0 && (
+                    <>
+                        <Text style={styles.sectionTitle}>Recent Feedback</Text>
+                        <View style={styles.reviewCard}>
+                            {recentReviews.slice(0, 3).map((r) => (
+                                <View key={r.id} style={styles.reviewRow}>
+                                    <View style={styles.reviewAvatar}>
+                                        <Text style={styles.reviewAvatarText}>
+                                            {(r.user || 'U').charAt(0).toUpperCase()}
+                                        </Text>
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <View style={styles.reviewHeaderRow}>
+                                            <Text style={styles.reviewUser} numberOfLines={1}>{r.user}</Text>
+                                            <View style={styles.reviewStarsRow}>
+                                                <Star size={12} color="#F59E0B" fill="#F59E0B" />
+                                                <Text style={styles.reviewRatingText}>
+                                                    {typeof r.rating === 'number' ? r.rating.toFixed(1) : r.rating}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        {r.comment ? (
+                                            <Text style={styles.reviewComment} numberOfLines={2}>
+                                                {r.comment}
+                                            </Text>
+                                        ) : null}
+                                        <Text style={styles.reviewDate}>{r.date || 'Just now'}</Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </>
+                )}
 
                 {/* ── Active Job Banner (Premium Redesign) ────────────────────────── */}
                 {activeJobs.length > 0 && activeJobs[0] && (

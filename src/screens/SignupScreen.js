@@ -64,8 +64,10 @@ const SignupScreen = ({ navigation, route }) => {
 
         setLoading(true);
         try {
+            console.log('[Signup] Attempt', { email, role });
             await signup(name, email, password, role);
         } catch (error) {
+            console.error('[Signup] Failed', error?.message || String(error));
             const msg = String(error).replace('Error: ', '');
             if (msg.toLowerCase().includes('email')) {
                 setEmailError(msg);
