@@ -1,6 +1,91 @@
-const { db } = require('../config/firebase');
+const { db, auth } = require('../config/firebase');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+
+// @desc    Google login
+// @route   POST /api/users/google-login
+// @access  Public
+exports.googleLogin = async (req, res) => {
+    try {
+        const { idToken, role } = req.body;
+
+        if (!idToken) {
+            return res.status(400).json({ success: false, error: 'idToken is required' });
+        }
+
+        if (!db || !auth) {
+            console.log('Firebase not fully initialized. Using MOCK MODE for Google login.');
+            // For mock mode, we assume the idToken is just an email or a mock string
+            const email = idToken.includes('@') ? idToken : 'mock@example.com';
+            const userData = {
+                id: email,
+                name: email.split('@')[0],
+                email: email,
+                role: (role || 'user').toLowerCase().trim() === 'garage' ? 'garage' : 'user',
+                provider: 'google'
+            };
+            return sendTokenResponse(userData, 200, res);
+        }
+
+        // Verify Google idToken
+        const decodedToken = await auth.verifyIdToken(idToken);
+        const { email, name, picture } = decodedToken;
+
+        // Check users collection
+        let userRef = db.collection('users').doc(email);
+        let doc = await userRef.get();
+
+        // If not in users, check owners
+        if (!doc.exists) {
+            userRef = db.collection('owners').doc(email);
+            doc = await userRef.get();
+        }
+
+        let userData;
+
+        if (!doc.exists) {
+            // New user - create account
+            const normalizedRole = (role || 'user').toString().toLowerCase().trim();
+            const userRole = normalizedRole === 'garage' ? 'garage' : 'user';
+            const collectionName = userRole === 'garage' ? 'owners' : 'users';
+
+            userRef = db.collection(collectionName).doc(email);
+            userData = {
+                name: name || email.split('@')[0],
+                email,
+                role: userRole,
+                provider: 'google',
+                avatar: picture,
+                createdAt: new Date().toISOString()
+            };
+
+            await userRef.set(userData);
+            userData.id = email;
+        } else {
+            // Existing user
+            const existingUser = doc.data();
+            userData = {
+                id: email,
+                name: existingUser.name,
+                email: existingUser.email,
+                role: existingUser.role,
+                avatar: existingUser.avatar || picture
+            };
+
+            // Check if garage profile exists if the user is an owner
+            if (userData.role === 'garage') {
+                const garageSnapshot = await db.collection('garages').where('ownerEmail', '==', email).limit(1).get();
+                userData.hasGarageProfile = !garageSnapshot.empty;
+            }
+        }
+
+        sendTokenResponse(userData, 200, res);
+    } catch (err) {
+        console.error('Google Login Error:', err);
+        res.status(400).json({ success: false, error: err.message });
+    }
+};
+
 
 // @desc    Register user
 // @route   POST /api/users/signup

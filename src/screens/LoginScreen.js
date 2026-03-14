@@ -1,6 +1,9 @@
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import { Eye, EyeOff } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+    Image,
     ImageBackground,
     KeyboardAvoidingView,
     Platform,
@@ -12,19 +15,56 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../components/Button';
+import { GOOGLE_CONFIG } from '../config';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
+WebBrowser.maybeCompleteAuthSession();
+
 const LoginScreen = ({ navigation }) => {
-    const { login } = useAuth();
+    const { login, googleLogin } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
 
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [generalError, setGeneralError] = useState('');
+
+    const [request, response, promptAsync] = Google.useAuthRequest({
+        webClientId: GOOGLE_CONFIG.webClientId,
+        iosClientId: GOOGLE_CONFIG.iosClientId?.includes('YOUR_') ? GOOGLE_CONFIG.webClientId : GOOGLE_CONFIG.iosClientId,
+        androidClientId: GOOGLE_CONFIG.androidClientId?.includes('YOUR_') ? GOOGLE_CONFIG.webClientId : GOOGLE_CONFIG.androidClientId,
+    });
+
+    useEffect(() => {
+        if (response?.type === 'success') {
+            // Expo auth session usually puts the token here
+            const idToken = response.authentication?.idToken || response.params?.id_token;
+            if (idToken) {
+                handleGoogleLogin(idToken);
+            } else {
+                setGeneralError('Could not retrieve identity token from Google. Please try again.');
+            }
+        } else if (response?.type === 'error') {
+            setGeneralError('Google login failed or was cancelled.');
+        }
+    }, [response]);
+
+    const handleGoogleLogin = async (idToken) => {
+        setGoogleLoading(true);
+        setGeneralError('');
+        try {
+            await googleLogin(idToken);
+        } catch (err) {
+            setGeneralError(err.message || 'Google login failed');
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
+
 
     const handleLogin = async () => {
         setEmailError('');
@@ -134,6 +174,26 @@ const LoginScreen = ({ navigation }) => {
                                 loading={loading}
                                 style={styles.loginButton}
                             />
+
+                            <View style={styles.divider}>
+                                <View style={styles.dividerLine} />
+                                <Text style={styles.dividerText}>OR</Text>
+                                <View style={styles.dividerLine} />
+                            </View>
+
+                            <TouchableOpacity
+                                style={styles.googleButton}
+                                onPress={() => promptAsync()}
+                                disabled={!request || googleLoading}
+                            >
+                                <Image
+                                    source={{ uri: 'https://authjs.dev/img/providers/google.svg' }}
+                                    style={styles.googleIcon}
+                                />
+                                <Text style={styles.googleButtonText}>
+                                    {googleLoading ? 'Connecting...' : 'Continue with Google'}
+                                </Text>
+                            </TouchableOpacity>
 
                             <View style={styles.footer}>
                                 <Text style={styles.footerText}>Don{"'"}t have an account? </Text>
@@ -288,6 +348,43 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginTop: 6,
         marginLeft: 4,
+    },
+    divider: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: SPACING.lg,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#EEEEEE',
+    },
+    dividerText: {
+        marginHorizontal: SPACING.md,
+        color: COLORS.textLight,
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    googleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: COLORS.white,
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#EEEEEE',
+        ...SHADOWS.small,
+    },
+    googleIcon: {
+        width: 20,
+        height: 20,
+        marginRight: 12,
+    },
+    googleButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: COLORS.text,
     },
 });
 

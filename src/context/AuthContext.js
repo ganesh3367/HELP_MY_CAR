@@ -164,8 +164,41 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Authenticates with Google.
+     */
+    const googleLogin = async (idToken, role = 'user') => {
+        setLoading(true);
+        try {
+            const response = await fetchWithRetry(`${API_URL}/users/google-login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken, role }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const userData = data.data;
+                const userToken = data.token;
+                await AsyncStorage.setItem('user', JSON.stringify(userData));
+                await AsyncStorage.setItem('token', userToken);
+                setUser(userData);
+                setToken(userToken);
+                return userData;
+            } else {
+                throw new Error(data.error || 'Google login failed');
+            }
+        } catch (error) {
+            console.error('Google login error:', error.message);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, loading, isInitializing, login, signup, logout, updateUser, deleteAccount }}>
+        <AuthContext.Provider value={{ user, token, loading, isInitializing, login, signup, googleLogin, logout, updateUser, deleteAccount }}>
             {children}
         </AuthContext.Provider>
     );

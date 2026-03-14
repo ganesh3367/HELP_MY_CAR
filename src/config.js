@@ -33,6 +33,23 @@ export const getApiUrl = () => {
 
 export const API_URL = getApiUrl();
 
+// Google Auth Configuration
+// These should be replaced with real Client IDs from Google Cloud Console
+export const GOOGLE_CONFIG = {
+    webClientId: '150268904855-87c4934d560e4edc1df0d2.apps.googleusercontent.com', // Derived from appId or manually provided
+    iosClientId: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
+    androidClientId: 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com',
+    firebase: {
+        apiKey: "AIzaSyCIfmlZh8244pZi7rPI2MZsSp30KvtgSVY",
+        authDomain: "helpmycar-7362b.firebaseapp.com",
+        projectId: "helpmycar-7362b",
+        storageBucket: "helpmycar-7362b.firebasestorage.app",
+        messagingSenderId: "150268904855",
+        appId: "1:150268904855:web:87c4934d560e4edc1df0d2",
+        measurementId: "G-4W8YXDZBNT"
+    }
+};
+
 console.log('[Config] Initialized API_URL:', API_URL);
 
 if (API_URL.includes('127.0.0.1') && Platform.OS === 'android') {
