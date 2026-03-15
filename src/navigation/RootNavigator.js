@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import CarDiagnosticScreen from '../screens/CarDiagnosticScreen';
 import EditGarageProfileScreen from '../screens/EditGarageProfileScreen';
 import FeedbackScreen from '../screens/FeedbackScreen';
+import GarageDashboardScreen from '../screens/GarageDashboardScreen';
 import GarageOrderTrackingScreen from '../screens/GarageOrderTrackingScreen';
 import LocationPickerScreen from '../screens/LocationPickerScreen';
 import LoginScreen from '../screens/LoginScreen';
@@ -79,6 +80,7 @@ const RootNavigator = () => {
                         <Stack.Screen name="PrivacySafety" component={PrivacySafetyScreen} />
                         <Stack.Screen name="Feedback" component={FeedbackScreen} />
                         <Stack.Screen name="EditGarageProfile" component={EditGarageProfileScreen} />
+                        <Stack.Screen name="GarageDashboard" component={GarageDashboardScreen} />
                         <Stack.Screen name="GarageOrderTracking" component={GarageOrderTrackingScreen} />
                         <Stack.Screen name="Profile" component={ProfileScreen} />
                         <Stack.Screen

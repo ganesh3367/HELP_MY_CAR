@@ -150,10 +150,20 @@ exports.login = async (req, res) => {
 
         if (!db) {
             console.log('Firebase not initialized. Using MOCK MODE for login.');
+            
+            // In mock mode, assume they want a garage profile unless 'user' is in their email
+            const isUserOnly = email.toLowerCase().includes('user');
+
             return res.status(200).json({
                 success: true,
                 token: 'mock-token-' + Date.now(),
-                data: { id: 'mock-user-id', name: email.split('@')[0], email }
+                data: { 
+                    id: email, 
+                    name: email.split('@')[0], 
+                    email,
+                    role: isUserOnly ? 'user' : 'garage',
+                    hasGarageProfile: !isUserOnly
+                }
             });
         }
 

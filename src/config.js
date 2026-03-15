@@ -21,7 +21,7 @@ export const getApiUrl = () => {
 
     // 3. Construct the final URL
     // Toggle this manually (true for Render, false for local dev)
-    const isProd = true;
+    const isProd = false;
 
     if (isProd) {
         return 'https://help-my-car.onrender.com/api';

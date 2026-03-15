@@ -12,7 +12,7 @@ const haversine = (lat1, lon1, lat2, lon2) => {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const MOCK_GARAGES = [
+let MOCK_GARAGES = [
     {
         id: 'mock-1',
         name: 'Pune Auto Care',
@@ -84,6 +84,38 @@ const getNearbyGarages = async (req, res) => {
         });
     } catch (error) {
         console.error('Fetch Garages Error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Get all garages (without distance filter)
+// @route   GET /api/garages/all
+// @access  Public
+const getAllGarages = async (req, res) => {
+    try {
+        let garages = [];
+
+        if (!db) {
+            garages = MOCK_GARAGES;
+        } else {
+            const snapshot = await db.collection('garages').get();
+            garages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // Normalize locations
+            garages = garages.map(g => ({
+                ...g,
+                lat: g.location?.lat || g.lat || 18.5204,
+                lng: g.location?.lng || g.lng || 73.8567
+            }));
+        }
+
+        res.status(200).json({
+            success: true,
+            count: garages.length,
+            data: garages
+        });
+    } catch (error) {
+        console.error('Fetch All Garages Error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -196,9 +228,10 @@ const getGarageByOwner = async (req, res) => {
         const { email } = req.params;
 
         if (!db) {
+            const mockGarage = MOCK_GARAGES.find(g => g.ownerEmail === email) || MOCK_GARAGES[0];
             return res.status(200).json({
                 success: true,
-                data: MOCK_GARAGES[0]
+                data: mockGarage
             });
         }
 
@@ -275,9 +308,12 @@ const createGarage = async (req, res) => {
         }
 
         if (!db) {
+            const newMockGarage = { id: 'mock-id-' + Date.now(), ...req.body };
+            // Save to mock database so it appears in search and map
+            MOCK_GARAGES.push(newMockGarage);
             return res.status(201).json({
                 success: true,
-                data: { id: 'mock-id-' + Date.now(), ...req.body }
+                data: newMockGarage
             });
         }
 
@@ -313,6 +349,7 @@ const createGarage = async (req, res) => {
 
 module.exports = {
     getNearbyGarages,
+    getAllGarages,
     seedGarages,
     getGarageByOwner,
     createGarage,

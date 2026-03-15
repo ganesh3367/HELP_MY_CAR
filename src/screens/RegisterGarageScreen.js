@@ -163,7 +163,7 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Business Address *</Text>
+                        <Text style={styles.label}>Option 1: Write Address Manually *</Text>
                         <TextInput
                             style={styles.input}
                             placeholder=""
@@ -227,7 +227,7 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                     </View>
 
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Garage Location *</Text>
+                        <Text style={styles.sectionTitle}>Option 2: Garage Map Location *</Text>
                     </View>
 
                     <View style={styles.instructionBanner}>

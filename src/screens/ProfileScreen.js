@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, History, Info, LogOut, MessageSquare, Phone, Settings, Shield, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, ChevronRight, History, Info, LogOut, MessageSquare, Phone, Settings, Shield, Trash2, Wrench } from 'lucide-react-native';
 import { Alert, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
@@ -70,6 +70,18 @@ const ProfileScreen = ({ navigation }) => {
                     />
                     <MenuItem icon={Info} title="App Info" subtitle="Version 1.2.0" />
                 </View>
+
+                {user?.hasGarageProfile && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Garage Management</Text>
+                        <MenuItem
+                            icon={Wrench}
+                            title="My Garage Dashboard"
+                            subtitle="Manage your profile & orders"
+                            onPress={() => navigation.navigate('GarageDashboard')}
+                        />
+                    </View>
+                )}
 
                 <View style={styles.section}>
                     <MenuItem icon={LogOut} title="Sign Out" onPress={logout} destructive />

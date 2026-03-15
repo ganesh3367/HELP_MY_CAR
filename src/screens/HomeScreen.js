@@ -24,7 +24,7 @@ const { width } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
     const { location } = useLocation();
-    const { mechanics, currentOrder } = useAppContext();
+    const { mechanics, allGarages, currentOrder } = useAppContext();
     const { user } = useAuth();
     const [mapError, setMapError] = useState(false);
     const [isConnected, setIsConnected] = useState(true);
@@ -41,13 +41,16 @@ const HomeScreen = ({ navigation }) => {
         }
     }, [currentOrder]);
 
-    const filteredMechanics = searchQuery.trim()
-        ? mechanics.filter(m =>
+    const searchResults = searchQuery.trim() && allGarages
+        ? allGarages.filter(m =>
             m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             m.specialties?.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) ||
             m.address?.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        : mechanics;
+        ).slice(0, 5) // limit to 5 results for dropdown
+        : [];
+    
+    // Mechanics displayed on the map
+    const filteredMechanics = mechanics;
 
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener(state => {
@@ -105,19 +108,50 @@ const HomeScreen = ({ navigation }) => {
                 <View style={styles.glassHeader}>
                     <View style={styles.topBar}>
                         {isSearchVisible ? (
-                            <View style={styles.searchContainer}>
-                                <Search size={20} color={COLORS.textLight} />
-                                <TextInput
-                                    style={styles.searchInput}
-                                    placeholder=""
-                                    placeholderTextColor={COLORS.textLight}
-                                    value={searchQuery}
-                                    onChangeText={setSearchQuery}
-                                    autoFocus
-                                />
-                                <TouchableOpacity onPress={() => { setIsSearchVisible(false); setSearchQuery(''); }}>
-                                    <X size={20} color={COLORS.textLight} />
-                                </TouchableOpacity>
+                            <View style={styles.searchContainerWrapper}>
+                                <View style={styles.searchContainer}>
+                                    <Search size={20} color={COLORS.textLight} />
+                                    <TextInput
+                                        style={styles.searchInput}
+                                        placeholder="Search any garage..."
+                                        placeholderTextColor={COLORS.textLight}
+                                        value={searchQuery}
+                                        onChangeText={setSearchQuery}
+                                        autoFocus
+                                    />
+                                    <TouchableOpacity onPress={() => { setIsSearchVisible(false); setSearchQuery(''); }}>
+                                        <X size={20} color={COLORS.textLight} />
+                                    </TouchableOpacity>
+                                </View>
+                                {searchQuery.trim().length > 0 && (
+                                    <View style={styles.searchResultsDropdown}>
+                                        {searchResults.length > 0 ? (
+                                            searchResults.map((result) => (
+                                                <TouchableOpacity
+                                                    key={result.id || result._id}
+                                                    style={styles.searchResultItem}
+                                                    onPress={() => {
+                                                        setIsSearchVisible(false);
+                                                        setSearchQuery('');
+                                                        navigation.navigate('MechanicProfile', { mechanic: result });
+                                                    }}
+                                                >
+                                                    <View style={styles.searchResultIcon}>
+                                                        <MapPin size={16} color={COLORS.primary} />
+                                                    </View>
+                                                    <View style={styles.searchResultInfo}>
+                                                        <Text style={styles.searchResultName} numberOfLines={1}>{result.name}</Text>
+                                                        <Text style={styles.searchResultAddress} numberOfLines={1}>{result.address}</Text>
+                                                    </View>
+                                                </TouchableOpacity>
+                                            ))
+                                        ) : (
+                                            <View style={styles.searchResultEmpty}>
+                                                <Text style={styles.searchResultEmptyText}>No garages found</Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                )}
                             </View>
                         ) : (
                             <>
@@ -140,7 +174,7 @@ const HomeScreen = ({ navigation }) => {
                                     onPress={() => navigation.navigate('Profile')}
                                 >
                                     <View style={styles.avatarLarge}>
-                                        <Text style={styles.avatarText}>{(user?.name || 'G').charAt(0)}</Text>
+                                        <Text style={styles.avatarText}>{(user?.name || 'G').charAt(0).toUpperCase()}</Text>
                                     </View>
                                 </TouchableOpacity>
                             </>
@@ -431,15 +465,18 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: COLORS.text,
     },
-    searchContainer: {
+    searchContainerWrapper: {
         flex: 1,
+        marginHorizontal: 5,
+        zIndex: 50,
+    },
+    searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         height: 50,
         borderRadius: 25,
         paddingHorizontal: 15,
-        marginHorizontal: 5,
         ...SHADOWS.medium,
         borderWidth: 1,
         borderColor: 'rgba(0,0,0,0.05)',
@@ -450,6 +487,55 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         marginLeft: 10,
         fontWeight: '600',
+    },
+    searchResultsDropdown: {
+        position: 'absolute',
+        top: 55,
+        left: 0,
+        right: 0,
+        backgroundColor: COLORS.white,
+        borderRadius: 16,
+        padding: 5,
+        ...SHADOWS.large,
+        borderWidth: 1,
+        borderColor: '#EFEFEF',
+        maxHeight: 250,
+    },
+    searchResultItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 12,
+    },
+    searchResultIcon: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: COLORS.primary + '15',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 10,
+    },
+    searchResultInfo: {
+        flex: 1,
+    },
+    searchResultName: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: COLORS.text,
+    },
+    searchResultAddress: {
+        fontSize: 12,
+        color: COLORS.textLight,
+        marginTop: 2,
+    },
+    searchResultEmpty: {
+        padding: 15,
+        alignItems: 'center',
+    },
+    searchResultEmptyText: {
+        color: COLORS.textLight,
+        fontSize: 14,
     },
     glassButton: {
         width: 45,

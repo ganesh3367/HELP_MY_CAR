@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     headerContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: SPACING.lg,
+        marginBottom: SPACING.md, // reduced from lg
     },
     iconCircle: {
         width: 56,
@@ -142,6 +142,7 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
         borderWidth: 1,
         borderColor: '#BBF7D0',
+        marginTop: SPACING.sm, // Added top margin for better alignment
     },
     liveDot: {
         width: 8,
@@ -162,6 +163,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: COLORS.textLight,
         marginBottom: SPACING.md,
+        marginTop: SPACING.sm, // added spacing above the list
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },

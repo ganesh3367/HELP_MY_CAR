@@ -81,10 +81,11 @@ const MOCK_MECHANICS = [
 ];
 
 export const AppProvider = ({ children }) => {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const locationContext = useLocation();
     const userLocation = locationContext?.location;
     const [mechanics, setMechanics] = useState([]);
+    const [allGarages, setAllGarages] = useState([]); // Added for global search
     const [towingServices, setTowingServices] = useState(TOWING_SERVICES);
     const [favorites, setFavorites] = useState([]);
     const [currentOrder, setCurrentOrder] = useState(null);
@@ -101,6 +102,7 @@ export const AppProvider = ({ children }) => {
 
     useEffect(() => {
         fetchMechanics();
+        fetchAllGarages();
     }, [fetchMechanics]);
 
     // Persistence: Load on mount
@@ -225,6 +227,28 @@ export const AppProvider = ({ children }) => {
             console.warn(`[fetchMechanics] All retries failed for ${API_URL}/garages/nearby:`, error.message);
             setMechanics(MOCK_MECHANICS);
             setTowingServices(TOWING_SERVICES); // Fallback to basic mock
+        }
+    }, []);
+
+    const fetchAllGarages = useCallback(async () => {
+        try {
+            const response = await fetchWithRetry(`${API_URL}/garages/all`);
+            if (!response.ok) {
+                throw new Error(`HTTP Error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            if (data.success) {
+                // Normalize data
+                const normalized = data.data.map(m => ({
+                    ...m,
+                    lat: m.location?.lat || m.location?.coordinates?.[1] || m.lat,
+                    lng: m.location?.lng || m.location?.coordinates?.[0] || m.lng
+                }));
+                setAllGarages(normalized);
+            }
+        } catch (error) {
+            console.warn(`[fetchAllGarages] Failed:`, error.message);
+            setAllGarages(MOCK_MECHANICS); // Fallback
         }
     }, []);
 
@@ -401,8 +425,8 @@ export const AppProvider = ({ children }) => {
             if (data.success) {
                 setMyGarage(data.data);
                 // Mark profile as complete in the user object to open the gate
-                if (user) {
-                    user.hasGarageProfile = true;
+                if (user && updateUser) {
+                    updateUser({ ...user, hasGarageProfile: true });
                 }
                 // Also refresh mechanics list to include the newly created one
                 fetchMechanics();
@@ -577,6 +601,8 @@ export const AppProvider = ({ children }) => {
         <AppContext.Provider
             value={{
                 mechanics,
+                allGarages,
+                fetchAllGarages,
                 towingServices,
                 favorites,
                 toggleFavorite,

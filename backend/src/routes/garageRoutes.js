@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { getNearbyGarages, seedGarages, getGarageByOwner, addReview, updateGarage, createGarage } = require('../controllers/garageController');
+const { getNearbyGarages, getAllGarages, seedGarages, getGarageByOwner, addReview, updateGarage, createGarage } = require('../controllers/garageController');
 
 router.get('/nearby', getNearbyGarages);
+router.get('/all', getAllGarages);
 router.post('/seed', seedGarages);
 router.get('/owner/:email', getGarageByOwner);
 router.post('/', createGarage);

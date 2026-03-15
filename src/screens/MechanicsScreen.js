@@ -129,7 +129,7 @@ const MechanicCard = ({ item, dist, index, onBook, onProfile }) => {
                     <View style={styles.infoDivider} />
                     <View style={styles.infoItem}>
                         <MapPin size={14} color={COLORS.textLight} />
-                        <Text style={styles.infoText}>{dist < 50 ? `${dist.toFixed(1)} km` : 'Near'}</Text>
+                        <Text style={styles.infoText}>{dist && dist < 1000 ? `${dist.toFixed(1)} km` : 'Far'}</Text>
                     </View>
                 </View>
 
@@ -172,7 +172,7 @@ const MechanicCard = ({ item, dist, index, onBook, onProfile }) => {
 
 const MechanicsScreen = () => {
     const navigation = useNavigation();
-    const { mechanics } = useAppContext();
+    const { mechanics, allGarages } = useAppContext();
     const { location } = useLocation();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSpecialty, setSelectedSpecialty] = useState('All');
@@ -190,7 +190,10 @@ const MechanicsScreen = () => {
     }, []);
 
     const processed = useMemo(() => {
-        let list = mechanics.map(m => ({
+        // Decide source based on whether we are searching
+        const baseList = searchQuery.trim() ? allGarages : mechanics;
+
+        let list = baseList.map(m => ({
             ...m,
             _dist: haversine(userLat, userLng, m.lat ?? m.location?.lat, m.lng ?? m.location?.lng),
             verified: m.verified ?? Math.random() > 0.4,
@@ -229,7 +232,7 @@ const MechanicsScreen = () => {
         });
 
         return list;
-    }, [mechanics, searchQuery, selectedSpecialty, sortKey, availableOnly, userLat, userLng]);
+    }, [mechanics, allGarages, searchQuery, selectedSpecialty, sortKey, availableOnly, userLat, userLng]);
 
     const activeSortLabel = SORT_OPTIONS.find(o => o.key === sortKey)?.label || '★ Top Rated';
 
