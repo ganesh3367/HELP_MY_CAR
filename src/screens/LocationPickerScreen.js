@@ -1,5 +1,5 @@
 import { ArrowLeft, Check, Crosshair, MapPin } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ const { width, height } = Dimensions.get('window');
 
 const LocationPickerScreen = ({ navigation, route }) => {
     const { location, setManualLocation } = useLocation();
+    const mapRef = useRef(null);
     const [region, setRegion] = useState({
         latitude: 18.5204,
         longitude: 73.8567,
@@ -46,20 +47,24 @@ const LocationPickerScreen = ({ navigation, route }) => {
 
     const handleMapPress = (e) => {
         const { latitude, longitude } = e.nativeEvent.coordinate;
-        setRegion(prev => ({
-            ...prev,
+        const newRegion = {
+            ...region,
             latitude,
             longitude,
-        }));
+        };
+        setRegion(newRegion);
+        mapRef.current?.animateToRegion(newRegion, 500);
     };
 
     const handleLocateMe = () => {
         if (location?.coords) {
-            setRegion(prev => ({
-                ...prev,
+            const newRegion = {
+                ...region,
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
-            }));
+            };
+            setRegion(newRegion);
+            mapRef.current?.animateToRegion(newRegion, 500);
         }
     };
 
@@ -84,13 +89,17 @@ const LocationPickerScreen = ({ navigation, route }) => {
 
     return (
         <View style={styles.container}>
-            <MapView
-                provider={PROVIDER_GOOGLE}
-                style={styles.map}
-                region={region}
-                onRegionChangeComplete={onRegionChangeComplete}
-                onPress={handleMapPress}
-            />
+            {hasSetInitialRegion && (
+                <MapView
+                    ref={mapRef}
+                    provider={PROVIDER_GOOGLE}
+                    style={styles.map}
+                    initialRegion={region}
+                    onRegionChangeComplete={onRegionChangeComplete}
+                    onPress={handleMapPress}
+                    showsUserLocation={true}
+                />
+            )}
 
             {/* Fixed Center Pin */}
             <View style={styles.centerMarkerContainer} pointerEvents="none">
