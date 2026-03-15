@@ -11,7 +11,7 @@ export const getApiUrl = () => {
     let host = hostUri.split(':')[0];
 
     // 2. Fallbacks for specific environments
-    if (!host) {
+    if (!host || host.includes('192.168')) {
         if (Platform.OS === 'android') {
             host = '10.0.2.2'; // Standard Android Emulator loopback
         } else {
@@ -21,7 +21,7 @@ export const getApiUrl = () => {
 
     // 3. Construct the final URL
     // Toggle this manually (true for Render, false for local dev)
-    const isProd = false;
+    const isProd = true;
 
     if (isProd) {
         return 'https://help-my-car.onrender.com/api';
