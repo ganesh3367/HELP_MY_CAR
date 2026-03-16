@@ -20,8 +20,8 @@ export const getApiUrl = () => {
     }
 
     // 3. Construct the final URL
-    // Toggle this manually (true for Render, false for local dev)
-    const isProd = true;
+    // Automatically use production URL only in production builds
+    const isProd = !__DEV__;
 
     if (isProd) {
         return 'https://help-my-car.onrender.com/api';
@@ -34,11 +34,17 @@ export const getApiUrl = () => {
 export const API_URL = getApiUrl();
 
 // Google Auth Configuration
-// These should be replaced with real Client IDs from Google Cloud Console
+// IMPORTANT: Replace these with real Client IDs from Google Cloud Console (APIs & Services > Credentials)
+// Web Client ID is required for Expo Go and Web. 
+// Android/iOS Client IDs are required for standalone/native builds.
 export const GOOGLE_CONFIG = {
-    webClientId: '150268904855-87c4934d560e4edc1df0d2.apps.googleusercontent.com', // Derived from appId or manually provided
+    // 1. Get this from Google Cloud Console > Credentials > OAuth 2.0 Client IDs > Web client (Auto-created for Google Sign-in)
+    webClientId: '150268904855-emtk9pquv2orls9t755m06b90o6svm0c.apps.googleusercontent.com', 
+    
+    // 2. Add these if you plan to build standalone APK/IPA or use development builds
     iosClientId: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
     androidClientId: 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com',
+    
     firebase: {
         apiKey: "AIzaSyCIfmlZh8244pZi7rPI2MZsSp30KvtgSVY",
         authDomain: "helpmycar-7362b.firebaseapp.com",
