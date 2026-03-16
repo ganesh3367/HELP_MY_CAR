@@ -30,7 +30,7 @@ const SignupScreen = ({ navigation, route }) => {
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
 
-    const [request, response, promptAsync] = Google.useAuthRequest({
+    const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
         webClientId: GOOGLE_CONFIG.webClientId,
         iosClientId: GOOGLE_CONFIG.iosClientId?.includes('YOUR_') ? GOOGLE_CONFIG.webClientId : GOOGLE_CONFIG.iosClientId,
         androidClientId: GOOGLE_CONFIG.androidClientId?.includes('YOUR_') ? GOOGLE_CONFIG.webClientId : GOOGLE_CONFIG.androidClientId,
