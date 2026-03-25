@@ -175,25 +175,6 @@ const LoginScreen = ({ navigation }) => {
                                 style={styles.loginButton}
                             />
 
-                            <View style={styles.divider}>
-                                <View style={styles.dividerLine} />
-                                <Text style={styles.dividerText}>OR</Text>
-                                <View style={styles.dividerLine} />
-                            </View>
-
-                            <TouchableOpacity
-                                style={styles.googleButton}
-                                onPress={() => promptAsync()}
-                                disabled={!request || googleLoading}
-                            >
-                                <Image
-                                    source={{ uri: 'https://authjs.dev/img/providers/google.svg' }}
-                                    style={styles.googleIcon}
-                                />
-                                <Text style={styles.googleButtonText}>
-                                    {googleLoading ? 'Connecting...' : 'Continue with Google'}
-                                </Text>
-                            </TouchableOpacity>
 
                             <View style={styles.footer}>
                                 <Text style={styles.footerText}>Don{"'"}t have an account? </Text>

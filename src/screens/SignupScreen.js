@@ -208,25 +208,6 @@ const SignupScreen = ({ navigation, route }) => {
                         style={styles.signupButton}
                     />
 
-                    <View style={styles.divider}>
-                        <View style={styles.dividerLine} />
-                        <Text style={styles.dividerText}>OR</Text>
-                        <View style={styles.dividerLine} />
-                    </View>
-
-                    <TouchableOpacity
-                        style={styles.googleButton}
-                        onPress={() => promptAsync()}
-                        disabled={!request || googleLoading}
-                    >
-                        <Image
-                            source={{ uri: 'https://authjs.dev/img/providers/google.svg' }}
-                            style={styles.googleIcon}
-                        />
-                        <Text style={styles.googleButtonText}>
-                            {googleLoading ? 'Connecting...' : 'Sign up with Google'}
-                        </Text>
-                    </TouchableOpacity>
 
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>Already have an account? </Text>
