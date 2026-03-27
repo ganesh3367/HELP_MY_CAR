@@ -8,7 +8,7 @@ const SplashScreen = ({ navigation }) => {
     const scaleAnim = useMemo(() => new Animated.Value(0.8), []);
 
     useEffect(() => {
-        // Synchronized animation
+        
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.75)', // Deep dark overlay for premium feel
+        backgroundColor: 'rgba(0,0,0,0.75)', 
     },
     content: {
         alignItems: 'center',

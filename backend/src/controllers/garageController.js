@@ -1,6 +1,6 @@
 const { db } = require('../config/firebase');
 
-// Haversine formula to compute distance in km
+
 const haversine = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -39,9 +39,9 @@ let MOCK_GARAGES = [
     }
 ];
 
-// @desc    Get garages within radius
-// @route   GET /api/garages/nearby
-// @access  Public
+
+
+
 const getNearbyGarages = async (req, res) => {
     try {
         const { lat, lng, radius = 50 } = req.query;
@@ -73,7 +73,7 @@ const getNearbyGarages = async (req, res) => {
             };
         }).sort((a, b) => a.distance - b.distance);
 
-        // If no results in radius, take top 10 closest ones anyway
+        
         const filtered = results.filter(g => g.distance <= parseFloat(radius));
         const finalData = filtered.length > 0 ? filtered : results.slice(0, 10);
 
@@ -88,9 +88,9 @@ const getNearbyGarages = async (req, res) => {
     }
 };
 
-// @desc    Get all garages (without distance filter)
-// @route   GET /api/garages/all
-// @access  Public
+
+
+
 const getAllGarages = async (req, res) => {
     try {
         let garages = [];
@@ -101,7 +101,7 @@ const getAllGarages = async (req, res) => {
             const snapshot = await db.collection('garages').get();
             garages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            // Normalize locations
+            
             garages = garages.map(g => ({
                 ...g,
                 lat: g.location?.lat || g.lat || 18.5204,
@@ -120,9 +120,9 @@ const getAllGarages = async (req, res) => {
     }
 };
 
-// @desc    Add review for a garage
-// @route   POST /api/garages/:id/reviews
-// @access  Public
+
+
+
 const addReview = async (req, res) => {
     try {
         const { id } = req.params;
@@ -158,9 +158,9 @@ const addReview = async (req, res) => {
     }
 };
 
-// @desc    Seed initial garage data
-// @route   POST /api/garages/seed
-// @access  Public
+
+
+
 const seedGarages = async (req, res) => {
     try {
         const mockMechanics = [
@@ -220,9 +220,9 @@ const seedGarages = async (req, res) => {
     }
 };
 
-// @desc    Get garage details for the owner
-// @route   GET /api/garages/owner/:email
-// @access  Public
+
+
+
 const getGarageByOwner = async (req, res) => {
     try {
         const { email } = req.params;
@@ -252,9 +252,9 @@ const getGarageByOwner = async (req, res) => {
     }
 };
 
-// @desc    Update garage details
-// @route   PATCH /api/garages/:id
-// @access  Public (Should be private in production)
+
+
+
 const updateGarage = async (req, res) => {
     try {
         const { id } = req.params;
@@ -286,9 +286,9 @@ const updateGarage = async (req, res) => {
     }
 };
 
-// @desc    Register a new garage (detailed)
-// @route   POST /api/garages
-// @access  Public (Should be private in production)
+
+
+
 const createGarage = async (req, res) => {
     try {
         const {
@@ -309,7 +309,7 @@ const createGarage = async (req, res) => {
 
         if (!db) {
             const newMockGarage = { id: 'mock-id-' + Date.now(), ...req.body };
-            // Save to mock database so it appears in search and map
+            
             MOCK_GARAGES.push(newMockGarage);
             return res.status(201).json({
                 success: true,

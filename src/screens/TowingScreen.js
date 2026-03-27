@@ -11,12 +11,12 @@ const TowingScreen = () => {
     const { towingServices } = useAppContext();
     const { location } = useLocation();
 
-    // Default to a generic Pune location string if coordinates exist but no reverse geocoding is available
+    
     const locationName = location?.coords ? 'Pune, Maharashtra' : 'Fetching location...';
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Professional Header */}
+            {}
             <View style={styles.header}>
                 <View style={styles.headerContent}>
                     <View style={styles.iconCircle}>
@@ -37,7 +37,7 @@ const TowingScreen = () => {
                 </View>
             </View>
 
-            {/* Services List */}
+            {}
             {towingServices && towingServices.length > 0 ? (
                 <FlatList
                     data={towingServices}
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     headerContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: SPACING.md, // reduced from lg
+        marginBottom: SPACING.md, 
     },
     iconCircle: {
         width: 56,
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
         borderWidth: 1,
         borderColor: '#BBF7D0',
-        marginTop: SPACING.sm, // Added top margin for better alignment
+        marginTop: SPACING.sm, 
     },
     liveDot: {
         width: 8,
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: COLORS.textLight,
         marginBottom: SPACING.md,
-        marginTop: SPACING.sm, // added spacing above the list
+        marginTop: SPACING.sm, 
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },

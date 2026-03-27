@@ -32,7 +32,7 @@ const ServiceCard = ({
     return (
         <View style={styles.container}>
             <View style={styles.contentRow}>
-                {/* Visual Section */}
+                {}
                 <View style={styles.imageWrapper}>
                     {image ? (
                         <Image source={{ uri: image }} style={styles.image} />
@@ -53,7 +53,7 @@ const ServiceCard = ({
                     )}
                 </View>
 
-                {/* Info Section */}
+                {}
                 <View style={styles.info}>
                     <View style={styles.titleRow}>
                         <Text style={styles.title} numberOfLines={1}>{title}</Text>
@@ -80,7 +80,7 @@ const ServiceCard = ({
                 </View>
             </View>
 
-            {/* Actions Row */}
+            {}
             <View style={styles.actionRow}>
                 {type === 'mechanic' ? (
                     <TouchableOpacity onPress={onProceed} style={styles.primaryAction}>

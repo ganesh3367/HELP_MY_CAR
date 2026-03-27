@@ -38,7 +38,6 @@ const SignupScreen = ({ navigation, route }) => {
 
     useEffect(() => {
         if (response?.type === 'success') {
-             // Expo auth session usually puts the token here
             const idToken = response.authentication?.idToken || response.params?.id_token;
             if (idToken) {
                 handleGoogleLogin(idToken);
@@ -61,7 +60,6 @@ const SignupScreen = ({ navigation, route }) => {
             setGoogleLoading(false);
         }
     };
-
 
     useEffect(() => {
         if (route.params?.role) {
@@ -207,7 +205,6 @@ const SignupScreen = ({ navigation, route }) => {
                         loading={loading}
                         style={styles.signupButton}
                     />
-
 
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>Already have an account? </Text>

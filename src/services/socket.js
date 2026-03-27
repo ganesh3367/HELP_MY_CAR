@@ -2,8 +2,8 @@ import { io } from 'socket.io-client';
 
 import { API_URL } from '../config';
 
-// ── Dynamic URL — works on emulator, device, and production ──────────────────
-// Automatically strips the '/api' from the end of the URL to get the base domain
+
+
 const SOCKET_URL = API_URL.replace('/api', '');
 
 console.log('[Socket] Initialized with URL:', SOCKET_URL);
@@ -32,13 +32,13 @@ export const joinGarage = (garageId) => {
     socket.emit('join_garage', garageId);
 };
 
-// Called by mechanic side: stream GPS to users tracking this order
+
 export const updateMechanicLocation = (orderId, coords) => {
     socket.emit('update_location', { orderId, location: coords });
 };
 
 export const onLocationUpdate = (callback) => {
-    socket.off('location_updated'); // prevent duplicate listeners
+    socket.off('location_updated'); 
     socket.on('location_updated', callback);
 };
 

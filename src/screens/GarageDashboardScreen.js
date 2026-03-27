@@ -128,7 +128,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                 contentContainerStyle={styles.scrollContent}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
             >
-                {/* ── Dashboard Header ────────────────────────────────────────── */}
+                {}
                 <View style={styles.headerArea}>
                     <View style={styles.headerTop}>
                         <View>
@@ -145,7 +145,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Status Ribbon */}
+                    {}
                     <View style={[styles.statusRibbon, { backgroundColor: myGarage?.isOnline ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)' }]}>
                         <View style={[styles.statusDot, { backgroundColor: myGarage?.isOnline ? '#10B981' : '#6B7280' }]} />
                         <Text style={[styles.statusLabel, { color: myGarage?.isOnline ? '#065F46' : '#374151' }]}>
@@ -173,7 +173,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                     </TouchableOpacity>
                 )}
 
-                {/* ── Business Controls ────────────────────────────────────────── */}
+                {}
                 <View style={styles.controlRow}>
                     <View style={styles.toggleContainer}>
                         <Text style={styles.toggleTitle}>Availability</Text>
@@ -192,7 +192,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
 
-                {/* ── Stats Grid ──────────────────────────────────────────────── */}
+                {}
                 <View style={styles.statsGrid}>
                     {stats.map((stat, idx) => (
                         <View key={idx} style={styles.statCard}>
@@ -207,7 +207,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                     ))}
                 </View>
 
-                {/* ── Recent Feedback ─────────────────────────────────────────── */}
+                {}
                 {recentReviews.length > 0 && (
                     <>
                         <Text style={styles.sectionTitle}>Recent Feedback</Text>
@@ -242,7 +242,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                     </>
                 )}
 
-                {/* ── Active Job Banner (Premium Redesign) ────────────────────────── */}
+                {}
                 {activeJobs.length > 0 && activeJobs[0] && (
                     <Animated.View style={[
                         styles.activeBanner,
@@ -257,7 +257,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                             ]}
                             onPress={() => navigation.navigate('Orders')}
                         >
-                            {/* Left part: Icon & Info */}
+                            {}
                             <View style={styles.bannerMain}>
                                 <View style={[
                                     styles.bannerIconBg,
@@ -283,7 +283,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                                 </View>
                             </View>
 
-                            {/* Right part: Action Button */}
+                            {}
                             <TouchableOpacity
                                 style={[
                                     styles.bannerActionBtn,
@@ -300,7 +300,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                     </Animated.View>
                 )}
 
-                {/* ── Quick Actions ─────────────────────────────────────────── */}
+                {}
                 <Text style={styles.sectionTitle}>Quick Management</Text>
                 <View style={styles.actionsGrid}>
                     {quickActions.map((action, idx) => (
@@ -317,7 +317,7 @@ const GarageDashboardScreen = ({ navigation }) => {
                     ))}
                 </View>
 
-                {/* ── Active Jobs ───────────────────────────────────────────── */}
+                {}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Upcoming & Active Jobs</Text>
                     <TouchableOpacity onPress={() => navigation.navigate('Orders')}>
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: SPACING.lg,
     },
-    // ─ Header Area ────────────────────────────────────────────────────────
+    
     headerArea: {
         marginBottom: SPACING.xl,
     },
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
     },
-    // ─ Notification ───────────────────────────────────────────────────────
+    
     notificationBanner: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
         color: '#B45309',
         marginTop: 2,
     },
-    // ─ Controls ───────────────────────────────────────────────────────────
+    
     controlRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.white,
         ...SHADOWS.small,
     },
-    // ─ Stats Grid ─────────────────────────────────────────────────────────
+    
     statsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
         color: COLORS.textLight,
         fontWeight: '500',
     },
-    // ─ Quick Actions ──────────────────────────────────────────────────────
+    
     sectionTitle: {
         fontSize: 18,
         fontWeight: '800',
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: COLORS.text,
     },
-    // ─ Jobs List ──────────────────────────────────────────────────────────
+    
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         textTransform: 'uppercase',
     },
-    // ─ Empty State ────────────────────────────────────────────────────────
+    
     emptyState: {
         alignItems: 'center',
         justifyContent: 'center',
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 40,
         lineHeight: 18,
     },
-    // ─ Active Banner (Premium) ──────────────────────────────────────────
+    
     activeBanner: {
         borderRadius: 24,
         marginBottom: SPACING.xl,
@@ -719,7 +719,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
     },
     pendingIconBg: {
-        backgroundColor: '#F59E0B', // Rich Amber
+        backgroundColor: '#F59E0B', 
     },
     bannerInfo: {
         flex: 1,

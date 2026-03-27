@@ -1,6 +1,4 @@
-/**
- * CostEstimatorScreen — Disabled (pricing removed).
- */
+
 import { useNavigation } from '@react-navigation/native';
 import { ChevronRight, Info } from 'lucide-react-native';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';

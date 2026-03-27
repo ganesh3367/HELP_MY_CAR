@@ -188,7 +188,7 @@ const GarageOrderTrackingScreen = () => {
                 <Marker coordinate={{ latitude: mechLat, longitude: mechLng }} title="You">
                     <View style={styles.garageMarker}><Wrench size={18} color={COLORS.white} /></View>
                 </Marker>
-                {/* Uber-style route line between you and customer once on the way/arrived */}
+                {}
                 {userLat && userLng && mechLat && mechLng && ['ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(order.status) && (
                     <Polyline
                         coordinates={[
@@ -229,7 +229,7 @@ const GarageOrderTrackingScreen = () => {
                     <Text style={styles.issueText}>{order.vehicleDetails.issue}</Text>
                 </View>
 
-                {/* Timeline */}
+                {}
                 <View style={styles.timeline}>
                     {ORDER_STEPS.slice(1, 6).map((step, i) => {
                         const done = i + 1 <= currentStep;

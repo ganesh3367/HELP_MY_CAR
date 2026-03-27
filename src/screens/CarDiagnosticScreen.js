@@ -1,8 +1,4 @@
-/**
- * CarDiagnosticScreen — Symptom checker
- * User picks symptoms → AI-style diagnosis shows likely issues,
- * urgency level, estimated cost range, and Book Mechanic CTA
- */
+
 import { useNavigation } from '@react-navigation/native';
 import { AlertTriangle, CheckCircle, ChevronRight, HelpCircle, RefreshCw } from 'lucide-react-native';
 import { useState } from 'react';
@@ -12,7 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 
-// ── Symptom database ──────────────────────────────────────────────────────────
+
 const SYMPTOMS = [
     { id: 'no_start', label: "Car won't start", group: 'General' },
     { id: 'engine_noise', label: 'Knocking / noise from engine', group: 'Engine' },
@@ -32,7 +28,7 @@ const SYMPTOMS = [
     { id: 'leak_coolant', label: 'Coolant / water leak', group: 'Engine' },
 ];
 
-// ── Diagnosis rules ───────────────────────────────────────────────────────────
+
 const DIAGNOSES = [
     {
         id: 'battery',
@@ -115,7 +111,7 @@ const URGENCY_CONFIG = {
     LOW: { color: '#34C759', bg: '#F0FFF7', label: 'LOW — Schedule when convenient' },
 };
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
+
 const CarDiagnosticScreen = () => {
     const navigation = useNavigation();
     const [selected, setSelected] = useState(new Set());
@@ -157,13 +153,13 @@ const CarDiagnosticScreen = () => {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-                {/* Header */}
+                {}
                 <View style={styles.header}>
                     <Text style={styles.title}>Car Diagnostic</Text>
                     <Text style={styles.subtitle}>Select symptoms your car is showing</Text>
                 </View>
 
-                {/* Symptoms by group */}
+                {}
                 {!results && groups.map(g => (
                     <View key={g} style={{ marginBottom: 18 }}>
                         <Text style={styles.groupLabel}>{g}</Text>
@@ -187,7 +183,7 @@ const CarDiagnosticScreen = () => {
                     </View>
                 ))}
 
-                {/* Diagnose button */}
+                {}
                 {!results && (
                     <TouchableOpacity
                         style={[styles.diagnoseBtn, selected.size === 0 && { opacity: 0.4 }]}
@@ -200,7 +196,7 @@ const CarDiagnosticScreen = () => {
                     </TouchableOpacity>
                 )}
 
-                {/* Results */}
+                {}
                 {results !== null && (
                     <>
                         <View style={styles.resultHeader}>
@@ -226,7 +222,7 @@ const CarDiagnosticScreen = () => {
                             const urg = URGENCY_CONFIG[r.urgency];
                             return (
                                 <View key={r.id} style={[styles.resultCard, { borderLeftColor: urg.color }]}>
-                                    {/* Issue header */}
+                                    {}
                                     <View style={styles.resultCardHeader}>
                                         <AlertTriangle size={28} color={urg.color} />
                                         <View style={{ flex: 1, marginLeft: 12 }}>
@@ -237,10 +233,10 @@ const CarDiagnosticScreen = () => {
                                         </View>
                                     </View>
 
-                                    {/* Description */}
+                                    {}
                                     <Text style={styles.issueDesc}>{r.desc}</Text>
 
-                                    {/* Cost + Fix */}
+                                    {}
                                     <View style={styles.infoRow}>
                                         <View style={styles.infoItem}>
                                             <Text style={styles.infoLabel}>Estimated Cost</Text>
@@ -252,7 +248,7 @@ const CarDiagnosticScreen = () => {
                                         </View>
                                     </View>
 
-                                    {/* Book CTA */}
+                                    {}
                                     <TouchableOpacity
                                         style={[styles.bookBtn, { backgroundColor: urg.color }]}
                                         onPress={() => navigation.navigate('Main', { screen: 'Nearby' })}

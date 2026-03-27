@@ -24,10 +24,6 @@ import TabNavigator from './TabNavigator';
 
 const Stack = createNativeStackNavigator();
 
-/**
- * The main navigator component.
- * @returns {JSX.Element} Navigation stack based on auth state.
- */
 const RootNavigator = () => {
     const { isInitializing, user } = useAuth();
 
@@ -50,9 +46,7 @@ const RootNavigator = () => {
             }}
         >
             {user ? (
-                // Authenticated Flow
                 user.role === 'garage' && !user.hasGarageProfile ? (
-                    // Forced Onboarding for Garage Owners
                     <>
                         <Stack.Screen
                             name="RegisterGarage"
@@ -63,7 +57,6 @@ const RootNavigator = () => {
                         <Stack.Screen name="Login" component={LoginScreen} />
                     </>
                 ) : (
-                    // Full App for Users or Completed Garage Owners
                     <>
                         <Stack.Screen name="Main" component={TabNavigator} />
                         <Stack.Screen
@@ -98,7 +91,6 @@ const RootNavigator = () => {
                     </>
                 )
             ) : (
-                // Unauthenticated Flow
                 <>
                     <Stack.Screen name="Splash" component={SplashScreen} />
                     <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />

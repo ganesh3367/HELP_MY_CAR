@@ -41,10 +41,10 @@ const MechanicProfileScreen = ({ navigation, route }) => {
         Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
     }, []);
 
-    // Open service picker modal
+    
     const handleBookNow = () => setShowServiceModal(true);
 
-    // Confirm booking after service selected
+    
     const handleConfirmBooking = async () => {
         if (!selectedService) {
             Alert.alert('Select a service', 'Please choose the type of service you need.');
@@ -96,7 +96,7 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                 onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
                 scrollEventThrottle={16}
             >
-                {/* Header Image Section */}
+                {}
                 <View style={styles.imageContainer}>
                     <Image
                         source={{ uri: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=1000&auto=format&fit=crop' }}
@@ -127,9 +127,9 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                     </Animated.View>
                 </View>
 
-                {/* Main Content Area */}
+                {}
                 <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-                    {/* Trust Badges */}
+                    {}
                     <View style={styles.statsGrid}>
                         <View style={styles.statItem}>
                             <View style={[styles.statIconBox, { backgroundColor: '#F0F4FF' }]}>
@@ -154,7 +154,7 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                         </View>
                     </View>
 
-                    {/* Description Section */}
+                    {}
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>About Mechanic</Text>
                         <View style={styles.line} />
@@ -163,7 +163,7 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                         Expert diagnostic and repair services delivered at your location. Specialized in modern vehicle systems with high-quality parts and guaranteed satisfaction.
                     </Text>
 
-                    {/* About/Specialties */}
+                    {}
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Specialties</Text>
                         <View style={styles.line} />
@@ -200,7 +200,7 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                 </Animated.View>
             </Animated.ScrollView>
 
-            {/* Premium Sticky Bottom Bar */}
+            {}
             <View style={styles.bottomBar}>
                 <TouchableOpacity
                     style={[styles.bookBtn, bookingLoading && { opacity: 0.6 }]}
@@ -212,7 +212,7 @@ const MechanicProfileScreen = ({ navigation, route }) => {
                 </TouchableOpacity>
             </View>
 
-            {/* ── Service Picker Modal (Redesigned) ───────────────────────── */}
+            {}
             <Modal
                 visible={showServiceModal}
                 animationType="slide"

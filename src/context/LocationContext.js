@@ -1,8 +1,4 @@
-/**
- * LocationContext.js
- * Manages access to the device's geolocation services using expo-location.
- * Uses watchPositionAsync so the user location updates continuously (like Uber).
- */
+
 import * as Location from 'expo-location';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
@@ -24,22 +20,22 @@ export const LocationProvider = ({ children }) => {
                 return;
             }
 
-            // Get an initial fix immediately so the app doesn't wait for first watcher event
+            
             const initialLocation = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.Balanced,
             });
             setLocation(initialLocation);
             setLoading(false);
 
-            // Then keep watching for updates (like Uber)
+            
             if (watcherRef.current) {
                 watcherRef.current.remove();
             }
             watcherRef.current = await Location.watchPositionAsync(
                 {
                     accuracy: Location.Accuracy.High,
-                    distanceInterval: 10,   // metres before update is emitted
-                    timeInterval: 5000,      // ms minimum between updates
+                    distanceInterval: 10,   
+                    timeInterval: 5000,      
                 },
                 (newLocation) => {
                     setLocation(newLocation);
@@ -67,7 +63,7 @@ export const LocationProvider = ({ children }) => {
         };
         setLocation(manualLoc);
 
-        // Optionally stop the watcher if you want the manual location to stick
+        
         if (watcherRef.current) {
             watcherRef.current.remove();
             watcherRef.current = null;
@@ -77,7 +73,7 @@ export const LocationProvider = ({ children }) => {
     useEffect(() => {
         requestLocation();
         return () => {
-            // Cleanup watcher on unmount
+            
             if (watcherRef.current) watcherRef.current.remove();
         };
     }, []);

@@ -79,7 +79,7 @@ const LocationPickerScreen = ({ navigation, route }) => {
                 merge: true,
             });
         } else {
-            // Fallback for earlier NearbyMechanics implementation
+            
             navigation.navigate('Main', {
                 screen: 'Nearby',
                 params: { pickedLocation: { lat: region.latitude, lng: region.longitude } }
@@ -101,13 +101,13 @@ const LocationPickerScreen = ({ navigation, route }) => {
                 />
             )}
 
-            {/* Fixed Center Pin */}
+            {}
             <View style={styles.centerMarkerContainer} pointerEvents="none">
                 <MapPin size={48} color={COLORS.primary} fill={COLORS.white} />
                 <View style={styles.shadow} />
             </View>
 
-            {/* Header / Back */}
+            {}
             <SafeAreaView style={styles.headerOverlay} pointerEvents="box-none">
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                     <ArrowLeft size={24} color={COLORS.text} />
@@ -121,7 +121,7 @@ const LocationPickerScreen = ({ navigation, route }) => {
                 </TouchableOpacity>
             </SafeAreaView>
 
-            {/* Bottom Panel */}
+            {}
             <View style={styles.bottomPanel}>
                 <View style={styles.addressBox}>
                     <Text style={styles.addressLabel}>Selected Location</Text>
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     },
     centerMarkerContainer: {
         position: 'absolute',
-        top: (height / 2) - 24, // Adjust for pin size
+        top: (height / 2) - 24, 
         left: (width / 2) - 24,
         alignItems: 'center',
         justifyContent: 'center',
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         marginTop: 10,
-        marginRight: 44, // Balance back button
+        marginRight: 44, 
     },
     headerTitle: {
         fontSize: 18,

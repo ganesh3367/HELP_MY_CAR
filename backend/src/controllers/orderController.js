@@ -1,8 +1,8 @@
 const { db } = require('../config/firebase');
 
-// @desc    Create a new order
-// @route   POST /api/orders
-// @access  Public
+
+
+
 const createOrder = async (req, res) => {
     try {
         const { userId, userName, garageId, vehicleDetails, userLocation } = req.body;
@@ -12,7 +12,7 @@ const createOrder = async (req, res) => {
         }
 
         let garageName = 'Unknown Garage';
-        let mechanicLocation = { lat: 18.5204, lng: 73.8567 }; // Default
+        let mechanicLocation = { lat: 18.5204, lng: 73.8567 }; 
 
         if (db) {
             const garageDoc = await db.collection('garages').doc(garageId).get();
@@ -48,14 +48,14 @@ const createOrder = async (req, res) => {
 
         const orderData = { id: orderId, ...newOrder };
 
-        // For now, simpler broadcast or room-based
+        
         const io = req.app.get('io');
         if (io) {
-            // Send to the specific garage room so they get a notification
+            
             io.to(`garage_${garageId}`).emit('new_order', orderData);
-            // Also join the user to the order room for tracking
-            // Note: the socket instance isn't directly available here for the user's specific connection
-            // handled via join_order on the client side
+            
+            
+            
         }
 
         res.status(201).json({
@@ -68,9 +68,9 @@ const createOrder = async (req, res) => {
     }
 };
 
-// @desc    Get order status & mechanic location
-// @route   GET /api/orders/:id/track
-// @access  Public
+
+
+
 const trackOrder = async (req, res) => {
     try {
         const { id } = req.params;
@@ -102,9 +102,9 @@ const trackOrder = async (req, res) => {
     }
 };
 
-// @desc    Get all orders for a specific garage
-// @route   GET /api/orders/garage/:garageId
-// @access  Public
+
+
+
 const getGarageOrders = async (req, res) => {
     try {
         const { garageId } = req.params;
@@ -133,9 +133,9 @@ const getGarageOrders = async (req, res) => {
     }
 };
 
-// @desc    Update order status
-// @route   PATCH /api/orders/:id/status
-// @access  Public
+
+
+
 const updateOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -163,7 +163,7 @@ const updateOrderStatus = async (req, res) => {
         const updatedDoc = await orderRef.get();
         const order = { id: updatedDoc.id, ...updatedDoc.data() };
 
-        // Emit Socket.io update
+        
         const io = req.app.get('io');
         if (id) {
             io.to(id).emit('order_updated', order);
@@ -182,9 +182,9 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
-// @desc    Get all orders for a specific user
-// @route   GET /api/orders/user/:userId
-// @access  Public
+
+
+
 const getUserOrders = async (req, res) => {
     try {
         const { userId } = req.params;

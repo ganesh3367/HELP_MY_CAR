@@ -44,7 +44,7 @@ export const TOWING_SERVICES = [
         costPerKm: '₹350',
         availability: 'Available',
         phone: '+91 98765 43210',
-        image: 'https://images.unsplash.com/photo-1549420015-c27ae38308cf?q=80&w=600&auto=format&fit=crop', // Better flatbed truck
+        image: 'https://images.unsplash.com/photo-1549420015-c27ae38308cf?q=80&w=600&auto=format&fit=crop', 
     },
     {
         id: '2',
@@ -52,7 +52,7 @@ export const TOWING_SERVICES = [
         costPerKm: '₹250',
         availability: '15 mins',
         phone: '+91 98765 43211',
-        image: 'https://images.unsplash.com/photo-1628172948655-333e6f98fcde?q=80&w=600&auto=format&fit=crop', // Better tow truck
+        image: 'https://images.unsplash.com/photo-1628172948655-333e6f98fcde?q=80&w=600&auto=format&fit=crop', 
     },
     {
         id: '3',
@@ -60,7 +60,7 @@ export const TOWING_SERVICES = [
         costPerKm: '₹800',
         availability: 'Available',
         phone: '+91 98765 43212',
-        image: 'https://images.unsplash.com/photo-1510250917036-edfa0d463d1a?q=80&w=600&auto=format&fit=crop', // Heavy truck
+        image: 'https://images.unsplash.com/photo-1510250917036-edfa0d463d1a?q=80&w=600&auto=format&fit=crop', 
     },
 ];
 

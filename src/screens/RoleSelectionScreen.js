@@ -19,7 +19,7 @@ const RoleSelectionScreen = ({ navigation }) => {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
             <ImageBackground
-                // Clean, light automotive background
+                
                 source={{ uri: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?q=80&w=2000&auto=format&fit=crop' }}
                 style={styles.heroBackground}
             >
@@ -33,7 +33,7 @@ const RoleSelectionScreen = ({ navigation }) => {
                     </View>
 
                     <View style={styles.cardsContainer}>
-                        {/* Option 1: Car Owner */}
+                        {}
                         <TouchableOpacity
                             style={styles.roleCard}
                             onPress={() => navigation.navigate('Signup', { role: 'user' })}
@@ -55,7 +55,7 @@ const RoleSelectionScreen = ({ navigation }) => {
                             <ChevronRight size={20} color={COLORS.textLight} />
                         </TouchableOpacity>
 
-                        {/* Option 2: Garage Owner */}
+                        {}
                         <TouchableOpacity
                             style={[styles.roleCard, { marginTop: 16 }]}
                             onPress={() => navigation.navigate('Signup', { role: 'garage' })}
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(255,255,255,0.85)', // Light overlay for readability
+        backgroundColor: 'rgba(255,255,255,0.85)', 
     },
     safeArea: {
         flex: 1,

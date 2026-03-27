@@ -17,7 +17,7 @@ const GarageSchema = new mongoose.Schema({
         },
         coordinates: {
             type: [Number],
-            required: true // [longitude, latitude]
+            required: true 
         }
     },
     phone: String,
@@ -43,7 +43,7 @@ const GarageSchema = new mongoose.Schema({
     }
 });
 
-// Geospatial index for nearby search
+
 GarageSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('Garage', GarageSchema);

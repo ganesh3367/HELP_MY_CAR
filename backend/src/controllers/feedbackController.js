@@ -1,8 +1,8 @@
 const { db } = require('../config/firebase');
 
-// @desc    Submit user feedback
-// @route   POST /api/feedback
-// @access  Public
+
+
+
 const submitFeedback = async (req, res) => {
     try {
         const { userId, userName, email, message, rating } = req.body;

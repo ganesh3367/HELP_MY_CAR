@@ -19,10 +19,10 @@ import { useAppContext } from '../context/AppContext';
 import { useLocation } from '../context/LocationContext';
 import { API_URL } from '../config';
 
-// Replace this with your own key from console.cloud.google.com
+
 const GOOGLE_MAPS_API_KEY = 'AIzaSyA3oFvnPMBJWcPLvqSHHvLcMfgbxLNq7oo';
 
-// ─── Haversine (km) ───────────────────────────────────────────────────────────
+
 const haversine = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -190,7 +190,7 @@ const NearbyMechanicsScreen = ({ navigation }) => {
         if (!activeCoords) return;
         setLoading(true);
 
-        // 1. Try Google Places
+        
         try {
             const { lat, lng } = activeCoords;
             const url =
@@ -234,9 +234,9 @@ const NearbyMechanicsScreen = ({ navigation }) => {
             }
         }
 
-        // 2. Try Backend
+        
         try {
-            // Internal timeout for this specific backend call if it's lagging
+            
             const backendUrl = `${API_URL}/garages/nearby?lat=${activeCoords.lat}&lng=${activeCoords.lng}&radius=5`;
             const res = await fetch(backendUrl);
             const json = await res.json();
@@ -252,7 +252,7 @@ const NearbyMechanicsScreen = ({ navigation }) => {
             }
         }
 
-        // 3. Fallback to Context/Mock
+        
         const withDistance = (contextMechanics || []).map(m => {
             const mLat = m.location?.lat ?? m.lat;
             const mLng = m.location?.lng ?? m.lng;
@@ -287,7 +287,7 @@ const NearbyMechanicsScreen = ({ navigation }) => {
         );
     };
 
-    // ── Pan map to selected mechanic ────────────────────────────────────────
+    
     const handleSelectMechanic = (mechanic, index) => {
         setSelectedId(mechanic._id || mechanic.id);
         const lat = mechanic.location?.lat;
@@ -303,11 +303,11 @@ const NearbyMechanicsScreen = ({ navigation }) => {
                 500
             );
         }
-        // Scroll list to selected card
+        
         listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
     };
 
-    // ─── Map region ─────────────────────────────────────────────────────────
+    
     const initialRegion = activeCoords
         ? {
             latitude: activeCoords.lat,
@@ -319,19 +319,19 @@ const NearbyMechanicsScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            {/* ── MAP ────────────────────────────────────────── */}
+            {}
             <View style={styles.mapWrapper}>
                 {initialRegion ? (
                     <MapView
                         ref={mapRef}
                         style={styles.map}
                         initialRegion={initialRegion}
-                        showsUserLocation={false}   // We draw our own dot
+                        showsUserLocation={false}   
                         showsCompass={false}
                         showsMyLocationButton={false}
                         pitchEnabled={false}
                     >
-                        {/* 5 km search radius ring */}
+                        {}
                         {activeCoords && (
                             <Circle
                                 center={{ latitude: activeCoords.lat, longitude: activeCoords.lng }}
@@ -342,7 +342,7 @@ const NearbyMechanicsScreen = ({ navigation }) => {
                             />
                         )}
 
-                        {/* User's live blue dot */}
+                        {}
                         {activeCoords && (
                             <Marker
                                 coordinate={{
@@ -366,7 +366,7 @@ const NearbyMechanicsScreen = ({ navigation }) => {
                     </View>
                 )}
 
-                {/* ── Map overlay: header pill ─────── */}
+                {}
                 <SafeAreaView pointerEvents="box-none" style={StyleSheet.absoluteFill}>
                     <View style={styles.mapHeader}>
                         <View style={styles.headerPill}>
@@ -376,11 +376,11 @@ const NearbyMechanicsScreen = ({ navigation }) => {
                             </Text>
                         </View>
                         <View style={styles.mapActions}>
-                            {/* Recenter */}
+                            {}
                             <TouchableOpacity style={styles.mapBtn} onPress={goToUser}>
                                 <Navigation2 size={18} color={COLORS.primary} />
                             </TouchableOpacity>
-                            {/* Refresh */}
+                            {}
                             <TouchableOpacity style={styles.mapBtn} onPress={fetchMechanics}>
                                 <RefreshCw size={18} color={COLORS.primary} />
                             </TouchableOpacity>
@@ -389,12 +389,12 @@ const NearbyMechanicsScreen = ({ navigation }) => {
                 </SafeAreaView>
             </View>
 
-            {/* ── BOTTOM SHEET LIST ────────────────────── */}
+            {}
             <View style={styles.sheet}>
-                {/* Handle pill */}
+                {}
                 <View style={styles.sheetHandle} />
 
-                {/* Count header */}
+                {}
                 <View style={styles.sheetHeader}>
                     <Text style={styles.sheetTitle}>
                         {loading
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.background,
     },
-    // Map area
+    
     mapWrapper: {
         height: MAP_HEIGHT,
         backgroundColor: '#F5F5F5',
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    // User + mechanic markers
+    
     marker: {
         width: 34,
         height: 34,
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         backgroundColor: COLORS.primary,
     },
-    // Cards sheet
+    
     sheet: {
         flex: 1,
         backgroundColor: COLORS.surface || '#FFFFFF',
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         gap: 12,
     },
-    // Mechanic card
+    
     card: {
         width: width * 0.8,
         backgroundColor: '#FFFFFF',

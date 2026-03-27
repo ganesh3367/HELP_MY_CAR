@@ -15,7 +15,7 @@ const RatingModal = ({ visible, onClose, onSave, mechanicName }) => {
     const [comment, setComment] = useState('');
     const slideAnim = React.useRef(new Animated.Value(height)).current;
 
-    // Slide up/down on visibility change
+    
     useEffect(() => {
         Animated.spring(slideAnim, {
             toValue: visible ? 0 : height,
@@ -23,7 +23,7 @@ const RatingModal = ({ visible, onClose, onSave, mechanicName }) => {
             bounciness: 4,
         }).start();
         if (!visible) {
-            // Reset after animation
+            
             const t = setTimeout(() => { setRating(0); setComment(''); }, 300);
             return () => clearTimeout(t);
         }
@@ -49,20 +49,20 @@ const RatingModal = ({ visible, onClose, onSave, mechanicName }) => {
                 <TouchableOpacity style={styles.backdrop} onPress={onClose} />
 
                 <Animated.View style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}>
-                    {/* Handle */}
+                    {}
                     <View style={styles.handle} />
 
-                    {/* Close */}
+                    {}
                     <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
                         <X size={22} color={COLORS.textLight} />
                     </TouchableOpacity>
 
-                    {/* Icon + Title */}
+                    {}
                     <Text style={styles.title}>Rate your service</Text>
                     <Text style={styles.subtitle}>How was your experience with</Text>
                     <Text style={styles.mechanicName}>{mechanicName || 'Mechanic'}?</Text>
 
-                    {/* Stars */}
+                    {}
                     <View style={styles.starsRow}>
                         {[1, 2, 3, 4, 5].map(s => (
                             <TouchableOpacity key={s} onPress={() => setRating(s)} style={styles.starBtn}>
@@ -75,12 +75,12 @@ const RatingModal = ({ visible, onClose, onSave, mechanicName }) => {
                         ))}
                     </View>
 
-                    {/* Rating label */}
+                    {}
                     <Text style={[styles.ratingLabel, rating > 0 && { color: COLORS.primary }]}>
                         {rating > 0 ? RATING_LABELS[rating] : 'Tap to rate'}
                     </Text>
 
-                    {/* Comment input */}
+                    {}
                     <TextInput
                         style={styles.input}
                         placeholder=""
@@ -92,7 +92,7 @@ const RatingModal = ({ visible, onClose, onSave, mechanicName }) => {
                         textAlignVertical="top"
                     />
 
-                    {/* Submit */}
+                    {}
                     <TouchableOpacity
                         style={[styles.submitBtn, rating === 0 && styles.submitDisabled]}
                         onPress={handleSave}

@@ -46,10 +46,10 @@ const HomeScreen = ({ navigation }) => {
             m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             m.specialties?.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) ||
             m.address?.toLowerCase().includes(searchQuery.toLowerCase())
-        ).slice(0, 5) // limit to 5 results for dropdown
+        ).slice(0, 5) 
         : [];
     
-    // Mechanics displayed on the map
+    
     const filteredMechanics = mechanics;
 
     useEffect(() => {

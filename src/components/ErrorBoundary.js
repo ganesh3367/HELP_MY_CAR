@@ -13,8 +13,8 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    // Shows up in Android Logcat as ReactNativeJS
-    // eslint-disable-next-line no-console
+    
+    
     console.error('[Fatal UI Error]', error, info?.componentStack);
   }
 

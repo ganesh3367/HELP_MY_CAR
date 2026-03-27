@@ -1,8 +1,4 @@
-/**
- * AppContext.js
- * Manages global application state including mechanics list, orders, and favorites.
- * Handles API calls for fetching mechanics and order management with fallback mock data.
- */
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { API_URL } from '../config';
@@ -85,7 +81,7 @@ export const AppProvider = ({ children }) => {
     const locationContext = useLocation();
     const userLocation = locationContext?.location;
     const [mechanics, setMechanics] = useState([]);
-    const [allGarages, setAllGarages] = useState([]); // Added for global search
+    const [allGarages, setAllGarages] = useState([]); 
     const [towingServices, setTowingServices] = useState(TOWING_SERVICES);
     const [favorites, setFavorites] = useState([]);
     const [currentOrder, setCurrentOrder] = useState(null);
@@ -105,7 +101,7 @@ export const AppProvider = ({ children }) => {
         fetchAllGarages();
     }, [fetchMechanics]);
 
-    // Persistence: Load on mount
+    
     useEffect(() => {
         const loadPersistedData = async () => {
             try {
@@ -113,7 +109,7 @@ export const AppProvider = ({ children }) => {
                 if (storedOrder) {
                     try {
                         const parsed = JSON.parse(storedOrder);
-                        // Only load if it's an active status
+                        
                         if (parsed && ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(parsed.status)) {
                             setCurrentOrder(parsed);
                         } else {
@@ -140,7 +136,7 @@ export const AppProvider = ({ children }) => {
         loadPersistedData();
     }, []);
 
-    // Persistence: Save on change
+    
     useEffect(() => {
         if (currentOrder) {
             AsyncStorage.setItem('currentOrder', JSON.stringify(currentOrder));
@@ -198,7 +194,7 @@ export const AppProvider = ({ children }) => {
             const data = await response.json();
 
             if (data.success) {
-                // Normalize data: Ensure lat/lng exist from coordinates
+                
                 const normalizedMechanics = data.data.map(m => ({
                     ...m,
                     lat: m.location?.lat || m.location?.coordinates?.[1] || m.lat,
@@ -206,7 +202,7 @@ export const AppProvider = ({ children }) => {
                 }));
                 setMechanics(normalizedMechanics);
 
-                // Dynamically update towing services from mechanics who offer it
+                
                 const dynamicTowing = normalizedMechanics
                     .filter(m => m.specialties?.some(s => s.toLowerCase().includes('towing')))
                     .map(m => ({
@@ -226,7 +222,7 @@ export const AppProvider = ({ children }) => {
         } catch (error) {
             console.warn(`[fetchMechanics] All retries failed for ${API_URL}/garages/nearby:`, error.message);
             setMechanics(MOCK_MECHANICS);
-            setTowingServices(TOWING_SERVICES); // Fallback to basic mock
+            setTowingServices(TOWING_SERVICES); 
         }
     }, []);
 
@@ -238,7 +234,7 @@ export const AppProvider = ({ children }) => {
             }
             const data = await response.json();
             if (data.success) {
-                // Normalize data
+                
                 const normalized = data.data.map(m => ({
                     ...m,
                     lat: m.location?.lat || m.location?.coordinates?.[1] || m.lat,
@@ -248,18 +244,13 @@ export const AppProvider = ({ children }) => {
             }
         } catch (error) {
             console.warn(`[fetchAllGarages] Failed:`, error.message);
-            setAllGarages(MOCK_MECHANICS); // Fallback
+            setAllGarages(MOCK_MECHANICS); 
         }
     }, []);
 
-    /**
-     * Places a new order for a mechanic.
-     * @param {string} garageId - The ID of the selected garage.
-     * @param {Object} vehicleDetails - Details of the user's vehicle.
-     * @returns {Promise<Object>} The created order object.
-     */
+    
     const placeOrder = async (garageId, vehicleDetails, userLocationOverride = null) => {
-        // Enforce single active order constraint
+        
         if (currentOrder && ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(currentOrder.status)) {
             throw new Error('You already have an active order. Please complete or cancel it first.');
         }
@@ -300,12 +291,12 @@ export const AppProvider = ({ children }) => {
             }
         } catch (_error) {
             console.warn('Order API failed, using mock order:', _error.message);
-            // Client-side mock order
+            
             const garage = MOCK_MECHANICS.find(m => m.id === garageId) || MOCK_MECHANICS[0];
             const mockOrder = {
                 id: 'local_mock_' + Date.now(),
                 _id: 'local_mock_' + Date.now(),
-                status: 'PENDING', // Start with PENDING
+                status: 'PENDING', 
                 garageId,
                 garageName: garage?.name || 'Nearby Mechanic',
                 mechanic: { name: garage?.name, rating: garage?.rating || 4.8, phone: '+911234567890' },
@@ -318,7 +309,7 @@ export const AppProvider = ({ children }) => {
                 etaMinutes: 12,
             };
 
-            // Auto-advance mock order status for better UX
+            
             setTimeout(() => {
                 setCurrentOrder(prev => prev?.id === mockOrder.id ? { ...prev, status: 'ACCEPTED' } : prev);
                 setTimeout(() => {
@@ -347,7 +338,7 @@ export const AppProvider = ({ children }) => {
         } catch (error) {
             console.log('Network failed, simulating local tracking:', error);
             if (currentOrder) {
-                // Simulate movement locally
+                
                 const newOrder = { ...currentOrder };
                 if (newOrder.status !== 'ARRIVED') {
                     const latDiff = newOrder.userLocation.lat - newOrder.mechanicLocation.lat;
@@ -424,11 +415,11 @@ export const AppProvider = ({ children }) => {
             const data = await response.json();
             if (data.success) {
                 setMyGarage(data.data);
-                // Mark profile as complete in the user object to open the gate
+                
                 if (user && updateUser) {
                     updateUser({ ...user, hasGarageProfile: true });
                 }
-                // Also refresh mechanics list to include the newly created one
+                
                 fetchMechanics();
                 return true;
             }
@@ -522,7 +513,7 @@ export const AppProvider = ({ children }) => {
             });
             const data = await response.json();
             if (data.success) {
-                // Update local status if in the list
+                
                 setGarageOrders(prev => prev.map(o => (o.id === orderId || o._id === orderId) ? { ...o, status } : o));
                 if (currentOrder && (currentOrder.id === orderId || currentOrder._id === orderId)) {
                     setCurrentOrder(prev => ({ ...prev, status }));
@@ -546,7 +537,7 @@ export const AppProvider = ({ children }) => {
     };
 
     const addReview = async (garageId, reviewData) => {
-        // ── Build the new review object ──────────────────────────────────────
+        
         const newReview = {
             id: Date.now(),
             user: user?.name || user?.email?.split('@')[0] || 'You',
@@ -555,7 +546,7 @@ export const AppProvider = ({ children }) => {
             date: 'Just now',
         };
 
-        // ── Always apply locally first (optimistic update) ───────────────────
+        
         setMechanics(prev => prev.map(m => {
             if (m.id === garageId || m._id === garageId) {
                 const updatedReviews = [newReview, ...(m.reviews || [])];
@@ -570,7 +561,7 @@ export const AppProvider = ({ children }) => {
             return m;
         }));
 
-        // ── Try syncing to backend in the background ─────────────────────────
+        
         try {
             const response = await fetchWithRetry(`${API_URL}/garages/${garageId}/reviews`, {
                 method: 'POST',
@@ -579,7 +570,7 @@ export const AppProvider = ({ children }) => {
             });
             const data = await response.json();
             if (data.success && data.data) {
-                // Replace the local review with the server copy so IDs match
+                
                 setMechanics(prev => prev.map(m => {
                     if (m.id === garageId || m._id === garageId) {
                         const updated = [data.data, ...(m.reviews || []).filter(r => r.id !== newReview.id)];
@@ -590,11 +581,11 @@ export const AppProvider = ({ children }) => {
                 }));
             }
         } catch (_err) {
-            // Local save already done; backend sync will happen next session
+            
             console.warn('[addReview] Backend unavailable — review saved locally only');
         }
 
-        return true; // Always succeeds because we saved locally
+        return true; 
     };
 
     return (

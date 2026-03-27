@@ -7,9 +7,9 @@ import { COLORS, SHADOWS, SPACING } from '../constants/theme';
 const CarStuckScreen = ({ navigation }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedIssue, setSelectedIssue] = useState(null);
-    const [vehicleType, setVehicleType] = useState('car'); // 'car' or 'bike'
+    const [vehicleType, setVehicleType] = useState('car'); 
 
-    // Guides Data with Visual Types
+    
     const guides = {
         flat_tire: {
             title: 'Flat Tire / Puncture',
@@ -144,7 +144,7 @@ const CarStuckScreen = ({ navigation }) => {
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
-                {/* Header */}
+                {}
                 <View style={styles.header}>
                     <View style={styles.iconCircle}>
                         <ShieldAlert size={32} color={COLORS.error} />
@@ -153,7 +153,7 @@ const CarStuckScreen = ({ navigation }) => {
                     <Text style={styles.headerSubtitle}>We are here to assist you immediately.</Text>
                 </View>
 
-                {/* Emergency Services */}
+                {}
                 <Text style={styles.sectionTitle}>Emergency Services</Text>
                 <View style={styles.emergencyGrid}>
                     {emergencyServices.map((service) => (
@@ -169,7 +169,7 @@ const CarStuckScreen = ({ navigation }) => {
                     ))}
                 </View>
 
-                {/* Quick Issues */}
+                {}
                 <Text style={styles.sectionTitle}>What{"'"}s the problem?</Text>
                 <View style={styles.issuesGrid}>
                     {quickIssues.map((issue) => (
@@ -186,7 +186,7 @@ const CarStuckScreen = ({ navigation }) => {
                     ))}
                 </View>
 
-                {/* Bottom Actions */}
+                {}
                 <View style={styles.actionSection}>
                     <TouchableOpacity
                         style={[styles.bigButton, { backgroundColor: COLORS.primary }]}
@@ -203,7 +203,7 @@ const CarStuckScreen = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
 
-                {/* GUIDE MODAL */}
+                {}
                 <Modal
                     animationType="slide"
                     transparent={true}
@@ -221,7 +221,7 @@ const CarStuckScreen = ({ navigation }) => {
                                 </TouchableOpacity>
                             </View>
 
-                            {/* Vehicle Toggle */}
+                            {}
                             <View style={styles.toggleContainer}>
                                 <TouchableOpacity
                                     style={[styles.toggleBtn, vehicleType === 'car' && styles.toggleBtnActive]}
@@ -245,7 +245,7 @@ const CarStuckScreen = ({ navigation }) => {
                             <ScrollView style={styles.stepsScroll}>
                                 {selectedIssue && guides[selectedIssue.id] ? (
                                     guides[selectedIssue.id][vehicleType].map((step, index) => {
-                                        // Determine styling based on step type
+                                        
                                         let bg = '#F5F5F5';
                                         let iconColor = '#8E8E93';
                                         let Icon = Info;
@@ -264,7 +264,7 @@ const CarStuckScreen = ({ navigation }) => {
                                         } else if (step.type === 'success') {
                                             bg = '#E6F9EC';
                                             iconColor = '#34C759';
-                                            Icon = CheckCircle; // Need to import CheckCircle
+                                            Icon = CheckCircle; 
                                             borderColor = '#C2F0D1';
                                         } else if (step.type === 'action') {
                                             bg = '#F0F7FF';
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: SPACING.lg,
-        paddingBottom: 100, // Space for tab bar
+        paddingBottom: 100, 
     },
     header: {
         alignItems: 'center',

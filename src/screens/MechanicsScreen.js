@@ -190,18 +190,18 @@ const MechanicsScreen = () => {
     }, []);
 
     const processed = useMemo(() => {
-        // Decide source based on whether we are searching
+        
         const baseList = searchQuery.trim() ? allGarages : mechanics;
 
         let list = baseList.map(m => ({
             ...m,
             _dist: haversine(userLat, userLng, m.lat ?? m.location?.lat, m.lng ?? m.location?.lng),
             verified: m.verified ?? Math.random() > 0.4,
-            available: m.isOnline !== false, // Use isOnline as availability
+            available: m.isOnline !== false, 
             reviewCount: m.reviewCount ?? m.reviews?.length ?? Math.floor(Math.random() * 200 + 10),
         }));
 
-        // Filter out offline garages unless searched by name specifically
+        
         if (!searchQuery.trim()) {
             list = list.filter(m => m.isOnline !== false);
         }
@@ -215,7 +215,7 @@ const MechanicsScreen = () => {
             );
         }
 
-        // Specialty filter
+        
         if (selectedSpecialty !== 'All') {
             list = list.filter(m => m.specialties?.some(s =>
                 s.toLowerCase().includes(selectedSpecialty.toLowerCase())
@@ -244,7 +244,7 @@ const MechanicsScreen = () => {
                     <Text style={styles.subtitle}>{processed.length} available</Text>
                 </View>
 
-                {/* Search */}
+                {}
                 <View style={styles.searchRow}>
                     <View style={styles.searchBar}>
                         <Search size={18} color={COLORS.textLight} />
@@ -261,13 +261,13 @@ const MechanicsScreen = () => {
                             </TouchableOpacity>
                         )}
                     </View>
-                    {/* Sort button */}
+                    {}
                     <TouchableOpacity style={styles.sortBtn} onPress={() => setShowSortModal(true)}>
                         <Filter size={18} color={COLORS.primary} />
                     </TouchableOpacity>
                 </View>
 
-                {/* Sort label + available toggle */}
+                {}
                 <View style={styles.controlRow}>
                     <TouchableOpacity style={styles.sortChip} onPress={() => setShowSortModal(true)}>
                         <Text style={styles.sortChipText}>{activeSortLabel}</Text>
@@ -284,7 +284,7 @@ const MechanicsScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Specialty filter chips */}
+                {}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
                     {SPECIALTY_FILTERS.map(f => (
                         <TouchableOpacity
@@ -335,7 +335,7 @@ const MechanicsScreen = () => {
                 />
             )}
 
-            {/* ── Sort Modal ───────────────────────────────────── */}
+            {}
             <Modal visible={showSortModal} transparent animationType="slide" onRequestClose={() => setShowSortModal(false)}>
                 <TouchableOpacity style={styles.modalOverlay} onPress={() => setShowSortModal(false)} />
                 <View style={styles.sortSheet}>
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
     emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginTop: 14 },
     emptyText: { fontSize: 14, color: COLORS.textLight, marginTop: 6 },
 
-    // Sort modal
+    
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
     sortSheet: {
         backgroundColor: COLORS.white, borderTopLeftRadius: 28, borderTopRightRadius: 28,

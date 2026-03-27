@@ -1,8 +1,4 @@
-/**
- * AuthContext.js
- * Manages user authentication state including login, signup, and logout/
- * Persists user state using AsyncStorage.
- */
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { API_URL } from '../config';
@@ -34,9 +30,7 @@ export const AuthProvider = ({ children }) => {
         checkUser();
     }, []);
 
-    /**
-     * Logs in the user.
-     */
+    
     const login = async (email, password) => {
         setLoading(true);
         try {
@@ -75,9 +69,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    /**
-     * Registers a new user.
-     */
+    
     const signup = async (name, email, password, role = 'user', garageDetails = null) => {
         setLoading(true);
         try {
@@ -122,10 +114,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    /**
-     * Updates the user state and persists it.
-     * @param {Object} updatedUser The new user object to store
-     */
+    
     const updateUser = async (updatedUser) => {
         try {
             await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
@@ -164,9 +153,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    /**
-     * Authenticates with Google.
-     */
+    
     const googleLogin = async (idToken, role = 'user') => {
         setLoading(true);
         try {

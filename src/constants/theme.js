@@ -1,7 +1,7 @@
 export const COLORS = {
-  primary: '#FF8C00', // Dark Orange
-  secondary: '#FFA500', // Orange
-  accent: '#FFD700', // Gold
+  primary: '#FF8C00', 
+  secondary: '#FFA500', 
+  accent: '#FFD700', 
   background: '#FFFFFF',
   surface: '#F8F9FA',
   text: '#333333',

@@ -38,7 +38,7 @@ import {
 
 const { width, height } = Dimensions.get('window');
 
-// ── Step config (Zomato/Uber-style order progress) ───────────────────────────
+
 const ORDER_STEPS = [
     { key: 'PENDING', label: 'Request Sent', icon: Clock },
     { key: 'ACCEPTED', label: 'Mechanic Assigned', icon: CheckCircle },
@@ -50,7 +50,7 @@ const ORDER_STEPS = [
 
 const stepIndex = (status) => ORDER_STEPS.findIndex(s => s.key === status);
 
-// ── Haversine ─────────────────────────────────────────────────────────────────
+
 const haversine = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -60,9 +60,9 @@ const haversine = (lat1, lon1, lat2, lon2) => {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const etaMinutes = (dist) => Math.max(1, Math.round(dist * 3)); // ~3 min/km city
+const etaMinutes = (dist) => Math.max(1, Math.round(dist * 3)); 
 
-// ── Pulse dot for "live" indicator ───────────────────────────────────────────
+
 const PulseDot = ({ color }) => {
     const scale = useRef(new Animated.Value(1)).current;
     useEffect(() => {
@@ -78,7 +78,7 @@ const PulseDot = ({ color }) => {
     );
 };
 
-// ── Car / Mechanic animated marker ───────────────────────────────────────────
+
 const MechanicMarker = ({ status }) => {
     const bounce = useRef(new Animated.Value(0)).current;
     useEffect(() => {
@@ -98,7 +98,7 @@ const MechanicMarker = ({ status }) => {
     );
 };
 
-// ── Searching Radar for PENDING state ────────────────────────────────────────
+
 const SearchingRadar = () => {
     const anim = useRef(new Animated.Value(0)).current;
     useEffect(() => {
@@ -139,7 +139,7 @@ const SearchingRadar = () => {
     );
 };
 
-// ── OrderTrackingScreen ───────────────────────────────────────────────────────
+
 const OrderTrackingScreen = () => {
     const navigation = useNavigation();
     const { params } = useRoute();
@@ -149,7 +149,7 @@ const OrderTrackingScreen = () => {
     const [mechanicCoords, setMechanicCoords] = useState(
         order?.mechanicLocation ? { lat: order.mechanicLocation.lat, lng: order.mechanicLocation.lng } : null
     );
-    const [locationPath, setLocationPath] = useState([]); // breadcrumb trail
+    const [locationPath, setLocationPath] = useState([]); 
     const [isRatingVisible, setIsRatingVisible] = useState(false);
     const mapRef = useRef(null);
     const slideAnim = useRef(new Animated.Value(300)).current;
@@ -163,22 +163,22 @@ const OrderTrackingScreen = () => {
         })
     ).current;
 
-    // ── Slide up bottom card on mount ─────────────────────────────────────
+    
     useEffect(() => {
         Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, bounciness: 6 }).start();
     }, [slideAnim]);
 
-    // ── Poll + socket ─────────────────────────────────────────────────────
+    
     useEffect(() => {
         const orderId = order?.id || order?._id;
         if (!orderId) return;
 
-        // Initial fetch
+        
         const fetchOnce = async () => {
             const updated = await trackOrderStatus(orderId);
             if (updated) {
                 setOrder(updated);
-                // Also update mechanic coords if available
+                
                 if (updated.mechanicLocation) {
                     setMechanicCoords({ lat: updated.mechanicLocation.lat, lng: updated.mechanicLocation.lng });
                 }
@@ -186,7 +186,7 @@ const OrderTrackingScreen = () => {
         };
         fetchOnce();
 
-        // Socket setup
+        
         connectSocket();
         joinOrder(orderId);
 
@@ -194,7 +194,7 @@ const OrderTrackingScreen = () => {
             setMechanicCoords(newCoords);
             setLocationPath(prev => [...prev.slice(-50), { latitude: newCoords.lat, longitude: newCoords.lng }]);
 
-            // Smoothly animate the marker to new coords
+            
             mechLocationAnim.timing({
                 latitude: newCoords.lat,
                 longitude: newCoords.lng,
@@ -219,7 +219,7 @@ const OrderTrackingScreen = () => {
         };
     }, [order?.id, order?._id]);
 
-    // ── Pan map to show both user + mechanic ──────────────────────────────
+    
     const panMapToBoth = useCallback((mechCoords) => {
         if (!mapRef.current || !order?.userLocation) return;
         const uLat = order.userLocation.lat;
@@ -271,7 +271,7 @@ const OrderTrackingScreen = () => {
     const distKm = hasUserLoc && hasMechLoc ? haversine(userLat, userLng, mechLat, mechLng) : null;
     const eta = distKm ? etaMinutes(distKm) : null;
 
-    // ── Status chip style ─────────────────────────────────────────────────
+    
     const statusColor = {
         PENDING: '#FF9500',
         ACCEPTED: '#007AFF',
@@ -307,7 +307,7 @@ const OrderTrackingScreen = () => {
 
     return (
         <View style={styles.container}>
-            {/* ── FULL SCREEN MAP ────────────────────────────────── */}
+            {}
             <MapView
                 ref={mapRef}
                 style={StyleSheet.absoluteFill}
@@ -316,7 +316,7 @@ const OrderTrackingScreen = () => {
                 showsMyLocationButton={false}
                 pitchEnabled={false}
             >
-                {/* User dot */}
+                {}
                 {hasUserLoc && (
                     <Marker
                         coordinate={{ latitude: userLat, longitude: userLng }}
@@ -329,7 +329,7 @@ const OrderTrackingScreen = () => {
                     </Marker>
                 )}
 
-                {/* Mechanic animated car marker */}
+                {}
                 {hasMechLoc && (
                     <Marker.Animated
                         coordinate={mechLocationAnim}
@@ -340,7 +340,7 @@ const OrderTrackingScreen = () => {
                     </Marker.Animated>
                 )}
 
-                {/* Uber-style route line between user and mechanic once accepted/on the way */}
+                {}
                 {hasUserLoc && hasMechLoc && ['ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(status) && (
                     <Polyline
                         coordinates={[
@@ -354,7 +354,7 @@ const OrderTrackingScreen = () => {
                     />
                 )}
 
-                {/* Breadcrumb route trail */}
+                {}
                 {locationPath.length > 1 && (
                     <Polyline
                         coordinates={locationPath}
@@ -365,7 +365,7 @@ const OrderTrackingScreen = () => {
                 )}
             </MapView>
 
-            {/* ── TOP STATUS CHIP ────────────────────────────────── */}
+            {}
             <SafeAreaView style={styles.topOverlay} pointerEvents="box-none">
                 <View style={styles.topRow}>
                     <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
@@ -384,12 +384,12 @@ const OrderTrackingScreen = () => {
                 </View>
             </SafeAreaView>
 
-            {/* ── BOTTOM SLIDE-UP CARD ────────────────────────────── */}
+            {}
             <Animated.View style={[styles.card, { transform: [{ translateY: slideAnim }] }]}>
-                {/* Handle */}
+                {}
                 <View style={styles.handle} />
 
-                {/* Mechanic info row */}
+                {}
                 <View style={styles.mechanicRow}>
                     <View style={styles.avatarCircle}>
                         <User size={26} color={COLORS.primary} />
@@ -407,7 +407,7 @@ const OrderTrackingScreen = () => {
                             </Text>
                         </View>
                     </View>
-                    {/* Call button */}
+                    {}
                     <TouchableOpacity
                         style={styles.callBtn}
                         onPress={() => Linking.openURL(`tel:${order.mechanic?.phone || '+911234567890'}`)}
@@ -416,7 +416,7 @@ const OrderTrackingScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* ── Status timeline (Zomato-style) ───────────────── */}
+                {}
                 <View style={styles.timeline}>
                     {ORDER_STEPS.slice(0, 5).map((step, i) => {
                         const done = i <= currentStep;
@@ -424,15 +424,15 @@ const OrderTrackingScreen = () => {
                         const Icon = step.icon;
                         return (
                             <View key={step.key} style={styles.timelineItem}>
-                                {/* Connector line */}
+                                {}
                                 {i < ORDER_STEPS.length - 2 && (
                                     <View style={[styles.timelineConnector, done && i < currentStep && { backgroundColor: COLORS.primary }]} />
                                 )}
-                                {/* Dot */}
+                                {}
                                 <View style={[styles.timelineDot, done && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }]}>
                                     {done ? <Icon size={10} color={COLORS.white} /> : null}
                                 </View>
-                                {/* Label */}
+                                {}
                                 <Text style={[styles.timelineLabel, done && { color: COLORS.text, fontWeight: '700' }]}>
                                     {step.label}
                                 </Text>
@@ -441,7 +441,7 @@ const OrderTrackingScreen = () => {
                     })}
                 </View>
 
-                {/* ── Live location info ───────────────────────────── */}
+                {}
                 {distKm && isOnWay && (
                     <View style={styles.liveInfoRow}>
                         <PulseDot color="#34C759" />
@@ -458,7 +458,7 @@ const OrderTrackingScreen = () => {
                     </View>
                 )}
 
-                {/* ── Action buttons/Issue ───────────────────────────────── */}
+                {}
                 {isDone ? (
                     <TouchableOpacity style={styles.rateBtn} onPress={() => setIsRatingVisible(true)}>
                         <Text style={styles.rateBtnText}>Rate your experience</Text>
@@ -510,7 +510,7 @@ const OrderTrackingScreen = () => {
     );
 };
 
-// ── Styles ────────────────────────────────────────────────────────────────────
+
 const CARD_HEIGHT = height * 0.44;
 
 const styles = StyleSheet.create({
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
     loadingText: { fontSize: 16, color: COLORS.textLight, fontWeight: '600' },
 
-    // ─ Map markers ───────────────────────────────────────────────────────────
+    
     userDotOuter: {
         width: 22, height: 22, borderRadius: 11,
         backgroundColor: 'rgba(0,122,255,0.25)', alignItems: 'center', justifyContent: 'center',
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
         borderWidth: 2, borderColor: COLORS.primary,
     },
 
-    // ─ Top overlay ───────────────────────────────────────────────────────────
+    
     topOverlay: {
         position: 'absolute', top: 0, left: 0, right: 0,
         paddingHorizontal: SPACING.md,
@@ -557,10 +557,10 @@ const styles = StyleSheet.create({
     etaNumber: { fontSize: 18, fontWeight: '900', color: COLORS.white },
     etaUnit: { fontSize: 10, color: 'rgba(255,255,255,0.8)', fontWeight: '700' },
 
-    // ─ Pulse dot ─────────────────────────────────────────────────────────────
+    
     pulseDot: { width: 8, height: 8, borderRadius: 4 },
 
-    // ─ Bottom card ───────────────────────────────────────────────────────────
+    
     card: {
         position: 'absolute', bottom: 0, left: 0, right: 0,
         backgroundColor: COLORS.white,
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center', marginBottom: 20,
     },
 
-    // ─ Mechanic row ──────────────────────────────────────────────────────────
+    
     mechanicRow: {
         flexDirection: 'row', alignItems: 'center', marginBottom: 20,
         backgroundColor: '#F7F8FA', borderRadius: 20, padding: 12,
@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', ...SHADOWS.small,
     },
 
-    // ─ Timeline ──────────────────────────────────────────────────────────────
+    
     timeline: {
         flexDirection: 'row', alignItems: 'flex-start',
         justifyContent: 'space-between', marginBottom: 18,
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 
-    // ─ Live info ─────────────────────────────────────────────────────────────
+    
     liveInfoRow: {
         flexDirection: 'row', alignItems: 'center', gap: 10,
         backgroundColor: '#F0FFF7', borderRadius: 14, padding: 12, marginBottom: 14,
@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
     liveText: { fontSize: 13, color: COLORS.text, fontWeight: '500', flex: 1 },
     liveHighlight: { fontWeight: '800', color: '#1a8a3c' },
 
-    // ─ Issue / Rate ──────────────────────────────────────────────────────────
+    
     issueRow: {
         flexDirection: 'row', alignItems: 'center', gap: 8,
         backgroundColor: '#F7F8FA', borderRadius: 12, padding: 12,
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
     },
     rateBtnText: { fontSize: 16, fontWeight: '800', color: '#B8860B' },
 
-    // ─ Searching Radar ───────────────────────────────────────────────────────
+    
     searchingContainer: {
         alignItems: 'center',
         paddingVertical: 10,

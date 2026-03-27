@@ -30,7 +30,7 @@ const GarageOrdersScreen = () => {
     }, [myGarage?.id]);
 
     useEffect(() => {
-        // Cleanup location tracking on unmount
+        
         return () => {
             if (locationSubscription.current) {
                 locationSubscription.current.remove();
@@ -58,8 +58,8 @@ const GarageOrdersScreen = () => {
             locationSubscription.current = await Location.watchPositionAsync(
                 {
                     accuracy: Location.Accuracy.High,
-                    distanceInterval: 10, // Update every 10 meters
-                    timeInterval: 5000,    // Or every 5 seconds
+                    distanceInterval: 10, 
+                    timeInterval: 5000,    
                 },
                 (location) => {
                     const coords = {
@@ -160,7 +160,7 @@ const GarageOrdersScreen = () => {
                 {item.status !== 'PENDING' && item.status !== 'REJECTED' && item.status !== 'COMPLETED' && (
                     <TouchableOpacity
                         style={styles.callButton}
-                        onPress={() => Linking.openURL('tel:+911234567890')} // Mock phone
+                        onPress={() => Linking.openURL('tel:+911234567890')} 
                     >
                         <Phone size={16} color={COLORS.primary} />
                         <Text style={styles.callText}>Contact Customer</Text>

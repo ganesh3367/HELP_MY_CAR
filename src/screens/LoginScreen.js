@@ -41,7 +41,6 @@ const LoginScreen = ({ navigation }) => {
 
     useEffect(() => {
         if (response?.type === 'success') {
-            // Expo auth session usually puts the token here
             const idToken = response.authentication?.idToken || response.params?.id_token;
             if (idToken) {
                 handleGoogleLogin(idToken);
@@ -64,7 +63,6 @@ const LoginScreen = ({ navigation }) => {
             setGoogleLoading(false);
         }
     };
-
 
     const handleLogin = async () => {
         setEmailError('');
@@ -174,7 +172,6 @@ const LoginScreen = ({ navigation }) => {
                                 loading={loading}
                                 style={styles.loginButton}
                             />
-
 
                             <View style={styles.footer}>
                                 <Text style={styles.footerText}>Don{"'"}t have an account? </Text>

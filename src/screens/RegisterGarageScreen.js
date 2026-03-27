@@ -51,7 +51,7 @@ const RegisterGarageScreen = ({ navigation, route }) => {
     const [location, setLocation] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // Initial setup with user location, but overwrite if picked from map
+    
     useEffect(() => {
         if (route.params?.pickedLocation) {
             setLocation({
@@ -94,7 +94,7 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                 phone: form.phone,
                 experience: form.experience || "Not Provided",
                 rating: parseFloat(form.rating) || 5,
-                reviewCount: 1, // Initial count
+                reviewCount: 1, 
                 specialties: selectedSpecialties,
                 location: {
                     lat: location.lat,
@@ -103,7 +103,7 @@ const RegisterGarageScreen = ({ navigation, route }) => {
             });
 
             if (success) {
-                // Update global auth state to trigger redirect to home
+                
                 await updateUser({ ...user, hasGarageProfile: true });
                 Alert.alert('Success', 'Your garage has been registered successfully!');
             } else {
@@ -142,7 +142,7 @@ const RegisterGarageScreen = ({ navigation, route }) => {
                     )}
                 </View>
 
-                {/* Progress bar */}
+                {}
                 <View style={styles.progressContainer}>
                     <View style={styles.progressBar}>
                         <View style={[styles.progressFill, { width: '100%' }]} />
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         fontStyle: 'italic',
     },
-    // ─ Location Pinning ───────────────────────────────────────────────────────
+    
     pinDropBtn: {
         flexDirection: 'row',
         alignItems: 'center',

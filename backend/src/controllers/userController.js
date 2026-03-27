@@ -2,9 +2,6 @@ const { db, auth } = require('../config/firebase');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-// @desc    Google login
-// @route   POST /api/users/google-login
-// @access  Public
 exports.googleLogin = async (req, res) => {
     try {
         const { idToken, role } = req.body;
@@ -15,7 +12,7 @@ exports.googleLogin = async (req, res) => {
 
         if (!db || !auth) {
             console.log('Firebase not fully initialized. Using MOCK MODE for Google login.');
-            // For mock mode, we assume the idToken is just an email or a mock string
+            
             const email = idToken.includes('@') ? idToken : 'mock@example.com';
             const userData = {
                 id: email,
@@ -27,15 +24,12 @@ exports.googleLogin = async (req, res) => {
             return sendTokenResponse(userData, 200, res);
         }
 
-        // Verify Google idToken
         const decodedToken = await auth.verifyIdToken(idToken);
         const { email, name, picture } = decodedToken;
 
-        // Check users collection
         let userRef = db.collection('users').doc(email);
         let doc = await userRef.get();
 
-        // If not in users, check owners
         if (!doc.exists) {
             userRef = db.collection('owners').doc(email);
             doc = await userRef.get();
@@ -44,7 +38,6 @@ exports.googleLogin = async (req, res) => {
         let userData;
 
         if (!doc.exists) {
-            // New user - create account
             const normalizedRole = (role || 'user').toString().toLowerCase().trim();
             const userRole = normalizedRole === 'garage' ? 'garage' : 'user';
             const collectionName = userRole === 'garage' ? 'owners' : 'users';
@@ -62,7 +55,6 @@ exports.googleLogin = async (req, res) => {
             await userRef.set(userData);
             userData.id = email;
         } else {
-            // Existing user
             const existingUser = doc.data();
             userData = {
                 id: email,
@@ -72,7 +64,6 @@ exports.googleLogin = async (req, res) => {
                 avatar: existingUser.avatar || picture
             };
 
-            // Check if garage profile exists if the user is an owner
             if (userData.role === 'garage') {
                 const garageSnapshot = await db.collection('garages').where('ownerEmail', '==', email).limit(1).get();
                 userData.hasGarageProfile = !garageSnapshot.empty;
@@ -86,15 +77,10 @@ exports.googleLogin = async (req, res) => {
     }
 };
 
-
-// @desc    Register user
-// @route   POST /api/users/signup
-// @access  Public
 exports.signup = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
 
-        // Robust role parsing
         const normalizedRole = (role || 'user').toString().toLowerCase().trim();
         const userRole = normalizedRole === 'garage' ? 'garage' : 'user';
         const collectionName = userRole === 'garage' ? 'owners' : 'users';
@@ -110,18 +96,16 @@ exports.signup = async (req, res) => {
             });
         }
 
-        // Check if user exists in the specific collection
+        
         const userRef = db.collection(collectionName).doc(email);
         const doc = await userRef.get();
         if (doc.exists) {
             return res.status(400).json({ success: false, error: 'Account already exists' });
         }
 
-        // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create user in Firestore
         const newUser = {
             name,
             email,
@@ -132,7 +116,6 @@ exports.signup = async (req, res) => {
 
         await userRef.set(newUser);
 
-        // Return response (excluding password)
         const userData = { id: email, name, email, role: userRole };
         sendTokenResponse(userData, 201, res);
     } catch (err) {
@@ -141,9 +124,6 @@ exports.signup = async (req, res) => {
     }
 };
 
-// @desc    Login user
-// @route   POST /api/users/login
-// @access  Public
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -151,7 +131,6 @@ exports.login = async (req, res) => {
         if (!db) {
             console.log('Firebase not initialized. Using MOCK MODE for login.');
             
-            // In mock mode, assume they want a garage profile unless 'user' is in their email
             const isUserOnly = email.toLowerCase().includes('user');
 
             return res.status(200).json({
@@ -167,11 +146,9 @@ exports.login = async (req, res) => {
             });
         }
 
-        // Check users collection first
         let userRef = db.collection('users').doc(email);
         let doc = await userRef.get();
 
-        // If not in users, check owners
         if (!doc.exists) {
             userRef = db.collection('owners').doc(email);
             doc = await userRef.get();
@@ -183,14 +160,12 @@ exports.login = async (req, res) => {
 
         const user = doc.data();
 
-        // Check if garage profile exists if the user is an owner
         let hasGarageProfile = false;
         if (user.role === 'garage') {
             const garageSnapshot = await db.collection('garages').where('ownerEmail', '==', email).limit(1).get();
             hasGarageProfile = !garageSnapshot.empty;
         }
 
-        // Check password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
@@ -210,9 +185,6 @@ exports.login = async (req, res) => {
     }
 };
 
-// @desc    Delete user account (and related garage if owner)
-// @route   DELETE /api/users/:email
-// @access  Public (Should be private in production)
 exports.deleteAccount = async (req, res) => {
     try {
         const { email } = req.params;
@@ -221,11 +193,9 @@ exports.deleteAccount = async (req, res) => {
         }
 
         if (!db) {
-            // Mock mode: treat as success
             return res.status(200).json({ success: true, message: 'Account deleted (mock mode)' });
         }
 
-        // Delete from users or owners collection
         const userRef = db.collection('users').doc(email);
         const ownerRef = db.collection('owners').doc(email);
         const [userDoc, ownerDoc] = await Promise.all([userRef.get(), ownerRef.get()]);
@@ -235,7 +205,6 @@ exports.deleteAccount = async (req, res) => {
         if (userDoc.exists) batch.delete(userRef);
         if (ownerDoc.exists) batch.delete(ownerRef);
 
-        // If owner, also delete their garages
         if (ownerDoc.exists) {
             const garagesSnap = await db.collection('garages').where('ownerEmail', '==', email).get();
             garagesSnap.forEach((d) => batch.delete(d.ref));
